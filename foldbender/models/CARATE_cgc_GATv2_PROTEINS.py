@@ -1,4 +1,5 @@
 # PROTEINS
+
 import os
 import numpy as np
 import torch
@@ -8,6 +9,7 @@ import sklearn.metrics as metrics
 from torch_geometric.datasets import TUDataset
 from torch_geometric.nn import global_add_pool, GraphConv, GATv2Conv
 from torch_geometric.loader import DataLoader
+
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 path = os.path.join(os.getcwd(), 'data', 'PROTEINS')
