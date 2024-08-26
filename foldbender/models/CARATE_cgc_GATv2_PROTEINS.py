@@ -18,10 +18,10 @@ os.makedirs(path, exist_ok=True)
 dataset = 'PROTEINS_full'
 heads = 3
 hidden_channels = 364
-dropout_gat = 0.1
-dropout_forward = 0.1
-epochs = 600
-lr = 0.0003
+dropout_gat = 0.6
+dropout_forward = 0.5
+epochs = 5000
+lr = 0.0004
 batch_size = 64
 
 dataset = TUDataset(path, name="PROTEINS_full").shuffle()
