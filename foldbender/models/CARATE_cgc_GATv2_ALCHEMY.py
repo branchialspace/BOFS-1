@@ -1,4 +1,5 @@
 # ALCHEMY
+
 import os
 import time
 import numpy as np
@@ -9,6 +10,7 @@ from torch_geometric.datasets import TUDataset
 from torch_geometric.logging import init_wandb, log
 from torch_geometric.nn import GraphConv, GATv2Conv, global_add_pool
 from torch_geometric.loader import DataLoader
+
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 path = os.path.join(os.getcwd(), 'data', 'ALCHEMY')
