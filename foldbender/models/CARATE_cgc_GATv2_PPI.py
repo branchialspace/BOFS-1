@@ -20,7 +20,7 @@ hidden_channels = 364
 dropout_gat = 0.6
 dropout_forward = 0.5
 epochs = 5000
-lr = 0.005
+lr = 0.0005
 weight_decay = 0  # 1e-5
 batch_size = 1
 
