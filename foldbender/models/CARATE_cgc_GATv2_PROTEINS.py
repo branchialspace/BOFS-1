@@ -21,7 +21,7 @@ hidden_channels = 364
 dropout_gat = 0.6
 dropout_forward = 0.5
 epochs = 5000
-lr = 0.0004
+lr = 0.0005
 batch_size = 64
 
 dataset = TUDataset(path, name="PROTEINS_full").shuffle()
