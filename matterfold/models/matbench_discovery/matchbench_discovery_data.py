@@ -9,6 +9,7 @@ from pymatgen.core import Structure
 import itertools
 from tqdm import tqdm
 
+
 def preprocess_matbench_discovery_data(cutoff: float = 5.0):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
