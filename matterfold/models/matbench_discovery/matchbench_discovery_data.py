@@ -3,6 +3,7 @@
 import os
 import numpy as np
 import torch
+import torch.multiprocessing as mp
 from torch.utils.data import Dataset, DataLoader
 from torch_geometric.data import Data, Batch
 from matbench_discovery.data import load
@@ -15,7 +16,7 @@ class MatbenchDataset(Dataset):
         self.entries = entries
         self.energies = energies
         self.is_mp = is_mp
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.device = torch.device('cpu')
 
         if self.is_mp:
             self.entries = self.entries.reset_index(drop=True)
@@ -35,11 +36,10 @@ class MatbenchDataset(Dataset):
             structure = Structure.from_dict(cse_entry['computed_structure_entry']['structure'])
             energy = row['e_above_hull_mp2020_corrected_ppd_mp']
 
-        return structure, torch.tensor(energy, dtype=torch.float32, device=self.device)
-
+        return structure, torch.tensor(energy, dtype=torch.float32)
 
 def structure_to_graph(structure: Structure, cutoff: float = 5.0):
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cpu')
 
     atomic_numbers = torch.tensor([site.specie.number for site in structure], dtype=torch.long, device=device)
     pos = torch.tensor(structure.cart_coords, dtype=torch.float32, device=device)
@@ -70,42 +70,39 @@ def collate_fn(batch):
     batch_data.y = torch.stack(energies).view(-1, 1)
     return batch_data
 
-def preprocess_matbench_discovery_data(cutoff: float = 5.0, batch_size: int = 32, num_workers: int = 2):
+def process_dataset(dataset, loader, device):
+    graphs = []
+    y_values = []
+
+    for i, batch in enumerate(loader):
+        batch = batch.to(device)
+        graphs.extend(batch.to_data_list())
+        y_values.extend(batch.y.cpu().numpy().flatten())
+        if (i + 1) % 100 == 0:
+            print(f"Processed {i + 1} batches out of {len(loader)}")
+
+    return graphs, y_values
+
+def preprocess_matbench_discovery_data(cutoff: float = 5.0, batch_size: int = 32, num_workers: int = 4):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     
     mp_entries = load("mp_computed_structure_entries", version="1.0.0")
     mp_energies = load("mp_energies", version="1.0.0")
 
     mp_dataset = MatbenchDataset(mp_entries, mp_energies, is_mp=True)
-    mp_loader = DataLoader(mp_dataset, batch_size=batch_size, num_workers=num_workers, collate_fn=collate_fn, pin_memory=True)
-
-    mp_graphs = []
-    mp_y_values = []
+    mp_loader = DataLoader(mp_dataset, batch_size=batch_size, num_workers=num_workers, collate_fn=collate_fn)
 
     print("Processing MP data...")
-    for i, batch in enumerate(mp_loader):
-        batch = batch.to(device)
-        mp_graphs.extend(batch.to_data_list())
-        mp_y_values.extend(batch.y.cpu().numpy().flatten())
-        if (i + 1) % 100 == 0:
-            print(f"Processed {i + 1} batches out of {len(mp_loader)}")
+    mp_graphs, mp_y_values = process_dataset(mp_dataset, mp_loader, device)
 
     wbm_summary = load("wbm_summary", version="1.0.0")
     wbm_cses = load("wbm_computed_structure_entries", version="1.0.0")
 
     wbm_dataset = MatbenchDataset(wbm_summary, wbm_cses, is_mp=False)
-    wbm_loader = DataLoader(wbm_dataset, batch_size=batch_size, num_workers=num_workers, collate_fn=collate_fn, pin_memory=True)
-
-    wbm_graphs = []
-    wbm_y_values = []
+    wbm_loader = DataLoader(wbm_dataset, batch_size=batch_size, num_workers=num_workers, collate_fn=collate_fn)
 
     print("Processing WBM data...")
-    for i, batch in enumerate(wbm_loader):
-        batch = batch.to(device)
-        wbm_graphs.extend(batch.to_data_list())
-        wbm_y_values.extend(batch.y.cpu().numpy().flatten())
-        if (i + 1) % 100 == 0:
-            print(f"Processed {i + 1} batches out of {len(wbm_loader)}")
+    wbm_graphs, wbm_y_values = process_dataset(wbm_dataset, wbm_loader, device)
 
     torch.save({
         'mp_graphs': mp_graphs,
@@ -117,4 +114,5 @@ def preprocess_matbench_discovery_data(cutoff: float = 5.0, batch_size: int = 32
     print(f"Preprocessing complete. Data saved to 'preprocessed_data.pt' (cutoff distance: {cutoff})")
 
 if __name__ == "__main__":
+    mp.set_start_method('spawn')
     preprocess_matbench_discovery_data()
