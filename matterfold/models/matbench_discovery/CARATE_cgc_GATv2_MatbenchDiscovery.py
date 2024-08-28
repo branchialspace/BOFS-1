@@ -12,7 +12,6 @@ from pymatgen.core import Structure
 from torch_geometric.data import Data
 from sklearn.metrics import f1_score
 import itertools
-from scipy.spatial import cKDTree
 from tqdm import tqdm
 
 
@@ -23,32 +22,28 @@ def structure_to_graph(structure: Structure, cutoff: float = 5.0):
     atomic_numbers = torch.tensor([site.specie.number for site in structure], dtype=torch.long)
 
     # Get positions
-    pos = torch.tensor(structure.cart_coords, dtype=torch.float)
+    pos = torch.tensor(structure.cart_coords, dtype=torch.float32).cuda()
 
     # Get cell and pbc
-    cell = torch.tensor(structure.lattice.matrix, dtype=torch.float)
-    pbc = torch.tensor(structure.lattice.pbc, dtype=torch.bool)
+    cell = torch.tensor(structure.lattice.matrix, dtype=torch.float32).cuda()
+    pbc = torch.tensor(structure.lattice.pbc, dtype=torch.bool).cuda()
 
-    # Use KDTree for efficient neighbor search
+    # Generate periodic images
     lattice = structure.lattice
-    scaled_positions = lattice.get_fractional_coords(structure.cart_coords)
-    pbc_offsets = np.array(list(itertools.product([-1, 0, 1], repeat=3)))
+    scaled_positions = torch.tensor(lattice.get_fractional_coords(structure.cart_coords), dtype=torch.float32).cuda()
+    pbc_offsets = torch.tensor(list(itertools.product([-1, 0, 1], repeat=3)), dtype=torch.float32).cuda()
 
-    extended_scaled_positions = scaled_positions[:, None, :] + pbc_offsets[None, :, :]
-    extended_cart_positions = lattice.get_cartesian_coords(extended_scaled_positions.reshape(-1, 3))
-    extended_cart_positions = extended_cart_positions.reshape(len(scaled_positions), -1, 3)
+    extended_scaled_positions = (scaled_positions.unsqueeze(1) + pbc_offsets.unsqueeze(0)).reshape(-1, 3)
+    extended_cart_positions = torch.matmul(extended_scaled_positions, cell.T)
 
-    tree = cKDTree(extended_cart_positions.reshape(-1, 3))
+    # Compute pairwise distances
+    diff = extended_cart_positions.unsqueeze(1) - pos.unsqueeze(0)
+    dist_matrix = torch.norm(diff, dim=-1)
+    neighbors = torch.nonzero(dist_matrix < cutoff)
+    edge_index = neighbors[neighbors[:, 0] // len(pbc_offsets) != neighbors[:, 1]].T
+    edge_index[0] = edge_index[0] // len(pbc_offsets)
 
-    edge_index = []
-    for i, pos in enumerate(structure.cart_coords):
-        neighbors = tree.query_ball_point(pos, cutoff)
-        central_atom_indices = np.array(neighbors) // len(pbc_offsets)
-        edge_index.extend([[i, j] for j in central_atom_indices if i != j])
-
-    edge_index = torch.tensor(edge_index, dtype=torch.long).t().contiguous()
-
-    x = atomic_numbers.unsqueeze(1).float()
+    x = atomic_numbers.unsqueeze(1).float().cuda()
 
     return Data(x=x, edge_index=edge_index, pos=pos, cell=cell, pbc=pbc)
 
