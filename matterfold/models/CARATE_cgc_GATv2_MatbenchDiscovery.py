@@ -92,10 +92,10 @@ for idx, row in tqdm(wbm_summary.iterrows(), total=len(wbm_summary)):
     wbm_y_values.append(row['e_above_hull_mp2020_corrected_ppd_mp'])
 
 # Use MP data for training
-train_loader = DataLoader(mp_graphs, batch_size=64, shuffle=True)
+train_loader = DataLoader(mp_graphs, batch_size=batch_size, shuffle=True)
 
 # Use WBM data for testing
-test_loader = DataLoader(wbm_graphs, batch_size=64)
+test_loader = DataLoader(wbm_graphs, batch_size=batch_size)
 
 heads = 3
 hidden_channels = 364
@@ -137,7 +137,7 @@ def train():
         data = data.to(device)
         optimizer.zero_grad()
         out = model(data.x, data.edge_index, data.batch)
-        loss = F.mse_loss(out, data.y)
+        loss = F.mse_loss(out.squeeze(), data.y)
         loss.backward()
         optimizer.step()
         total_loss += float(loss) * data.num_graphs
@@ -152,7 +152,7 @@ def test(loader):
     for data in loader:
         data = data.to(device)
         out = model(data.x, data.edge_index, data.batch)
-        total_mae += F.l1_loss(out, data.y).item() * data.num_graphs
+        total_mae += F.l1_loss(out.squeeze(), data.y).item() * data.num_graphs
         all_preds.extend(out.cpu().numpy())
         all_true.extend(data.y.cpu().numpy())
 
