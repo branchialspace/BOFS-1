@@ -84,7 +84,7 @@ def preprocess_matbench_discovery_data(path, cutoff: float = 5.0, batch_size: in
     structures = []
     energies = []
 
-    wbm_initial_structures_dict = wbm_initial_structures.set_index('formula')['initial_structure'].to_dict()
+    wbm_initial_structures_dict = wbm_initial_structures.set_index('formula_from_cse')['initial_structure'].to_dict()
 
     def process_row(row):
         initial_structure = wbm_initial_structures_dict.get(row['formula'])
