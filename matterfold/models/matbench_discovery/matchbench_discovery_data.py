@@ -16,7 +16,7 @@ def preprocess_matbench_discovery_data(path, cutoff: float = 5.0, batch_size: in
     def structures_to_graphs(structures: list):
         batch_size = len(structures)
         max_atoms = max(len(s) for s in structures)
-        
+
         atomic_numbers = torch.zeros((batch_size, max_atoms), dtype=torch.long, device=device)
         positions = torch.zeros((batch_size, max_atoms, 3), dtype=torch.float32, device=device)
         cells = torch.zeros((batch_size, 3, 3), dtype=torch.float32, device=device)
@@ -38,7 +38,7 @@ def preprocess_matbench_discovery_data(path, cutoff: float = 5.0, batch_size: in
 
         diff = extended_cart_positions.unsqueeze(2) - positions.unsqueeze(1)
         dist_matrix = torch.norm(diff, dim=-1)
-        
+
         graphs = []
         for i in range(batch_size):
             neighbors = torch.nonzero(dist_matrix[i, :num_atoms[i]*27, :num_atoms[i]] < cutoff)
@@ -72,7 +72,7 @@ def preprocess_matbench_discovery_data(path, cutoff: float = 5.0, batch_size: in
                 graph.y = torch.tensor([energy], dtype=torch.float)
                 mp_graphs.append(graph)
                 mp_y_values.append(energy)
-            
+
             pbar.update(1)
 
     wbm_summary = load("wbm_summary", version="1.0.0")
@@ -83,10 +83,21 @@ def preprocess_matbench_discovery_data(path, cutoff: float = 5.0, batch_size: in
     print("Processing WBM data...")
     structures = []
     energies = []
-    for idx, row in wbm_summary.iterrows():
-        cse_entry = wbm_cses[wbm_cses['formula_from_cse'] == row['formula']].iloc[0]
-        structures.append(Structure.from_dict(cse_entry['computed_structure_entry']['structure']))
-        energies.append(row['e_above_hull_mp2020_corrected_ppd_mp'])
+
+    wbm_cses_dict = wbm_cses.set_index('formula_from_cse')['computed_structure_entry'].to_dict()
+
+    def process_row(row):
+        cse_entry = wbm_cses_dict.get(row['formula'])
+        if cse_entry is not None:
+            return Structure.from_dict(cse_entry['structure']), row['e_above_hull_mp2020_corrected_ppd_mp']
+        return None, None
+
+    tqdm.pandas(desc="Processing WBM rows")
+    results = wbm_summary.progress_apply(process_row, axis=1)
+    structures, energies = zip(*results)
+
+    structures = [s for s in structures if s is not None]
+    energies = [e for e in energies if e is not None]
 
     total_batches = (len(structures) + batch_size - 1) // batch_size
     with tqdm(total=total_batches, desc="WBM Batches") as pbar:
@@ -99,7 +110,7 @@ def preprocess_matbench_discovery_data(path, cutoff: float = 5.0, batch_size: in
                 graph.y = torch.tensor([energy], dtype=torch.float)
                 wbm_graphs.append(graph)
                 wbm_y_values.append(energy)
-            
+
             pbar.update(1)
 
     torch.save({
