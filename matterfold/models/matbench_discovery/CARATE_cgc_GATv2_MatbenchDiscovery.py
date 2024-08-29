@@ -19,8 +19,12 @@ epochs = 50
 lr = 0.0005
 batch_size = 64
 
+# Processed Matbench Discovery training data with energy above hull graph-level regression targets
+# !gdown 1-PxArsNas0aLZ2DzCGUnNy_kRh-KucBT
+# !unzip MBDData.zip -d ./MBDData/ > /dev/null 2>&1
+
 # Load preprocessed data
-preprocessed_data = torch.load('/content/drive/MyDrive/MBDprocessed.pt')
+preprocessed_data = torch.load('/content/MBDData/MBDData.pt')
 mp_graphs = preprocessed_data['mp_graphs']
 mp_y_values = preprocessed_data['mp_y_values']
 wbm_graphs = preprocessed_data['wbm_graphs']
