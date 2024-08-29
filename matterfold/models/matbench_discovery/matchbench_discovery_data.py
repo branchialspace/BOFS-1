@@ -9,7 +9,6 @@ from pymatgen.core import Structure
 import itertools
 from tqdm import tqdm
 
-
 def preprocess_matbench_discovery_data(path, cutoff: float = 5.0, batch_size: int = 100):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -76,7 +75,7 @@ def preprocess_matbench_discovery_data(path, cutoff: float = 5.0, batch_size: in
             pbar.update(1)
 
     wbm_summary = load("wbm_summary", version="1.0.0")
-    wbm_cses = load("wbm_computed_structure_entries", version="1.0.0")
+    wbm_initial_structures = load("wbm_initial_structures", version="1.0.0")
 
     wbm_graphs = []
     wbm_y_values = []
@@ -84,12 +83,12 @@ def preprocess_matbench_discovery_data(path, cutoff: float = 5.0, batch_size: in
     structures = []
     energies = []
 
-    wbm_cses_dict = wbm_cses.set_index('formula_from_cse')['computed_structure_entry'].to_dict()
+    wbm_initial_structures_dict = wbm_initial_structures.set_index('formula')['initial_structure'].to_dict()
 
     def process_row(row):
-        cse_entry = wbm_cses_dict.get(row['formula'])
-        if cse_entry is not None:
-            return Structure.from_dict(cse_entry['structure']), row['e_above_hull_mp2020_corrected_ppd_mp']
+        initial_structure = wbm_initial_structures_dict.get(row['formula'])
+        if initial_structure is not None:
+            return Structure.from_dict(initial_structure), row['e_above_hull_mp2020_corrected_ppd_mp']
         return None, None
 
     tqdm.pandas(desc="Processing WBM rows")
@@ -118,9 +117,9 @@ def preprocess_matbench_discovery_data(path, cutoff: float = 5.0, batch_size: in
         'mp_y_values': mp_y_values,
         'wbm_graphs': wbm_graphs,
         'wbm_y_values': wbm_y_values
-    }, os.path.join(path, 'MBDprocessed.pt'))
+    }, os.path.join(path, 'MBDData.pt'))
 
-    print(f"Preprocessing complete. Data saved as 'MBDprocessed.pt' (cutoff distance: {cutoff})")
+    print(f"Preprocessing complete. Data saved as 'MBDData.pt' (cutoff distance: {cutoff})")
 
 if __name__ == "__main__":
-    preprocess_matbench_discovery_data(path='/content/drive/MyDrive/')
+    preprocess_matbench_discovery_data(path='/content/drive/MyDrive/matbench_discovery/')
