@@ -20,7 +20,7 @@ lr = 0.0005
 batch_size = 64
 
 # Load preprocessed data
-preprocessed_data = torch.load('preprocessed_data.pt')
+preprocessed_data = torch.load('/content/drive/MyDrive/MBDprocessed.pt')
 mp_graphs = preprocessed_data['mp_graphs']
 mp_y_values = preprocessed_data['mp_y_values']
 wbm_graphs = preprocessed_data['wbm_graphs']
