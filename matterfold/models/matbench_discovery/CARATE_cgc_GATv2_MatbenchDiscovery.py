@@ -20,7 +20,7 @@ lr = 0.0005
 batch_size = 64
 
 # Processed Matbench Discovery training data with energy above hull graph-level regression targets
-# !gdown 1-PxArsNas0aLZ2DzCGUnNy_kRh-KucBT
+# !gdown 1-JQHQTuWna_XdaphwM16iCkjEdWgUlLC
 # !unzip MBDData.zip -d ./MBDData/ > /dev/null 2>&1
 
 # Load preprocessed data
