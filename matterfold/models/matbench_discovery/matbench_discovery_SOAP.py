@@ -11,9 +11,9 @@ def soap_local(data_path, r_cut=5.0, n_max=4, l_max=4, sigma=0.4):
     data = torch.load(data_path)
     
     soap = SOAP(species=["H"], periodic=True, r_cut=r_cut, n_max=n_max, l_max=l_max, sigma=sigma)
-    for graph in tqdm(data['mp_graphs'], desc="Processing MP graphs"):
+    for graph in tqdm(data['mp_graphs'], desc="Processing MP graphs local SOAP"):
         process_graph(graph, soap)
-    for graph in tqdm(data['wbm_graphs'], desc="Processing WBM graphs"):
+    for graph in tqdm(data['wbm_graphs'], desc="Processing WBM graphs local SOAP"):
         process_graph(graph, soap)
     torch.save(data, data_path)
     print(f"SOAP descriptors calculated and saved to {data_path}.")
@@ -22,9 +22,9 @@ def soap_global(data_path, r_cut=5.0, n_max=4, l_max=4, sigma=0.4):
     data = torch.load(data_path)
     
     average_soap = SOAP(species=["H"], periodic=True, r_cut=r_cut, n_max=n_max, l_max=l_max, sigma=sigma, average="inner")
-    for graph in tqdm(data['mp_graphs'], desc="Processing MP graphs (global)"):
+    for graph in tqdm(data['mp_graphs'], desc="Processing MP graphs global SOAP"):
         process_graph_global(graph, average_soap)
-    for graph in tqdm(data['wbm_graphs'], desc="Processing WBM graphs (global)"):
+    for graph in tqdm(data['wbm_graphs'], desc="Processing WBM graphs global SOAP"):
         process_graph_global(graph, average_soap)
     torch.save(data, data_path)
     print(f"Global SOAP descriptors calculated and saved to {data_path}.")
