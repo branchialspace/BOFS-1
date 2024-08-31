@@ -61,10 +61,16 @@ def preprocess_matbench_discovery_data(path, cutoff: float = 5.0, batch_size: in
         structures_data = structures_data.loc[common_ids]
         properties_data = properties_data.loc[common_ids]
 
-        structures = [Structure.from_dict(row[structure_key]) for _, row in structures_data.iterrows()]
+        if dataset_name == 'MP':
+            structures = [Structure.from_dict(row[structure_key]['structure']) for _, row in structures_data.iterrows()]
+            material_ids = structures_data.index.tolist()
+            formulas = [row[structure_key]['composition'] for _, row in structures_data.iterrows()]
+        else:  # WBM
+            structures = [Structure.from_dict(row[structure_key]) for _, row in structures_data.iterrows()]
+            material_ids = structures_data.index.tolist()
+            formulas = structures_data[formula_key].tolist()
+
         energies = properties_data[energy_key].tolist()
-        material_ids = properties_data.index.tolist()
-        formulas = properties_data[formula_key].tolist()
 
         print(f"Total {dataset_name} structures: {len(structures)}")
 
@@ -106,13 +112,12 @@ def preprocess_matbench_discovery_data(path, cutoff: float = 5.0, batch_size: in
     wbm_initial_structures = load("wbm_initial_structures", version="1.0.0")
     
     # Prepare WBM data to match MP data structure
-    wbm_structures = wbm_initial_structures.set_index('formula_from_cse')
-    wbm_structures = wbm_structures.rename(columns={'initial_structure': 'structure'})
-    wbm_summary = wbm_summary.set_index('formula')
+    wbm_structures = wbm_initial_structures.set_index('material_id')
+    wbm_summary = wbm_summary.set_index('material_id')
     
     wbm_graphs, wbm_y_values = process_dataset(
         wbm_structures, wbm_summary, 
-        structure_key='structure', 
+        structure_key='initial_structure', 
         energy_key='e_above_hull_mp2020_corrected_ppd_mp', 
         formula_key='formula',
         dataset_name='WBM'
