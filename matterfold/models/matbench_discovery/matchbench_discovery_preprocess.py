@@ -57,17 +57,24 @@ def preprocess_matbench_discovery_data(path, cutoff: float = 5.0, batch_size: in
         print(f"Processing {dataset_name} data...")
         
         # Ensure data alignment
-        common_ids = structures_data.index.intersection(properties_data.index)
-        structures_data = structures_data.loc[common_ids]
-        properties_data = properties_data.loc[common_ids]
+        if dataset_name == 'MP':
+            common_ids = structures_data.index.intersection(properties_data.index)
+            structures_data = structures_data.loc[common_ids]
+            properties_data = properties_data.loc[common_ids]
+            material_ids = structures_data.index.tolist()
+        else:  # WBM
+            structures_data = structures_data.reset_index()
+            properties_data = properties_data.reset_index()
+            common_ids = structures_data['material_id'].intersection(properties_data['material_id'])
+            structures_data = structures_data[structures_data['material_id'].isin(common_ids)]
+            properties_data = properties_data[properties_data['material_id'].isin(common_ids)]
+            material_ids = structures_data['material_id'].tolist()
 
         if dataset_name == 'MP':
             structures = [Structure.from_dict(row[structure_key]['structure']) for _, row in structures_data.iterrows()]
-            material_ids = structures_data.index.tolist()
             formulas = [row[structure_key]['composition'] for _, row in structures_data.iterrows()]
         else:  # WBM
             structures = [Structure.from_dict(row[structure_key]) for _, row in structures_data.iterrows()]
-            material_ids = structures_data.index.tolist()
             formulas = structures_data[formula_key].tolist()
 
         energies = properties_data[energy_key].tolist()
@@ -111,12 +118,8 @@ def preprocess_matbench_discovery_data(path, cutoff: float = 5.0, batch_size: in
     wbm_summary = load("wbm_summary", version="1.0.0")
     wbm_initial_structures = load("wbm_initial_structures", version="1.0.0")
     
-    # Prepare WBM data to match MP data structure
-    wbm_structures = wbm_initial_structures.set_index('material_id')
-    wbm_summary = wbm_summary.set_index('material_id')
-    
     wbm_graphs, wbm_y_values = process_dataset(
-        wbm_structures, wbm_summary, 
+        wbm_initial_structures, wbm_summary, 
         structure_key='initial_structure', 
         energy_key='e_above_hull_mp2020_corrected_ppd_mp', 
         formula_key='formula',
