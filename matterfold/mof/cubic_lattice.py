@@ -1,7 +1,10 @@
+# Generate cubic lattice MOF
+
 from rdkit import Chem
 from rdkit.Chem import AllChem
 from ase import Atoms
 from ase.build import make_supercell
+
 
 # Convert SMILES string to ASE Atoms object
 def generate_mols(smiles: str) -> Atoms:
