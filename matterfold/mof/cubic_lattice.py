@@ -7,7 +7,7 @@ from ase.build import make_supercell
 
 
 # SMILES to RDKit to ASE Atoms object
-def generate_mols(smiles: str) -> Atoms:
+def generate_mol(smiles: str) -> Atoms:
   
     mol = Chem.MolFromSmiles(smiles)
     mol = Chem.AddHs(mol)
