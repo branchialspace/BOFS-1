@@ -6,7 +6,7 @@ from ase import Atoms
 from ase.build import make_supercell
 
 
-# Convert SMILES string to ASE Atoms object
+# SMILES to RDKit to ASE Atoms object
 def generate_mols(smiles: str) -> Atoms:
   
     mol = Chem.MolFromSmiles(smiles)
@@ -37,10 +37,10 @@ def cubic_lattice_mof(metal: str, ligand: str, lattice_constant=10.0, repetition
     cell = Atoms(cell=[(lattice_constant, 0, 0), (0, lattice_constant, 0), (0, 0, lattice_constant)])
     
     metal_unit.translate([0, 0, 0])
-    cell += ase_mol1
+    cell += metal_unit
     
     ligand_unit.translate([lattice_constant/2, lattice_constant/2, lattice_constant/2])
-    cell += ase_mol2
+    cell += ligand_unit
     
     P = [[repetitions[0], 0, 0],
          [0, repetitions[1], 0],
