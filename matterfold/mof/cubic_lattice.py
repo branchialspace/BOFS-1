@@ -38,19 +38,19 @@ def generate_ligand(smiles: str) -> Atoms:
 # Octohedral Bismuth Core ASE Atoms object
 def generate_octahedral_bismuth() -> Atoms:
     positions = [
-        (3, 0, 0),
-        (-3, 0, 0),
-        (0, 3, 0),
-        (0, -3, 0),
-        (0, 0, 3),
-        (0, 0, -3)
+        (1, 0, 0),
+        (-1, 0, 0),
+        (0, 1, 0),
+        (0, -1, 0),
+        (0, 0, 1),
+        (0, 0, -1)
     ]
     atoms = Atoms('Bi6', positions=positions)
     
-    # lj_calc = LennardJones(sigma=3.5, epsilon=0.2)
-    # atoms.calc = lj_calc
-    # optimizer = BFGS(atoms)
-    # optimizer.run(fmax=0.01)
+    lj_calc = LennardJones(sigma=3.5, epsilon=0.2)
+    atoms.calc = lj_calc
+    optimizer = BFGS(atoms)
+    optimizer.run(fmax=0.01)
 
     filename = 'Bi6_octahedron.xyz'
     write(filename, atoms)
