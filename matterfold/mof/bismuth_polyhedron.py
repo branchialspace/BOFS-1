@@ -21,10 +21,8 @@ SLOANE_DATA = {
     40: 33.1583563
 }
 
+# Generate optimal packing based on hardcoded Sloane's Tables data
 def generate_optimal_packing(num_points):
-    """
-    Generate optimal packing based on hardcoded Sloane's Tables data.
-    """
     if num_points not in SLOANE_DATA:
         raise ValueError(f"Optimal packing for {num_points} points not available in the hardcoded data.")
     
@@ -47,10 +45,8 @@ def generate_optimal_packing(num_points):
     
     return np.array(points)
 
+# Generate a bismuth polyhedron with a specified number of atoms
 def generate_bismuth_polyhedron(num_atoms: int) -> Atoms:
-    """
-    Generate a bismuth polyhedron with a specified number of atoms using hardcoded optimal sphere packing data.
-    """
     if num_atoms < 2:
         raise ValueError("Number of atoms must be at least 2 to form a polyhedron.")
     
