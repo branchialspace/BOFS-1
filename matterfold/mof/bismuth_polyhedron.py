@@ -6,6 +6,7 @@ from ase.calculators.lj import LennardJones
 from ase.optimize import BFGS
 from ase.io import write
 
+
 # Hardcoded Sloane's Tables optimal sphere packing degrees of separation data http://neilsloane.com/packings/index.html#I
 SLOANE_DATA = {
     4: 109.4712206, 5: 90.0000000, 6: 90.0000000, 7: 77.8695421,
