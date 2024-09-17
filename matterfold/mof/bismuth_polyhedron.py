@@ -1,4 +1,4 @@
-# Bismuth Polyhedron
+# Bismuth polyhedron metal center
 
 from ase import Atoms
 from ase.calculators.lj import LennardJones
