@@ -1,70 +1,67 @@
 # Bismuth polyhedron metal center
 
 import numpy as np
+from scipy.spatial.distance import pdist, squareform
 from ase import Atoms
 from ase.calculators.lj import LennardJones
 from ase.optimize import BFGS
 from ase.io import write
 
 
-# Hardcoded Sloane's Tables optimal sphere packing degrees of separation data http://neilsloane.com/packings/index.html#I
-SLOANE_DATA = {
-    4: 109.4712206, 5: 90.0000000, 6: 90.0000000, 7: 77.8695421,
-    8: 74.8584922, 9: 70.5287794, 10: 66.1468220, 11: 63.4349488,
-    12: 63.4349488, 13: 57.1367031, 14: 55.6705700, 15: 53.6578501,
-    16: 52.2443957, 17: 51.0903285, 18: 49.5566548, 19: 47.6919141,
-    20: 47.4310362, 21: 45.6132231, 22: 44.7401612, 23: 43.7099642,
-    24: 43.6907671, 25: 41.6344612, 26: 41.0376616, 27: 40.6776007,
-    28: 39.3551436, 29: 38.7136512, 30: 38.5971159, 31: 37.7098291,
-    32: 37.4752140, 33: 36.2545530, 34: 35.8077844, 35: 35.3198076,
-    36: 35.1897322, 37: 34.4224080, 38: 34.2506607, 39: 33.4890466,
-    40: 33.1583563
-}
-
-# Generate optimal packing based on hardcoded Sloane's Tables data
-def generate_optimal_packing(num_points):
-    if num_points not in SLOANE_DATA:
-        raise ValueError(f"Optimal packing for {num_points} points not available in the hardcoded data.")
+# Generate a close-packed cluster of spheres using a force-biased algorithm
+def sphere_pack_cluster(n_atoms, radius=1.5, max_iterations=2000):
+    # Initialize random positions in a cube
+    positions = np.random.rand(n_atoms, 3) * (n_atoms**(1/3) * radius)
     
-    # Convert separation angle to radians
-    separation = np.radians(SLOANE_DATA[num_points])
-    
-    # Generate points on a unit sphere
-    points = []
-    golden_angle = np.pi * (3 - np.sqrt(5))
-    
-    for i in range(num_points):
-        y = 1 - (i / float(num_points - 1)) * 2
-        radius = np.sqrt(1 - y * y)
-        theta = golden_angle * i
+    for _ in range(max_iterations):
+        # Calculate pairwise distances
+        distances = squareform(pdist(positions))
+        np.fill_diagonal(distances, np.inf)  # Avoid self-interactions
         
-        x = np.cos(theta) * radius
-        z = np.sin(theta) * radius
+        # Calculate unit vectors between atoms
+        diff = positions[:, np.newaxis] - positions
+        with np.errstate(invalid='ignore', divide='ignore'):
+            unit_vectors = diff / distances[:, :, np.newaxis]
+        unit_vectors = np.nan_to_num(unit_vectors)
         
-        points.append([x, y, z])
+        # Calculate repulsive forces (inversely proportional to distance)
+        forces = np.maximum(0, 2*radius - distances)[:, :, np.newaxis] * unit_vectors
+        
+        # Sum forces on each atom
+        total_forces = np.sum(forces, axis=1)
+        
+        # Move atoms based on forces
+        positions += total_forces * 0.1  # Small step size for stability
+        
+        # Apply weak central force to keep cluster together
+        center = np.mean(positions, axis=0)
+        to_center = center - positions
+        positions += to_center * 0.01
     
-    return np.array(points)
+    # Center the cluster at the origin
+    positions -= np.mean(positions, axis=0)
+    
+    return positions
 
 # Generate a bismuth polyhedron with a specified number of atoms
 def generate_bismuth_polyhedron(num_atoms: int) -> Atoms:
-    if num_atoms < 2:
-        raise ValueError("Number of atoms must be at least 2 to form a polyhedron.")
-    
-    # Generate optimal packing coordinates
-    packed_positions = generate_optimal_packing(num_atoms)
-    
-    # Ensure the first atom is at (0,0,0) and others are relative to it
-    packed_positions -= packed_positions[0]
-    
-    # Normalize to fit within a unit sphere
-    max_distance = np.max(np.linalg.norm(packed_positions, axis=1))
-    packed_positions /= max_distance
-    
-    # Scale the positions to a reasonable size for bismuth atoms (e.g., 3 Angstrom radius)
-    packed_positions *= 3.0
+    if num_atoms == 1:
+        positions = np.array([[0.0, 0.0, 0.0]])
+    elif num_atoms >= 2:
+        # Generate packed positions using the sphere packing method
+        packed_positions = sphere_pack_cluster(num_atoms, radius=1.5)
+        
+        # Normalize to fit within a unit sphere
+        max_distance = np.max(np.linalg.norm(packed_positions, axis=1))
+        packed_positions /= max_distance
+        
+        # Scale the positions to a reasonable size for bismuth atoms (e.g., 3 Angstrom radius)
+        positions = packed_positions * 3.0
+    else:
+        raise ValueError("Number of atoms must be at least 1")
     
     # Create the Atoms object
-    atoms = Atoms(f'Bi{num_atoms}', positions=packed_positions)
+    atoms = Atoms(f'Bi{num_atoms}', positions=positions)
     
     # Set up the Lennard-Jones calculator
     lj_calc = LennardJones(sigma=3.2, epsilon=0.2)
