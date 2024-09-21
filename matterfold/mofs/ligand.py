@@ -4,7 +4,6 @@ from rdkit import Chem
 from rdkit.Chem import AllChem
 from ase import Atoms
 from ase.io import write
-from ase.optimize import BFGS
 
 
 def generate_ligand(smiles: str) -> Atoms:
