@@ -9,6 +9,7 @@ from typing import Tuple, Dict, List, Union
 import inspect
 import numpy as np
 
+
 # Generate ligand: SMILES to RDKit to ASE Atoms object
 def generate_ligand(smiles: str) -> Tuple[Atoms, Chem.Mol]:
     mol = Chem.MolFromSmiles(smiles)
