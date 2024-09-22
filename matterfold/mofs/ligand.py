@@ -3,7 +3,6 @@
 import rdkit
 from rdkit import Chem
 from rdkit.Chem import AllChem, Fragments
-from rdkit.Chem import rdPartialCharges
 from ase import Atoms
 from ase.io import write
 from typing import Tuple, Dict, List, Union
