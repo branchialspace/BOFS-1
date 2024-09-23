@@ -10,7 +10,7 @@ import inspect
 import numpy as np
 
 
-# Generate ligand: SMILES to RDKit to ASE Atoms object
+# Generate ligand: SMILES to RDKit and ASE Atoms object
 def generate_ligand(smiles: str) -> Tuple[Atoms, Chem.Mol]:
     mol = Chem.MolFromSmiles(smiles)
     if mol is None:
