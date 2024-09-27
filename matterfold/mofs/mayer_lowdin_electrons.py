@@ -42,11 +42,11 @@ end
         print(f"Error during ORCA calculation: {e}")
     
     orca_output_file = 'orca.out'
-    #mayer_data = parse_mayer_data(orca_output_file)
-    #lowdin_data = parse_lowdin_data(orca_output_file)
-    #donor_atoms = find_electron_donors(mayer_data, lowdin_data)
+    mayer_data = parse_mayer_data(orca_output_file)
+    lowdin_data = parse_lowdin_data(orca_output_file)
+    donor_atoms = find_electron_donors(mayer_data, lowdin_data)
     
-    return orca_output_file #donor_atoms
+    return donor_atoms
 
 def parse_mayer_data(filename):
     mayer_data = {'charges': {}, 'bond_orders': {}, 'free_valences': {}}
@@ -158,6 +158,10 @@ def parse_lowdin_data(filename):
 
     return lowdin_data
 
+
+def get_valence_electrons(element):
+    return [a.number for a in Atoms(element)][0] - sum(1 for s in chemical_symbols[:chemical_symbols.index(element)+1] if s in ['He', 'Ne', 'Ar', 'Kr', 'Xe', 'Rn'])
+
 def find_electron_donors(mayer_data, lowdin_data):
     donor_atoms = {}
     
@@ -186,6 +190,3 @@ def find_electron_donors(mayer_data, lowdin_data):
             }
 
     return donor_atoms
-
-def get_valence_electrons(element):
-    return [a.number for a in Atoms(element)][0] - sum(1 for s in chemical_symbols[:chemical_symbols.index(element)+1] if s in ['He', 'Ne', 'Ar', 'Kr', 'Xe', 'Rn'])
