@@ -34,12 +34,8 @@ end
     except Exception as e:
         print(f"Error during ORCA calculation: {e}")
     
-    # Parse the ORCA output file
     orca_output_file = 'orca.out'
-    
     lowdin_data = parse_lowdin_data(orca_output_file)
-    
-    # Analyze results
     donor_atoms = find_free_electrons(lowdin_data)
     
     return donor_atoms
