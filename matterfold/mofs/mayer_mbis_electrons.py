@@ -1,11 +1,25 @@
-# Mayer and Minimal Basis Iterative Stockholder (MBIS) electron-donor analysis in ORCA
+# Mayer and Minimal Basis Iterative Stockholder (MBIS) bonding site analysis in ORCA
 
 import os
 import subprocess
+import re
 from ase import Atoms
-from ase.data import chemical_symbols
+from ase.data import atomic_numbers, chemical_symbols
 
-def electron_donors(ligand, charge=0, mult=1, method='B3LYP', basis_set='def2-SVP'):
+def electron_bonding_sites(ligand, charge=0, mult=1, method='B3LYP', basis_set='def2-SVP'):
+    """
+    Identify potential cations, anions, and atoms for covalent bonding in a ligand.
+
+    Parameters:
+    - ligand: ASE Atoms object representing the ligand molecule.
+    - charge: Overall charge of the ligand.
+    - mult: Spin multiplicity of the ligand.
+    - method: Quantum chemistry method to use (e.g., 'B3LYP').
+    - basis_set: Basis set to use (e.g., 'def2-SVP').
+
+    Returns:
+    - bonding_sites: Dictionary containing information about each atom's bonding role.
+    """
     # Define the ORCA executable path
     orca_path = '/root/orca_6_0_0/orca'
 
@@ -32,9 +46,9 @@ def electron_donors(ligand, charge=0, mult=1, method='B3LYP', basis_set='def2-SV
     # Parse the output file
     mayer_data = parse_mayer_data(output_filename)
     mbis_data = parse_mbis_data(output_filename)
-    donor_atoms = find_electron_donors(mayer_data, mbis_data)
+    bonding_sites = find_potential_bonding_sites(mayer_data, mbis_data)
 
-    return donor_atoms
+    return bonding_sites
 
 def write_orca_input(ligand, filename, charge, mult, method, basis_set):
     with open(filename, 'w') as f:
@@ -96,7 +110,6 @@ def parse_mayer_data(filename):
     bond_order_text = ' '.join(bond_order_lines)
 
     # Now parse the bond order text
-    import re
     bond_order_pattern = r'B\(\s*(\d+)-\w+\s*,\s*(\d+)-\w+\s*\)\s*:\s*([\d\.]+)'
     matches = re.findall(bond_order_pattern, bond_order_text)
     for match in matches:
@@ -106,7 +119,6 @@ def parse_mayer_data(filename):
         mayer_data['bond_orders'][(atom1, atom2)] = order
 
     return mayer_data
-
 
 def parse_mbis_data(filename):
     mbis_data = {}
@@ -135,10 +147,24 @@ def parse_mbis_data(filename):
     return mbis_data
 
 def get_valence_electrons(element):
-    return [a.number for a in Atoms(element)][0] - sum(1 for s in chemical_symbols[:chemical_symbols.index(element)+1] if s in ['He', 'Ne', 'Ar', 'Kr', 'Xe', 'Rn'])
+    atomic_number = [a.number for a in Atoms(element)][0]
+    noble_gases = ['He', 'Ne', 'Ar', 'Kr', 'Xe', 'Rn']
+    noble_gas_atomic_numbers = [atomic_numbers[s] for s in noble_gases]
+    core_electrons = max([n for n in noble_gas_atomic_numbers if n < atomic_number] + [0])
+    return atomic_number - core_electrons
 
-def find_electron_donors(mayer_data, mbis_data):
-    donor_atoms = {}
+def find_potential_bonding_sites(mayer_data, mbis_data):
+    """
+    Identify potential bonding sites in the molecule.
+
+    Parameters:
+    - mayer_data: Dictionary containing Mayer bond orders.
+    - mbis_data: Dictionary containing MBIS charges.
+
+    Returns:
+    - bonding_sites: Dictionary with bonding information for each atom.
+    """
+    bonding_sites = {}
 
     for atom_index, mbis_info in mbis_data.items():
         element = mbis_info['element']
@@ -156,13 +182,13 @@ def find_electron_donors(mayer_data, mbis_data):
         # Calculate free electrons (available for external bonding)
         free_electrons = available_electrons - bonding_electrons
 
-        # Consider atoms with significant free electrons as potential donors
-        if free_electrons > 0.1:
-            donor_atoms[atom_index] = {
-                'element': element,
-                'available_electrons': free_electrons,
-                'mbis_charge': mbis_charge,
-                'bonding_electrons': bonding_electrons
-            }
+        # Initialize bonding site info
+        bonding_sites[atom_index] = {
+            'element': element,
+            'available_electrons': available_electrons,
+            'mbis_charge': mbis_charge,
+            'bonding_electrons': bonding_electrons,
+            'free_electrons': free_electrons
+        }
 
-    return donor_atoms
+    return bonding_sites
