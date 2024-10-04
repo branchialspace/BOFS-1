@@ -127,32 +127,51 @@ def parse_mbis_data(filename):
         lines = f.readlines()
 
     mbis_section = False
+    valence_section = False
     for i, line in enumerate(lines):
+        line = line.strip()
         if 'MBIS ANALYSIS' in line:
             mbis_section = True
             continue
         if mbis_section and 'ATOM     CHARGE    POPULATION     SPIN' in line:
-            # Now, read the data
+            # Read total atomic charges and populations
             for j in range(i+1, len(lines)):
                 line_content = lines[j].strip()
-                if line_content == '' or 'MBIS VALENCE-SHELL DATA' in line_content or 'Total charge' in line_content:
+                if line_content == '' or 'MBIS VALENCE-SHELL DATA' in line_content or 'Total charge' in line_content or '------------------' in line_content:
+                    break
+                parts = line_content.split()
+                if len(parts) >= 5 and parts[0].isdigit():
+                    atom_index = int(parts[0])
+                    element = parts[1]
+                    charge = float(parts[2])
+                    population = float(parts[3])
+                    if atom_index not in mbis_data:
+                        mbis_data[atom_index] = {'element': element}
+                    mbis_data[atom_index]['mbis_charge'] = charge
+                    mbis_data[atom_index]['population'] = population
+            continue
+
+        if 'MBIS VALENCE-SHELL DATA:' in line:
+            valence_section = True
+            continue
+        if valence_section and 'ATOM   POPULATION   WIDTH(A.U.)' in line:
+            # Read valence shell data
+            for j in range(i+1, len(lines)):
+                line_content = lines[j].strip()
+                if line_content == '' or 'Total MBIS valence charge' in line_content or '------------------' in line_content:
+                    valence_section = False
                     break
                 parts = line_content.split()
                 if len(parts) >= 4 and parts[0].isdigit():
                     atom_index = int(parts[0])
                     element = parts[1]
-                    charge = float(parts[2])
-                    mbis_data[atom_index] = {'element': element, 'charge': charge}
-            break
-
+                    valence_population = float(parts[2])
+                    # width = float(parts[3])  # We can ignore width
+                    if atom_index not in mbis_data:
+                        mbis_data[atom_index] = {'element': element}
+                    mbis_data[atom_index]['valence_population'] = valence_population
+            continue
     return mbis_data
-
-def get_valence_electrons(element):
-    atomic_number = [a.number for a in Atoms(element)][0]
-    noble_gases = ['He', 'Ne', 'Ar', 'Kr', 'Xe', 'Rn']
-    noble_gas_atomic_numbers = [atomic_numbers[s] for s in noble_gases]
-    core_electrons = max([n for n in noble_gas_atomic_numbers if n < atomic_number] + [0])
-    return atomic_number - core_electrons
 
 def find_potential_bonding_sites(mayer_data, mbis_data):
     """
@@ -160,7 +179,7 @@ def find_potential_bonding_sites(mayer_data, mbis_data):
 
     Parameters:
     - mayer_data: Dictionary containing Mayer bond orders.
-    - mbis_data: Dictionary containing MBIS charges.
+    - mbis_data: Dictionary containing MBIS charges and valence populations.
 
     Returns:
     - bonding_sites: Dictionary with bonding information for each atom.
@@ -169,27 +188,24 @@ def find_potential_bonding_sites(mayer_data, mbis_data):
 
     for atom_index, mbis_info in mbis_data.items():
         element = mbis_info['element']
-        mbis_charge = mbis_info['charge']
+        mbis_charge = mbis_info.get('mbis_charge', None)
+        valence_population = mbis_info.get('valence_population', None)
 
-        # Get valence electrons
-        valence_electrons = get_valence_electrons(element)
+        if valence_population is None:
+            print(f"No valence population data for atom {atom_index}")
+            continue
 
-        # Available electrons: valence electrons minus MBIS charge
-        available_electrons = valence_electrons - mbis_charge
+        # Get bonded electrons from Mayer bond orders
+        bonded_electrons = sum(order for (a1, a2), order in mayer_data['bond_orders'].items() if atom_index in (a1, a2))
 
-        # Get bonding electrons from Mayer bond orders
-        bonding_electrons = sum(order for (a1, a2), order in mayer_data['bond_orders'].items() if atom_index in (a1, a2))
+        non_bonded_electrons = valence_population - bonded_electrons
 
-        # Calculate free electrons (available for external bonding)
-        free_electrons = available_electrons - bonding_electrons
-
-        # Initialize bonding site info
         bonding_sites[atom_index] = {
             'element': element,
-            'available_electrons': available_electrons,
+            'valence_population': valence_population,
             'mbis_charge': mbis_charge,
-            'bonding_electrons': bonding_electrons,
-            'free_electrons': free_electrons
+            'bonded_electrons': bonded_electrons,
+            'non_bonded_electrons': non_bonded_electrons
         }
 
     return bonding_sites
