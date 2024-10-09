@@ -70,3 +70,16 @@ def identify_donor_atoms(mol: Chem.Mol) -> List[int]:
             if atom.GetFormalCharge() <= 0:
                 donor_atoms.append(atom.GetIdx())
     return donor_atoms
+
+
+from pymatgen.core.periodic_table import Element
+
+def get_valence_electrons(element):
+    el = Element(element)
+    valence_electrons = el.full_electronic_structure
+    valence = 0
+    max_n = max([n for (n, l, occ) in valence_electrons])
+    for (n, l, occ) in valence_electrons:
+        if n == max_n or (el.is_transition_metal and n == max_n - 1):
+            valence += occ
+    return valence
