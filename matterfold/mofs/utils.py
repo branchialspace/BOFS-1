@@ -72,8 +72,10 @@ def identify_donor_atoms(mol: Chem.Mol) -> List[int]:
     return donor_atoms
 
 
+
 from pymatgen.core.periodic_table import Element
 
+# Get valence using pymatgen
 def get_valence_electrons(element):
     el = Element(element)
     valence_electrons = el.full_electronic_structure
