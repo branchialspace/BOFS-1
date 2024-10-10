@@ -100,9 +100,6 @@ def parse_mayer_data(filename):
             for j in range(i+1, len(lines)):
                 line_content = lines[j].strip()
                 if line_content == '':
-                    continue
-                if '****' in line_content or 'Population analysis' in line_content:
-                    # Reached the end of bond orders
                     break
                 bond_order_lines.append(line_content)
             break
@@ -137,7 +134,7 @@ def parse_mbis_data(filename):
             # Read total atomic charges and populations
             for j in range(i+1, len(lines)):
                 line_content = lines[j].strip()
-                if line_content == '' or 'MBIS VALENCE-SHELL DATA' in line_content or 'Total charge' in line_content or '------------------' in line_content:
+                if line_content == '':
                     break
                 parts = line_content.split()
                 if len(parts) >= 5 and parts[0].isdigit():
@@ -158,7 +155,7 @@ def parse_mbis_data(filename):
             # Read valence shell data
             for j in range(i+1, len(lines)):
                 line_content = lines[j].strip()
-                if line_content == '' or 'Total MBIS valence charge' in line_content or '------------------' in line_content:
+                if line_content == '':
                     valence_section = False
                     break
                 parts = line_content.split()
