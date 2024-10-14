@@ -1,4 +1,4 @@
-# surface-accessible and bifocal binding-site charge symmetry
+# surface-accessible and bifocal bonding-site charge symmetry
 
 # binding site angle = max distance from internal ligand bonds
 
