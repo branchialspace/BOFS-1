@@ -2,4 +2,4 @@
 
 # bonding site angle = max distance from internal ligand bonds
 
-# steric hinderence in single-cluster octahedral coordination
+# steric hindrance in single-cluster octahedral coordination
