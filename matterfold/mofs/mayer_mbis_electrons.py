@@ -4,7 +4,6 @@ import os
 import subprocess
 import re
 from ase import Atoms
-from ase.data import atomic_numbers, chemical_symbols
 
 
 def electron_bonding_sites(ligand, charge=0, mult=1, method='B3LYP', basis_set='def2-SVP'):
