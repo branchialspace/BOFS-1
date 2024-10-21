@@ -1,4 +1,4 @@
-# surface-accessible and bifocal bonding-site charge symmetry
+# Bisected bonding-site charge symmetry for 1d bridging ligands
 
 # bonding site angle = max distance from internal ligand bonds
 
