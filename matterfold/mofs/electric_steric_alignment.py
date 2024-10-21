@@ -6,7 +6,7 @@ import numpy as np
 from scipy.optimize import minimize
 from ase import Atoms
 
-def find_bonding_site_symmetry_axis(ligand: Atoms, bonding_sites: dict):
+def bonding_site_symmetry_axis(ligand: Atoms, bonding_sites: dict):
     """
     Identify the axis of symmetry of bonding sites in bridging ligands by bisecting the ligand
     to equalize the density of unbonded electrons on either side while maximizing the distance
