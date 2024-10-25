@@ -93,7 +93,6 @@ def visualize_symmetry_axis(ligand: Atoms, symmetry_axis: dict):
     Parameters:
     - ligand: ASE Atoms object representing the ligand molecule.
     - symmetry_axis: Dictionary containing 'normal_vector' and 'point_on_plane'.
-    - filename: Name of the output XYZ file.
     """
     # Extract normal vector and a point on the plane
     n = symmetry_axis['normal_vector']
