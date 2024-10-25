@@ -3,10 +3,10 @@
     # Bonding site angle = max distance from internal ligand bonds
 
 import numpy as np
-from scipy.optimize import minimize
 from ase import Atoms
+from ase.io import write
 
-def bonding_site_symmetry_axis(ligand: Atoms, bonding_sites: dict):
+def find_bonding_site_symmetry_axis(ligand: Atoms, bonding_sites: dict):
     """
     Identify the axis of symmetry of bonding sites in bridging ligands by bisecting the ligand
     to equalize the density of unbonded electrons on either side while maximizing the distance
@@ -22,119 +22,104 @@ def bonding_site_symmetry_axis(ligand: Atoms, bonding_sites: dict):
     # Extract positions and unbonded electron counts
     positions = ligand.get_positions()
     num_atoms = len(positions)
-    weights = np.array([bonding_sites[i + 1]['non_bonded_electrons'] for i in range(num_atoms)])
+    weights = np.array([bonding_sites[i]['non_bonded_electrons'] for i in range(num_atoms)])
+    weights = np.where(weights > 0, weights, 0)
 
     # Normalize weights to avoid division by zero
     total_weight = np.sum(weights)
     if total_weight == 0:
-        raise ValueError("Total unbonded electrons in the ligand are zero.")
+        raise ValueError("Total unbonded electrons are zero after disregarding negatives.")
 
-    # Define the objective function to maximize the distance between charge centers
-    def objective_function(params):
-        theta, phi = params
-        n = np.array([
-            np.sin(theta) * np.cos(phi),
-            np.sin(theta) * np.sin(phi),
-            np.cos(theta)
-        ])
+    # Compute the weighted center of unbonded electrons
+    weighted_positions = positions * weights[:, np.newaxis]
+    center = np.sum(weighted_positions, axis=0) / total_weight
 
-        # Project positions onto the normal vector
-        projections = positions @ n
+    # Center the positions
+    centered_positions = positions - center
 
-        # Sort projections and corresponding weights
-        sorted_indices = np.argsort(projections)
-        sorted_projections = projections[sorted_indices]
-        sorted_weights = weights[sorted_indices]
+    # Perform PCA on the weighted positions
+    # Compute the covariance matrix manually since np.cov can't handle negative weights
+    deviations = centered_positions
+    covariance_matrix = np.zeros((3, 3))
+    for i in range(num_atoms):
+        if weights[i] > 0:
+            deviation = deviations[i][:, np.newaxis]
+            covariance_matrix += weights[i] * deviation @ deviation.T
+    covariance_matrix /= total_weight
 
-        # Compute cumulative weights
-        cumulative_weights = np.cumsum(sorted_weights)
-        total_weight = cumulative_weights[-1]
+    # Compute eigenvalues and eigenvectors
+    eigenvalues, eigenvectors = np.linalg.eigh(covariance_matrix)
 
-        # Find the plane position that balances the weights
-        idx = np.searchsorted(cumulative_weights, total_weight / 2)
-        d_candidates = sorted_projections[idx - 1:idx + 1] if idx > 0 else sorted_projections[:1]
-        best_D = -np.inf
-        best_d = None
+    # The principal component is the eigenvector with the largest eigenvalue
+    principal_axis = eigenvectors[:, np.argmax(eigenvalues)]
 
-        for d in d_candidates:
-            # Assign atoms to each side of the plane
-            side = np.where(projections >= d, 1, -1)
-            W_plus = np.sum(weights[side == 1])
-            W_minus = np.sum(weights[side == -1])
+    # The normal vector of the bisecting plane is orthogonal to the principal axis
+    # We can take the eigenvector corresponding to the smallest eigenvalue as the normal vector
+    normal_vector = eigenvectors[:, np.argmin(eigenvalues)]
+    normal_vector /= np.linalg.norm(normal_vector)
 
-            # Calculate centers of unbonded electron densities
-            if W_plus > 0 and W_minus > 0:
-                C_plus = np.sum(positions[side == 1] * weights[side == 1, np.newaxis], axis=0) / W_plus
-                C_minus = np.sum(positions[side == -1] * weights[side == -1, np.newaxis], axis=0) / W_minus
+    # Project positions onto the normal vector
+    projections = centered_positions @ normal_vector
 
-                # Compute distance between centers
-                D = np.linalg.norm(C_plus - C_minus)
-
-                # Check if this division is better
-                weight_diff = abs(W_plus - W_minus)
-                if weight_diff <= total_weight * 0.1 and D > best_D:  # Allowing 10% imbalance
-                    best_D = D
-                    best_d = d
-
-        # Return negative distance to convert maximization to minimization
-        return -best_D if best_D != -np.inf else np.inf
-
-    # Initial guess for theta and phi
-    initial_guess = [np.pi / 2, 0]
-
-    # Bounds for theta and phi
-    bounds = [(0, np.pi), (0, 2 * np.pi)]
-
-    # Optimize using scipy's minimize function
-    result = minimize(
-        objective_function,
-        initial_guess,
-        bounds=bounds,
-        method='L-BFGS-B',
-        options={'ftol': 1e-6, 'disp': True}
-    )
-
-    # Extract the best normal vector
-    theta_opt, phi_opt = result.x
-    n_opt = np.array([
-        np.sin(theta_opt) * np.cos(phi_opt),
-        np.sin(theta_opt) * np.sin(phi_opt),
-        np.cos(theta_opt)
-    ])
-
-    # Find the best plane position d
-    projections = positions @ n_opt
+    # Sort projections and corresponding weights
     sorted_indices = np.argsort(projections)
     sorted_projections = projections[sorted_indices]
     sorted_weights = weights[sorted_indices]
     cumulative_weights = np.cumsum(sorted_weights)
-    total_weight = cumulative_weights[-1]
+
+    # Find the plane position that balances the weights
     idx = np.searchsorted(cumulative_weights, total_weight / 2)
-    d_candidates = sorted_projections[idx - 1:idx + 1] if idx > 0 else sorted_projections[:1]
-    best_D = -np.inf
-    best_d = None
+    if idx == 0 or idx == len(projections):
+        d = projections[idx]
+    else:
+        # Average the two projections
+        d = (projections[idx - 1] + projections[idx]) / 2
 
-    for d in d_candidates:
-        side = np.where(projections >= d, 1, -1)
-        W_plus = np.sum(weights[side == 1])
-        W_minus = np.sum(weights[side == -1])
-
-        if W_plus > 0 and W_minus > 0:
-            C_plus = np.sum(positions[side == 1] * weights[side == 1, np.newaxis], axis=0) / W_plus
-            C_minus = np.sum(positions[side == -1] * weights[side == -1, np.newaxis], axis=0) / W_minus
-            D = np.linalg.norm(C_plus - C_minus)
-            weight_diff = abs(W_plus - W_minus)
-            if weight_diff <= total_weight * 0.1 and D > best_D:
-                best_D = D
-                best_d = d
-
-    if best_d is None:
-        raise ValueError("Could not find a suitable plane to bisect the ligand.")
+    # The point on the plane is center + normal_vector * d
+    point_on_plane = center + normal_vector * d
 
     # Return the plane parameters
     best_plane = {
-        'normal_vector': n_opt,
-        'point_on_plane': n_opt * best_d
+        'normal_vector': normal_vector,
+        'point_on_plane': point_on_plane
     }
 
     return best_plane
+
+def visualize_symmetry_axis(ligand: Atoms, symmetry_axis: dict):
+    """
+    Visualize the symmetry axis and ligand by creating a modified XYZ file for Avogadro2.
+
+    Parameters:
+    - ligand: ASE Atoms object representing the ligand molecule.
+    - symmetry_axis: Dictionary containing 'normal_vector' and 'point_on_plane'.
+    - filename: Name of the output XYZ file.
+    """
+    # Extract normal vector and a point on the plane
+    n = symmetry_axis['normal_vector']
+    point = symmetry_axis['point_on_plane']
+
+    # Calculate two points along the normal vector to represent the axis
+    # Extend the axis beyond the ligand for better visualization
+    length = np.linalg.norm(ligand.get_positions().ptp(axis=0)) * 1.5  # 1.5 times the ligand size
+    axis_point1 = point + n * length
+    axis_point2 = point - n * length
+
+    # Create dummy atoms at these points
+    # Using 'X' as the element symbol for dummy atoms (ASE recognizes 'X' with atomic number 0)
+    dummy_symbols = ['X', 'X']
+    dummy_positions = [axis_point1, axis_point2]
+    dummy_atoms = Atoms(symbols=dummy_symbols, positions=dummy_positions)
+
+    # Combine ligand atoms with dummy atoms
+    combined_atoms = ligand + dummy_atoms
+
+    # Set the atomic numbers to zero to distinguish them
+    for atom in combined_atoms[-2:]:
+        atom.number = 0
+
+    # Write the combined atoms to an XYZ file
+    filename = "".join(ligand.get_chemical_symbols()) + "_bisected.xyz"
+    write(filename, combined_atoms)
+
+    print(f"Visualization file '{filename}' has been created.")
