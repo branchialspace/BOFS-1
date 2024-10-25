@@ -12,6 +12,7 @@ def generate_ligand(smiles: str) -> Tuple[Atoms, Chem.Mol]:
     if mol is None:
         raise ValueError("Invalid SMILES string provided.")
     mol = Chem.AddHs(mol)
+    Chem.SanitizeMol(mol)
     AllChem.EmbedMolecule(mol, AllChem.ETKDG())
     AllChem.UFFOptimizeMolecule(mol)
     
