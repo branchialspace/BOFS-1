@@ -12,7 +12,7 @@ def find_surface_bonding_sites(
     bonding_sites: dict,
     donor_elements=['N', 'O', 'S', 'P', 'F', 'Cl', 'Se', 'Br', 'I', 'At', 'Ts'],
     min_unbonded_electrons=1.0,
-    clustering_distance_threshold=2.5
+    clustering_distance_threshold=5
 ):
     """
     Identify surface-accessible donor atoms and cluster them into bonding sites.
