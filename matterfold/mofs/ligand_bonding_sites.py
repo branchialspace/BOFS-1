@@ -7,7 +7,7 @@ from scipy.spatial import ConvexHull
 from ase import Atoms
 from ase.geometry import get_distances
 
-def find_surface_bonding_sites(
+def ligand_bonding_sites(
     ligand: Atoms,
     bonding_sites: dict,
     donor_elements=['N', 'O', 'S', 'P', 'F', 'Cl', 'Se', 'Br', 'I', 'At', 'Ts'],
