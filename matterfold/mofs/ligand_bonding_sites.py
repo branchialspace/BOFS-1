@@ -1,11 +1,9 @@
 # ligand bonding-site clustering
 
-import numpy as np
 from sklearn.decomposition import PCA
 from sklearn.cluster import AgglomerativeClustering
 from scipy.spatial import ConvexHull
 from ase import Atoms
-from ase.geometry import get_distances
 
 
 def ligand_bonding_sites(
