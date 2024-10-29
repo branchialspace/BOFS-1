@@ -3,7 +3,6 @@
 import numpy as np
 from ase import Atoms
 from typing import List
-from copy import deepcopy
 from scipy.optimize import minimize_scalar
 from scipy.spatial.distance import cdist
 
