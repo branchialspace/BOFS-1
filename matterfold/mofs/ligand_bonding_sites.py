@@ -33,8 +33,8 @@ def ligand_bonding_sites(
         element = info['element']
         non_bonded_electrons = info['non_bonded_electrons']
         if element in donor_elements and non_bonded_electrons >= min_unbonded_electrons:
-            donor_atom_indices.append(atom_index - 1)  # Adjusting index to 0-based
-            donor_positions.append(ligand.positions[atom_index - 1])
+            donor_atom_indices.append(atom_index)
+            donor_positions.append(ligand.positions[atom_index])
 
     donor_positions = np.array(donor_positions)
 
