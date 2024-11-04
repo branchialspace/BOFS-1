@@ -178,7 +178,7 @@ def valence_minus_bonded(mayer_data, mbis_data):
     - mbis_data: Dictionary containing MBIS charges and valence populations.
 
     Returns:
-    - bonding_site-analysis: Dictionary with bonding information for each atom.
+    - bonding_site_analysis: Dictionary with bonding information for each atom.
     """
     bonding_site_analysis = {}
 
