@@ -1,4 +1,5 @@
-# Mayer and Minimal Basis Iterative Stockholder (MBIS) bonding site analysis in ORCA
+# Mayer and Minimal Basis Iterative Stockholder (MBIS) bonding site analysis in ORCA. 
+# Determine non-bonded electrons.
 
 import os
 import subprocess
@@ -6,9 +7,8 @@ import re
 from ase import Atoms
 
 
-def electron_bonding_sites(ligand, charge=0, mult=1, method='B3LYP', basis_set='def2-SVP'):
+def non_bonded_electrons(ligand, charge=0, mult=1, method='B3LYP', basis_set='def2-SVP'):
     """
-    Identify potential cations, anions, and atoms for covalent bonding in a ligand.
 
     Parameters:
     - ligand: ASE Atoms object representing the ligand molecule.
@@ -18,7 +18,7 @@ def electron_bonding_sites(ligand, charge=0, mult=1, method='B3LYP', basis_set='
     - basis_set: Basis set to use (e.g., 'def2-SVP').
 
     Returns:
-    - bonding_sites: Dictionary containing information about each atom's bonding role.
+    - bonding_site_analysis: Dictionary containing information about each atom's bonding role.
     """
     # Define the ORCA executable path
     orca_path = '/root/orca_6_0_0/orca'
@@ -46,9 +46,9 @@ def electron_bonding_sites(ligand, charge=0, mult=1, method='B3LYP', basis_set='
     # Parse the output file
     mayer_data = parse_mayer_data(output_filename)
     mbis_data = parse_mbis_data(output_filename)
-    bonding_sites = find_potential_bonding_sites(mayer_data, mbis_data)
+    bonding_site_analysis = valence_minus_bonded(mayer_data, mbis_data)
 
-    return bonding_sites
+    return bonding_site_analysis
 
 def write_orca_input(ligand, filename, charge, mult, method, basis_set):
     with open(filename, 'w') as f:
@@ -169,18 +169,18 @@ def parse_mbis_data(filename):
             continue
     return mbis_data
 
-def find_potential_bonding_sites(mayer_data, mbis_data):
+def valence_minus_bonded(mayer_data, mbis_data):
     """
-    Identify potential bonding sites in the molecule.
+    Subtract the mbis valence population from the mayer bond orders to determine non-bonded electrons. Return all data.
 
     Parameters:
     - mayer_data: Dictionary containing Mayer bond orders.
     - mbis_data: Dictionary containing MBIS charges and valence populations.
 
     Returns:
-    - bonding_sites: Dictionary with bonding information for each atom.
+    - bonding_site-analysis: Dictionary with bonding information for each atom.
     """
-    bonding_sites = {}
+    bonding_site_analysis = {}
 
     for atom_index, mbis_info in mbis_data.items():
         element = mbis_info['element']
@@ -196,7 +196,7 @@ def find_potential_bonding_sites(mayer_data, mbis_data):
 
         non_bonded_electrons = valence_population - bonded_electrons
 
-        bonding_sites[atom_index] = {
+        bonding_site_analysis[atom_index] = {
             'element': element,
             'valence_population': valence_population,
             'mbis_charge': mbis_charge,
@@ -204,4 +204,4 @@ def find_potential_bonding_sites(mayer_data, mbis_data):
             'non_bonded_electrons': non_bonded_electrons
         }
 
-    return bonding_sites
+    return bonding_site_analysis
