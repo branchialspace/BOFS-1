@@ -1,8 +1,8 @@
 # ligand bonding-site clustering
 
-from sklearn.decomposition import PCA
-from sklearn.cluster import AgglomerativeClustering
 from scipy.spatial import ConvexHull
+from sklearn.cluster import AgglomerativeClustering
+import numpy as np
 from ase import Atoms
 
 
@@ -42,23 +42,12 @@ def ligand_bonding_sites(
         print("No potential donor atoms found with the specified criteria.")
         return []
 
-    # Step 2: Perform PCA on the ligand positions
-    pca = PCA(n_components=3)
-    pca.fit(ligand.positions)
-    transformed_positions = pca.transform(ligand.positions)
-    transformed_donor_positions = pca.transform(donor_positions)
+    # Step 2: Determine donor atoms that are on the convex hull (surface-accessible)
+    # Aims to filter ligands/ bonding sites with geometries incompatible with 3d periodic boundary condition arrangements
+    hull = ConvexHull(ligand.positions)
+    hull_vertices = set(hull.vertices)
 
-    # Step 3: Determine surface-accessible donor atoms
-    # Compute the convex hull of the ligand
-    hull = ConvexHull(transformed_positions)
-    hull_vertices = hull.vertices
-
-    # Identify donor atoms that are on the convex hull (surface-accessible)
-    surface_donor_indices = []
-    for idx, pos in zip(donor_atom_indices, transformed_donor_positions):
-        # Check if the donor atom index is among the hull vertices
-        if idx in hull_vertices:
-            surface_donor_indices.append(idx)
+    surface_donor_indices = [idx for idx in donor_atom_indices if idx in hull_vertices]
 
     if len(surface_donor_indices) == 0:
         print("No surface-accessible donor atoms found.")
@@ -66,7 +55,7 @@ def ligand_bonding_sites(
 
     surface_donor_positions = ligand.positions[surface_donor_indices]
 
-    # Step 4: Cluster the surface-accessible donor atoms
+    # Step 3: Cluster the surface-accessible donor atoms
     clustering = AgglomerativeClustering(
         n_clusters=None,
         distance_threshold=clustering_distance_threshold,
