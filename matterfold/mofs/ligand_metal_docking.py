@@ -2,6 +2,7 @@
 
 import numpy as np
 from ase import Atoms
+from scipy.spatial import ConvexHull
 
 
 def ligand_metal_docking(
@@ -34,51 +35,63 @@ def ligand_metal_docking(
         ligand_positions = ligand.get_positions()
         bonding_positions = ligand_positions[bonding_site_atoms]
         
-        # Step 2: Identify the metal atoms that will coordinate
-        # For simplicity, select the closest metal atoms to the bonding site(s)
+        # Step 2: Identify the metal atom that will coordinate
+        # Compute the convex hull of the metal cluster to find surface atoms
         metal_positions = metal_center_copy.get_positions()
-        distances = np.linalg.norm(
-            metal_positions[:, np.newaxis, :] - bonding_positions[np.newaxis, :, :], axis=2
-        )
-        coordinating_atom_indices = np.argmin(distances, axis=0)
-        coordinating_positions = metal_positions[coordinating_atom_indices]
+        hull = ConvexHull(metal_positions)
+        surface_atom_indices = np.unique(hull.simplices.flatten())
+        surface_atom_positions = metal_positions[surface_atom_indices]
         
-        # Step 3: Compute the optimal rotation and translation using the Kabsch algorithm
-        # Center the coordinates
+        # For simplicity, select the surface atom that best aligns along the computed angle
+        # Compute the centroid of the bonding-site atoms
         ligand_centroid = np.mean(bonding_positions, axis=0)
-        metal_centroid = np.mean(coordinating_positions, axis=0)
-        ligand_coords_centered = bonding_positions - ligand_centroid
-        metal_coords_centered = coordinating_positions - metal_centroid
         
-        # Compute covariance matrix
-        covariance_matrix = np.dot(metal_coords_centered.T, ligand_coords_centered)
+        # Vector from ligand centroid to bonding-site centroid
+        bonding_vector = bonding_positions - ligand_centroid
+        if len(bonding_vector) > 1:
+            # Use the average direction if multiple atoms
+            bonding_direction = np.mean(bonding_vector, axis=0)
+        else:
+            bonding_direction = bonding_vector[0]
+        bonding_direction /= np.linalg.norm(bonding_direction)
         
-        # Singular Value Decomposition
-        V, S, Wt = np.linalg.svd(covariance_matrix)
-        d = np.linalg.det(np.dot(V, Wt))
-        D = np.diag([1, 1, d])
+        # Vector from metal centroid to each surface atom
+        metal_centroid = np.mean(metal_positions, axis=0)
+        metal_vectors = surface_atom_positions - metal_centroid
+        metal_vectors_normalized = metal_vectors / np.linalg.norm(metal_vectors, axis=1)[:, np.newaxis]
         
-        # Rotation matrix
-        rotation_matrix = np.dot(np.dot(V, D), Wt)
+        # Compute the angle between bonding direction and each metal vector
+        angles = np.arccos(np.clip(np.dot(metal_vectors_normalized, bonding_direction), -1.0, 1.0))
+        
+        # Select the metal atom whose vector is most aligned with the bonding direction
+        coordinating_atom_index = surface_atom_indices[np.argmin(angles)]
+        coordinating_position = metal_positions[coordinating_atom_index]
+        
+        # Step 3: Compute the optimal rotation and translation
+        # We need at least three non-colinear points to compute a rotation
+        # Since we have only one coordinating atom, we'll align the vectors
+        # Vector from metal centroid to coordinating atom
+        metal_vector = coordinating_position - metal_centroid
+        metal_vector /= np.linalg.norm(metal_vector)
+        
+        # Compute rotation matrix to align metal_vector to bonding_direction
+        v = np.cross(metal_vector, bonding_direction)
+        c = np.dot(metal_vector, bonding_direction)
+        s = np.linalg.norm(v)
+        if s != 0:
+            kmat = np.array([[0, -v[2], v[1]],
+                             [v[2], 0, -v[0]],
+                             [-v[1], v[0], 0]])
+            rotation_matrix = np.eye(3) + kmat + kmat @ kmat * ((1 - c) / (s ** 2))
+        else:
+            rotation_matrix = np.eye(3)  # Vectors are aligned
         
         # Apply rotation to the entire metal center
-        rotated_metal_positions = np.dot(metal_center_copy.get_positions() - metal_centroid, rotation_matrix)
+        rotated_metal_positions = np.dot(metal_positions - metal_centroid, rotation_matrix)
         
         # Step 4: Translate the metal center to the bonding site
-        # Adjust the translation to match the desired bond distance
-        current_distance = np.linalg.norm(
-            (rotated_metal_positions[coordinating_atom_indices] + metal_centroid) - bonding_positions, axis=1
-        ).mean()
-        distance_correction = bond_distance - current_distance
-        # Direction vector from metal centroid to ligand centroid
-        direction_vector = ligand_centroid - metal_centroid
-        # Normalize direction vector
-        if np.linalg.norm(direction_vector) > 0:
-            direction_vector /= np.linalg.norm(direction_vector)
-        else:
-            direction_vector = np.zeros(3)
-        # Apply distance correction along the direction vector
-        translation_vector = ligand_centroid - metal_centroid + distance_correction * direction_vector
+        # Place the coordinating atom at the desired bond distance along the bonding direction
+        translation_vector = ligand_centroid + bond_distance * bonding_direction - (metal_centroid + np.dot(coordinating_position - metal_centroid, rotation_matrix))
         
         # Apply rotation and translation
         new_metal_positions = rotated_metal_positions + metal_centroid + translation_vector
@@ -88,5 +101,5 @@ def ligand_metal_docking(
         
         # Step 5: Combine the metal center with the combined structure
         combined_structure += metal_center_copy
-    
+        
     return combined_structure
