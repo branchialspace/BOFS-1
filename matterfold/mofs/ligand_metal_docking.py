@@ -2,94 +2,91 @@
 
 import numpy as np
 from ase import Atoms
-from typing import List
-from scipy.optimize import minimize_scalar
-from scipy.spatial.distance import cdist
 
 
 def ligand_metal_docking(
     ligand: Atoms,
-    bonding_sites_clusters: List[List[int]],
     metal_center: Atoms,
-    distance: float
+    bonding_sites: list,
+    bond_distance: float
 ) -> Atoms:
     """
-    Places metal centers at each bonding site of the ligand, facing away from the ligand,
-    such that the distance between each bonding site atom and the closest atom of the metal
-    center is equal to the specified distance. The metal center's center of mass remains
-    along the bonding site centroid vector.
-
+    Place metal centers at each bonding site cluster on the ligand using the Kabsch algorithm RMSD method.
+    
     Parameters:
-    - ligand: ASE Atoms object representing the ligand.
-    - bonding_sites_clusters: List of clusters, each containing atom indices of a bonding site.
-    - metal_center: ASE Atoms object representing the metal center to be placed.
-    - distance: Distance in Angstroms between each bonding site atom and the closest metal center atom.
-
+    - ligand: ASE Atoms object of the ligand.
+    - metal_center: ASE Atoms object of the metal cluster.
+    - bonding_sites: List of lists, each containing atom indices (0-based) of a bonding site.
+    - bond_distance: Desired bond distance between the ligand and metal atoms.
+    
     Returns:
-    - combined_atoms: ASE Atoms object with the metal centers added to the ligand.
+    - combined_structure: ASE Atoms object with metal centers placed at each bonding site.
     """
-
-    # Copy the ligand
-    ligand_metal_docked = ligand.copy()
-
-    # Compute the center of mass of the ligand
-    ligand_center_of_mass = ligand.get_center_of_mass()
-
-    for bonding_site in bonding_sites_clusters:
-        # Get positions of the bonding site atoms
-        bonding_site_positions = ligand.positions[bonding_site]
-
-        # Compute the centroid of the bonding site atoms
-        bonding_site_centroid = np.mean(bonding_site_positions, axis=0)
-
-        # Compute the vector from ligand's center of mass to bonding site centroid
-        vector = bonding_site_centroid - ligand_center_of_mass
-
-        # Normalize the vector
-        unit_vector = vector / np.linalg.norm(vector)
-
-        # Define the objective function
-        def objective(scalar):
-            # Compute the position along the centroid vector at distance scalar
-            metal_center_position = ligand_center_of_mass + unit_vector * scalar
-
-            # Translate the metal center so that its center of mass is at this position
-            metal_atoms = metal_center.copy()
-            metal_center_of_mass = metal_atoms.get_center_of_mass()
-            translation = metal_center_position - metal_center_of_mass
-            metal_atoms.translate(translation)
-
-            # Compute distances from bonding site atoms to all atoms in the metal center
-            distances = cdist(bonding_site_positions, metal_atoms.positions)
-
-            # For each bonding site atom, find the minimum distance to the metal center atoms
-            min_distances = np.min(distances, axis=1)
-
-            # Compute the differences between these distances and the specified distance
-            differences = min_distances - distance
-
-            # Return the sum of squares of differences
-            return np.sum(differences**2)
-
-        # Use an optimizer to find the scalar that minimizes the objective function
-        res = minimize_scalar(
-            objective,
-            bounds=(0, 10 * distance),  # Adjust upper bound as needed
-            method='bounded'
+    # Start with the ligand structure
+    combined_structure = ligand.copy()
+    
+    # Loop over each bonding site cluster
+    for bonding_site_atoms in bonding_sites:
+        # Copy the metal center for placement
+        metal_center_copy = metal_center.copy()
+        
+        # Step 1: Extract positions of the ligand's bonding-site atoms
+        ligand_positions = ligand.get_positions()
+        bonding_positions = ligand_positions[bonding_site_atoms]
+        
+        # Step 2: Identify the metal atoms that will coordinate
+        # For simplicity, select the closest metal atoms to the bonding site(s)
+        metal_positions = metal_center_copy.get_positions()
+        distances = np.linalg.norm(
+            metal_positions[:, np.newaxis, :] - bonding_positions[np.newaxis, :, :], axis=2
         )
-
-        optimal_scalar = res.x
-
-        # Compute the final position of the metal center
-        metal_center_position = ligand_center_of_mass + unit_vector * optimal_scalar
-
-        # Translate the metal center to the final position
-        metal_atoms = metal_center.copy()
-        metal_center_of_mass = metal_atoms.get_center_of_mass()
-        translation = metal_center_position - metal_center_of_mass
-        metal_atoms.translate(translation)
-
-        # Append the metal atoms to the combined_atoms
-        ligand_metal_docked += metal_atoms
-
-    return ligand_metal_docked
+        coordinating_atom_indices = np.argmin(distances, axis=0)
+        coordinating_positions = metal_positions[coordinating_atom_indices]
+        
+        # Step 3: Compute the optimal rotation and translation using the Kabsch algorithm
+        # Center the coordinates
+        ligand_centroid = np.mean(bonding_positions, axis=0)
+        metal_centroid = np.mean(coordinating_positions, axis=0)
+        ligand_coords_centered = bonding_positions - ligand_centroid
+        metal_coords_centered = coordinating_positions - metal_centroid
+        
+        # Compute covariance matrix
+        covariance_matrix = np.dot(metal_coords_centered.T, ligand_coords_centered)
+        
+        # Singular Value Decomposition
+        V, S, Wt = np.linalg.svd(covariance_matrix)
+        d = np.linalg.det(np.dot(V, Wt))
+        D = np.diag([1, 1, d])
+        
+        # Rotation matrix
+        rotation_matrix = np.dot(np.dot(V, D), Wt)
+        
+        # Apply rotation to the entire metal center
+        rotated_metal_positions = np.dot(metal_center_copy.get_positions() - metal_centroid, rotation_matrix)
+        
+        # Step 4: Translate the metal center to the bonding site
+        # Adjust the translation to match the desired bond distance
+        current_distance = np.linalg.norm(
+            (rotated_metal_positions[coordinating_atom_indices] + metal_centroid) - bonding_positions, axis=1
+        ).mean()
+        distance_correction = bond_distance - current_distance
+        # Direction vector from metal centroid to ligand centroid
+        direction_vector = ligand_centroid - metal_centroid
+        # Normalize direction vector
+        if np.linalg.norm(direction_vector) > 0:
+            direction_vector /= np.linalg.norm(direction_vector)
+        else:
+            direction_vector = np.zeros(3)
+        # Apply distance correction along the direction vector
+        translation_vector = ligand_centroid - metal_centroid + distance_correction * direction_vector
+        
+        # Apply rotation and translation
+        new_metal_positions = rotated_metal_positions + metal_centroid + translation_vector
+        
+        # Update the metal center positions
+        metal_center_copy.set_positions(new_metal_positions)
+        
+        # Step 5: Combine the metal center with the combined structure
+        combined_structure += metal_center_copy
+    
+    return combined_structure
