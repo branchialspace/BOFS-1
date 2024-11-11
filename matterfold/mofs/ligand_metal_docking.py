@@ -4,6 +4,10 @@ import numpy as np
 from ase import Atoms
 from scipy.spatial import ConvexHull
 from scipy.optimize import minimize
+from rdkit import Chem
+from rdkit.Chem import AllChem
+from rdkit.Chem import rdDetermineBonds
+
 
 def ligand_metal_docking(
     ligand: Atoms,
@@ -13,7 +17,7 @@ def ligand_metal_docking(
 ) -> Atoms:
     """
     Place metal centers at each bonding site on the ligand using geometric centroids
-    and ligand-aware direction vectors.
+    and bond angle-aware direction vectors.
 
     Parameters:
     - ligand: ASE Atoms object of the ligand
@@ -32,34 +36,54 @@ def ligand_metal_docking(
     ligand_positions = ligand.get_positions()
     previous_metal_positions = []
 
+    # Convert ASE Atoms to RDKit molecule
+    symbols = ligand.get_chemical_symbols()
+    coords = ligand.get_positions()
+    xyz_block = f"{len(symbols)}\n\n"
+    for symbol, coord in zip(symbols, coords):
+        xyz_block += f"{symbol} {coord[0]:.6f} {coord[1]:.6f} {coord[2]:.6f}\n"
+
+    rdkit_mol = Chem.MolFromXYZBlock(xyz_block)
+    Chem.SanitizeMol(rdkit_mol)
+    rdDetermineBonds.DetermineConnectivity(rdkit_mol)
+
     # Loop over each bonding site
     for site_indices in bonding_sites:
         # Get bonding site positions and centroid
         site_positions = ligand_positions[site_indices]
         site_centroid = np.mean(site_positions, axis=0)
 
-        # Calculate direction vector pointing away from ligand
-        # Get positions of non-bonding site atoms
-        non_site_indices = [i for i in range(len(ligand)) if i not in site_indices]
-        if not non_site_indices:  # If all atoms are in bonding site
-            direction_vector = np.array([0.0, 0.0, 1.0])
-        else:
-            non_site_positions = ligand_positions[non_site_indices]
-            non_site_centroid = np.mean(non_site_positions, axis=0)
-            direction_vector = site_centroid - non_site_centroid
-            norm = np.linalg.norm(direction_vector)
-            if norm < 1e-10:  # If centroids are too close
-                direction_vector = np.array([0.0, 0.0, 1.0])
-            else:
-                direction_vector = direction_vector / norm
+        # Calculate direction vector using bond angles
+        bond_vectors_sum = np.zeros(3)
+        for site_idx in site_indices:
+            # Get bonds directly from RDKit molecule
+            bonds = rdkit_mol.GetBonds()
+            for bond in bonds:
+                begin_idx = bond.GetBeginAtomIdx()
+                end_idx = bond.GetEndAtomIdx()
 
-        # Define objective function to find optimal binding position
+                # If one of the atoms in the bond is our site atom
+                if begin_idx == site_idx or end_idx == site_idx:
+                    neighbor_idx = end_idx if begin_idx == site_idx else begin_idx
+                    if neighbor_idx not in site_indices:
+                        # Calculate bond vector from bonding site atom to neighbor
+                        bond_vector = ligand_positions[site_idx] - ligand_positions[neighbor_idx]
+                        bond_vector = bond_vector / np.linalg.norm(bond_vector)
+                        bond_vectors_sum += bond_vector
+
+        # The direction vector is the sum of normalized bond vectors
+        direction_vector = bond_vectors_sum
+        direction_vector = direction_vector / np.linalg.norm(direction_vector)
+
+        # Define objective function to find optimal bonding position
         def position_objective_function(scale_factor):
             proposed_position = site_centroid + scale_factor * direction_vector
+            # Calculate distances from proposed_position to each atom in the bonding site
             distances = np.linalg.norm(site_positions - proposed_position, axis=1)
+            # Objective: minimize the sum of squared deviations from bond_distance
             return np.sum((distances - bond_distance) ** 2)
 
-        # Optimize the scaling factor to find optimal binding position
+        # Optimize the scaling factor to find optimal bonding position
         position_result = minimize(position_objective_function, bond_distance, method='L-BFGS-B')
         optimal_position = site_centroid + position_result.x[0] * direction_vector
 
@@ -71,7 +95,7 @@ def ligand_metal_docking(
         # Create a copy of metal center and align it
         metal_center_copy = metal_center.copy()
         metal_center_positions = metal_center_copy.get_positions()
-        
+
         # Translate metal center to align coordinating atom with optimal position
         translation_vector = optimal_position - metal_center_positions[coordinating_atom_index]
         metal_center_positions += translation_vector
@@ -121,6 +145,7 @@ def ligand_metal_docking(
                     np.min(distances_metals, axis=1)
                 )
 
+            # We want to maximize the minimum distance, so we return the negative sum
             return -np.sum(min_distances)
 
         # Optimize rotation
@@ -179,6 +204,9 @@ def ligand_metal_docking(
         # Set final positions and update structure
         metal_center_copy.set_positions(final_positions)
         combined_structure += metal_center_copy
+        previous_metal_positions.append(metal_atoms_positions)
+
+    return combined_structure
         previous_metal_positions.append(metal_atoms_positions)
 
     return combined_structure
