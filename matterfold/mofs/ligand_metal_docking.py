@@ -13,7 +13,7 @@ def ligand_metal_docking(
     bond_distance: float
 ) -> Atoms:
     """
-    Place metal centers at each bonding site on the ligand using the Kabsch algorithm and a force-based rotation optimization.
+    Place metal centers at each bonding site on the ligand and use force-based rotation optimization.
 
     Parameters:
     - ligand: ASE Atoms object of the ligand.
