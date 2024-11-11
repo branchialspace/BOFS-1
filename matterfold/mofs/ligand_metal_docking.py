@@ -16,8 +16,8 @@ def ligand_metal_docking(
     bond_distance: float
 ) -> Atoms:
     """
-    Place metal centers at each bonding site on the ligand using geometric centroids
-    and bond angle-aware direction vectors.
+    Place metal centers at each bonding site on the ligand using geometric centroids and 
+    bond angle-aware direction vectors with L-BFGS-B optimization for distance and rotation.
 
     Parameters:
     - ligand: ASE Atoms object of the ligand
@@ -84,7 +84,11 @@ def ligand_metal_docking(
             return np.sum((distances - bond_distance) ** 2)
 
         # Optimize the scaling factor to find optimal bonding position
-        position_result = minimize(position_objective_function, bond_distance, method='L-BFGS-B')
+        position_result = minimize(
+            position_objective_function, 
+            bond_distance, 
+            method='L-BFGS-B'
+        )
         optimal_position = site_centroid + position_result.x[0] * direction_vector
 
         # Identify coordinating atom from metal center
