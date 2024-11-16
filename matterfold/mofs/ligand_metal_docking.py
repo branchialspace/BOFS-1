@@ -211,6 +211,3 @@ def ligand_metal_docking(
         previous_metal_positions.append(metal_atoms_positions)
 
     return combined_structure
-        previous_metal_positions.append(metal_atoms_positions)
-
-    return combined_structure
