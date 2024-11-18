@@ -13,11 +13,13 @@ def ligand_metal_docking(
     ligand: Atoms,
     metal_center: Atoms,
     bonding_sites: list,
-    bond_distance: float
 ) -> Atoms:
     """
-    Place metal centers at each bonding site on the ligand using geometric centroids and the sum 
-    of normalized bond vectors as direction vectors with L-BFGS-B optimization for distance and rotation.
+    Place metal centers at each bonding site on the ligand using geometric centroids and normalized 
+    bond vectors as initial direction vectors. Final positions are optimized using the law of 
+    cosines and L-BFGS-B minimization to achieve exact covalent radii-based distances between the 
+    metal center and each bonding site atom. Metal center orientations are then optimized for 
+    rotation around the bonding site to minimize steric hindrance.
 
     Parameters:
     - ligand: ASE Atoms object of the ligand
@@ -72,25 +74,53 @@ def ligand_metal_docking(
                         bond_vectors_sum += bond_vector
 
         # The direction vector is the sum of normalized bond vectors
-        direction_vector = bond_vectors_sum
-        direction_vector = direction_vector / np.linalg.norm(direction_vector)
+        direction_vector = bond_vectors_sum / np.linalg.norm(bond_vectors_sum)
 
-        # Define objective function to find optimal bonding position
-        def position_objective_function(scale_factor):
-            proposed_position = site_centroid + scale_factor * direction_vector
-            # Calculate distances from proposed_position to each atom in the bonding site
-            distances = np.linalg.norm(site_positions - proposed_position, axis=1)
-            # Objective: minimize the sum of squared deviations from bond_distance
-            return np.sum((distances - bond_distance) ** 2)
+        # Get covalent radii for bonding atoms
+        metal_symbols = metal_center.get_chemical_symbols()
+        ligand_symbols = ligand.get_chemical_symbols()
+        coordinating_metal_radius = covalent_radii[atomic_numbers[metal_symbols[0]]]
+        site_radii = [covalent_radii[atomic_numbers[ligand_symbols[i]]] for i in site_indices]
 
-        # Optimize the scaling factor to find optimal bonding position
-        position_result = minimize(
-            position_objective_function, 
-            bond_distance, 
+        # Use normalized direction_vector to get initial position
+        initial_scale = np.mean([r1 + coordinating_metal_radius for r1 in site_radii])
+        initial_position = site_centroid + initial_scale * direction_vector
+
+        # Calculate relative angles between bonding site atoms
+        target_distances = [r1 + coordinating_metal_radius for r1 in site_radii]
+        site_vectors = site_positions - initial_position
+        angles = np.arccos(np.clip(np.dot(site_vectors, site_vectors.T) / 
+                                  (np.linalg.norm(site_vectors, axis=1)[:, None] * 
+                                  np.linalg.norm(site_vectors, axis=1)[None, :]), -1, 1))
+
+        # Use law of cosines to adjust position
+        # For each pair of bonding site atoms: d² = r1² + r2² - 2r1r2cos(θ)
+        def angle_position_correction(pos_adjustment):
+            test_position = initial_position + pos_adjustment
+            test_vectors = site_positions - test_position
+            test_distances = np.linalg.norm(test_vectors, axis=1)
+            
+            error = 0
+            for i in range(len(site_indices)):
+                for j in range(i+1, len(site_indices)):
+                    d = np.linalg.norm(site_positions[i] - site_positions[j])
+                    predicted_d = np.sqrt(test_distances[i]**2 + test_distances[j]**2 - 
+                                        2*test_distances[i]*test_distances[j]*np.cos(angles[i,j]))
+                    error += (d - predicted_d)**2
+                
+                # Ensure target distances are maintained
+                error += (test_distances[i] - target_distances[i])**2
+            
+            return error
+
+        position_correction = minimize(
+            angle_position_correction,
+            np.zeros(3),
             method='L-BFGS-B'
         )
-        optimal_position = site_centroid + position_result.x[0] * direction_vector
 
+        optimal_position = initial_position + position_correction.x
+        
         # Identify coordinating atom from metal center convex hull
         metal_positions = metal_center.get_positions()
         hull = ConvexHull(metal_positions)
@@ -104,7 +134,7 @@ def ligand_metal_docking(
         translation_vector = optimal_position - metal_center_positions[coordinating_atom_index]
         metal_center_positions += translation_vector
 
-        # Optimize rotation around the binding position
+        # Optimize ligand rotation around the bonding position
         def rotation_objective_function(rotation_angles):
             theta_x, theta_y, theta_z = rotation_angles
             Rx = np.array([[1, 0, 0],
@@ -202,9 +232,11 @@ def ligand_metal_docking(
                 np.min(distances_metals, axis=1)
             )
 
-        if np.any(min_distances < bond_distance):
-            raise ValueError("Steric hindrance detected between metal centers or with the ligand.")
+        min_allowed_distance = min(covalent_radii[atomic_numbers[m]] + covalent_radii[atomic_numbers[ligand_symbols[0]]] for m in metal_symbols)
 
+        if np.any(min_distances < min_allowed_distance):
+            raise ValueError("Steric hindrance detected between metal centers or with the ligand.")
+            
         # Set final positions and update structure
         metal_center_copy.set_positions(final_positions)
         combined_structure += metal_center_copy
