@@ -2,7 +2,7 @@
 
 import numpy as np
 from scipy.spatial.distance import pdist, squareform
-from ase import atoms
+from ase import Atoms
 from ase.data import atomic_numbers, covalent_radii
 from ase.io import write
 
