@@ -47,21 +47,23 @@ def sphere_pack_cluster(species, n_atoms, max_iterations=2000, seed=42):
 
 # Generate a metal polyhedron with a specified number of atoms
 def generate_metal_polyhedron(species: str, num_atoms: int) -> Atoms:
+    species_str = species.capitalize()
+
     if num_atoms == 1:
         positions = np.array([[0.0, 0.0, 0.0]])
     elif num_atoms >= 2:
         # Generate packed positions using the sphere packing method
-        species_str = species.capitalize()
-        species = atomic_numbers[species_str]
-        packed_positions = sphere_pack_cluster(species, num_atoms)
+        species_num = atomic_numbers[species_str]
+        packed_positions = sphere_pack_cluster(species_num, num_atoms)
         positions = packed_positions
     else:
         raise ValueError("Number of atoms must be at least 1")
 
-    # Create the Atoms object
-    atoms = Atoms(f'{species_str}{num_atoms}', positions=positions)
+    atoms_list = [species_str] * num_atoms
+    atoms = Atoms(atoms_list, positions=positions)
 
-    filename = f'{species_str}{num_atoms}_polyhedron.xyz'
+    formula = atoms.get_chemical_formula()
+    filename = f"{formula}_polyhedron.xyz"
     write(filename, atoms)
 
     return atoms
