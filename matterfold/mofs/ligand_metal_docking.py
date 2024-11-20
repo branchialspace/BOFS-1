@@ -2,6 +2,7 @@
 
 import numpy as np
 from ase import Atoms
+from ase.io import write 
 from scipy.spatial import ConvexHull
 from scipy.optimize import minimize
 from rdkit import Chem
@@ -241,5 +242,10 @@ def ligand_metal_docking(
         metal_center_copy.set_positions(final_positions)
         combined_structure += metal_center_copy
         previous_metal_positions.append(metal_atoms_positions)
+
+    ligand_formula = ligand.get_chemical_formula()
+    metal_center_formula = metal_center.get_chemical_formula()
+    filename = f"{metal_center_formula}_{ligand_formula}_docking.xyz"
+    write(filename, combined_structure)
 
     return combined_structure
