@@ -29,7 +29,7 @@ def generate_ligand(smiles: str) -> Tuple[Atoms, Chem.Mol]:
         positions.append([pos.x, pos.y, pos.z])
     
     atoms_obj = Atoms(atoms, positions=positions)
-    filename = "".join(atoms_obj.get_chemical_symbols()) + ".xyz"
+    filename = "".join(atoms_obj.get_chemical_formula()) + ".xyz"
     write(filename, atoms_obj)
     
     return atoms_obj, mol
