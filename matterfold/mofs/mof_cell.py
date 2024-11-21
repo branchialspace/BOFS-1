@@ -10,8 +10,7 @@ def mof_cell(
     combined_structure: Atoms,
     ligand: Atoms,
     metal_center: Atoms,
-    bonding_sites: list,
-    lattice_constant: float = None
+    bonding_sites: list
 ) -> Atoms:
     """
     Constructs a unit cell by replicating the ligand and metal centers to fully coordinate all the
@@ -23,8 +22,6 @@ def mof_cell(
     - ligand: ASE Atoms object of the ligand.
     - metal_center: ASE Atoms object of the metal cluster.
     - bonding_sites: List of lists, each containing atom indices (0-based) of a bonding site on the ligand.
-    - lattice_constant: The lattice constant 'a' for the cubic lattice. If None, it will be calculated
-      from the distance between the two metal centers.
 
     Returns:
     - unit_cell_structure: ASE Atoms object representing the unit cell with PBC.
@@ -59,10 +56,7 @@ def mof_cell(
     # Calculate the vector between the two metal centers
     vector_metal_centers = metal2_centroid - metal1_centroid
     distance_metal_centers = np.linalg.norm(vector_metal_centers)
-
-    # If lattice_constant is not provided, use the distance between metal centers
-    if lattice_constant is None:
-        lattice_constant = distance_metal_centers
+    lattice_constant = distance_metal_centers # Define lattice constant
 
     # Define lattice vectors for a cubic lattice
     a1 = lattice_constant * np.array([1, 0, 0])
