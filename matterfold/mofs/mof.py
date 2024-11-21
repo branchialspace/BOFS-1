@@ -1,4 +1,4 @@
-# MOF lattice unit cell
+# MOF primitive cubic/ rhombohedral lattice unit cell
 
 import numpy as np
 from ase import Atoms
