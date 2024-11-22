@@ -1,5 +1,20 @@
 # ENZYMES
 
+"""
+Implementation of CARATE (Chemistry Attention Representation through Encoders)
+Based on the following works:
+
+Academic Paper:
+Kleber, J. M. (2024). Introducing CARATE: Finally Speaking Chemistry Through Learning 
+Hidden Wave-Function Representations on Graph-Based Attention and Convolutional Neural Networks. 
+Research & Reviews: Journal of Chemistry, 13, 1-10.
+DOI: 10.4172/2319-9849.13.3.001
+
+Original Implementation:
+Kleber, J. M. (2021-2024). CARATE - Chemistry Attention Representation through Encoders.
+Repository: https://codeberg.org/sail.black/carate
+"""
+
 import os
 import numpy as np
 import torch
