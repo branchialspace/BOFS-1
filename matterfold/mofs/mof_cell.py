@@ -1,11 +1,9 @@
 # MOF primitive cubic/ rhombohedral lattice unit cell
 
-from ase import Atoms, Atom
+from ase import Atoms
 from ase.io import write
 import numpy as np
-from scipy.spatial.transform import Rotation
-from scipy.optimize import minimize
-from scipy.spatial import ConvexHull
+
 
 def build_metal_organic_crystal(
     combined_structure: Atoms,
