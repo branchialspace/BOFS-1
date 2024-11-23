@@ -1,9 +1,11 @@
 # MOF primitive cubic/ rhombohedral lattice unit cell
 
-from ase import Atoms
+from ase import Atoms, Atom
 from ase.io import write
 import numpy as np
-
+from scipy.spatial.transform import Rotation
+from scipy.optimize import minimize
+from scipy.spatial import ConvexHull
 
 def build_metal_organic_crystal(
     combined_structure: Atoms,
@@ -38,52 +40,77 @@ def build_metal_organic_crystal(
     metal_clusters = [metal_indices[i:i+n_metal_atoms] 
                      for i in range(0, len(metal_indices), n_metal_atoms)]
     
-    # Extract reference metal clusters and connecting vectors
+    # Extract reference metal cluster information
     reference_clusters = []
     for cluster_indices in metal_clusters:
         cluster_pos = positions[cluster_indices]
         centroid = np.mean(cluster_pos, axis=0)
         
-        # Calculate reference connecting vector using bonding sites
-        site_positions = [positions[i] for i in bonding_sites[0]]
-        connecting_point = np.mean(site_positions, axis=0)
-        connect_vector = connecting_point - centroid
-        connect_vector = connect_vector / np.linalg.norm(connect_vector)
+        # Find coordinating atom using ConvexHull
+        hull = ConvexHull(cluster_pos)
+        coord_atom_idx = cluster_indices[np.unique(hull.simplices.flatten())[0]]
+        coord_vector = positions[coord_atom_idx] - centroid
+        coord_vector = coord_vector / np.linalg.norm(coord_vector)
+        
+        # Calculate full orientation matrix
+        ref_pos = metal_center.get_positions()
+        ref_centroid = np.mean(ref_pos, axis=0)
         
         reference_clusters.append({
             'centroid': centroid,
             'positions': cluster_pos,
-            'relative_positions': cluster_pos - centroid,
-            'connect_vector': connect_vector
+            'coord_vector': coord_vector,
+            'relative_positions': cluster_pos - centroid
         })
     
-    # Calculate cell parameters
-    cell_vector = reference_clusters[1]['centroid'] - reference_clusters[0]['centroid']
-    cell_length = np.linalg.norm(cell_vector)
+    # Calculate cell vector length (metal-to-metal distance)
+    cell_length = np.linalg.norm(reference_clusters[1]['centroid'] - 
+                                reference_clusters[0]['centroid'])
     
-    # Define cubic cell
-    cell = np.eye(3) * cell_length
+    # Calculate angle between coordination vectors
+    coord_angle = np.arccos(np.dot(reference_clusters[0]['coord_vector'],
+                                  reference_clusters[1]['coord_vector']))
+    is_rhombohedral = abs(coord_angle - np.pi) > tolerance
+    
+    # 3. Unit Cell Construction
+    if is_rhombohedral:
+        # Calculate rhombohedral angles
+        cos_alpha = np.dot(reference_clusters[0]['coord_vector'], 
+                          reference_clusters[1]['coord_vector'])
+        alpha = np.arccos(cos_alpha)
+        cell = np.array([
+            [cell_length, 0, 0],
+            [cell_length * np.cos(alpha), cell_length * np.sin(alpha), 0],
+            [cell_length * np.cos(alpha), 
+             cell_length * np.cos(alpha) * np.cos(alpha),
+             cell_length * np.sqrt(1 - 2*np.cos(alpha)**2 + np.cos(alpha)**2)]
+        ])
+    else:
+        # Cubic cell
+        cell = np.eye(3) * cell_length
     
     # 4. Create Crystal Structure
     crystal = Atoms()
     
-    def get_cluster_orientation(position, directions):
+    def get_cluster_orientation(position, direction_vectors):
         """Calculate cluster orientation for given position and connection directions"""
-        if not directions:
-            return reference_clusters[0]['relative_positions'] + position
-            
-        # Get reference orientation from combined structure
-        ref_connect = reference_clusters[0]['connect_vector']
+        # Use reference cluster closest to desired orientation
+        ref_idx = 0 if len(direction_vectors) == 1 else (
+            0 if np.dot(reference_clusters[0]['coord_vector'], direction_vectors[0]) > 
+               np.dot(reference_clusters[1]['coord_vector'], direction_vectors[0]) else 1
+        )
         
-        # Create orthogonal basis from first direction
-        v1 = directions[0]
-        v1 = v1 / np.linalg.norm(v1)
+        ref_cluster = reference_clusters[ref_idx]
         
-        # Find rotation that aligns reference vector with first direction
-        rotation_axis = np.cross(ref_connect, v1)
+        # Calculate rotation to align coordination vector with first direction
+        v1 = ref_cluster['coord_vector']
+        v2 = direction_vectors[0]
+        
+        # Calculate rotation axis and angle
+        rotation_axis = np.cross(v1, v2)
         if np.any(rotation_axis):
             rotation_axis = rotation_axis / np.linalg.norm(rotation_axis)
-            angle = np.arccos(np.clip(np.dot(ref_connect, v1), -1.0, 1.0))
+            angle = np.arccos(np.clip(np.dot(v1, v2), -1.0, 1.0))
             
             # Create rotation matrix
             c = np.cos(angle)
@@ -92,12 +119,11 @@ def build_metal_organic_crystal(
             R = np.array([[c + x*x*(1-c), x*y*(1-c) - z*s, x*z*(1-c) + y*s],
                          [y*x*(1-c) + z*s, c + y*y*(1-c), y*z*(1-c) - x*s],
                          [z*x*(1-c) - y*s, z*y*(1-c) + x*s, c + z*z*(1-c)]])
-        else:
-            R = np.eye(3)
             
-        # Apply rotation to relative positions
-        rotated_positions = np.dot(reference_clusters[0]['relative_positions'], R.T)
-        
+            rotated_positions = ref_cluster['relative_positions'] @ R.T
+        else:
+            rotated_positions = ref_cluster['relative_positions']
+            
         return rotated_positions + position
     
     # Add metal clusters at lattice points
@@ -106,20 +132,20 @@ def build_metal_organic_crystal(
             for k in range(2):
                 pos = np.dot([i, j, k], cell)
                 
-                # Determine connection directions
+                # Determine connection directions for this cluster
                 directions = []
                 if i < 1:
-                    directions.append(cell[0] / cell_length)
+                    directions.append(cell[0] / np.linalg.norm(cell[0]))
                 if i > 0:
-                    directions.append(-cell[0] / cell_length)
+                    directions.append(-cell[0] / np.linalg.norm(cell[0]))
                 if j < 1:
-                    directions.append(cell[1] / cell_length)
+                    directions.append(cell[1] / np.linalg.norm(cell[1]))
                 if j > 0:
-                    directions.append(-cell[1] / cell_length)
+                    directions.append(-cell[1] / np.linalg.norm(cell[1]))
                 if k < 1:
-                    directions.append(cell[2] / cell_length)
+                    directions.append(cell[2] / np.linalg.norm(cell[2]))
                 if k > 0:
-                    directions.append(-cell[2] / cell_length)
+                    directions.append(-cell[2] / np.linalg.norm(cell[2]))
                 
                 # Calculate cluster positions with proper orientation
                 cluster_positions = get_cluster_orientation(pos, directions)
@@ -137,57 +163,40 @@ def build_metal_organic_crystal(
                     pos1 = np.dot([i, j, k], cell)
                     
                     if i < 1:
-                        pos2 = pos1 + cell[0]
-                        add_ligand_with_orientation(crystal, ligand, pos1, pos2, 
-                                                 reference_clusters[0], bonding_sites)
+                        pos2 = np.dot([i+1, j, k], cell)
+                        add_ligand(crystal, ligand, pos1, pos2, cell[0], bonding_sites)
                     if j < 1:
-                        pos2 = pos1 + cell[1]
-                        add_ligand_with_orientation(crystal, ligand, pos1, pos2, 
-                                                 reference_clusters[0], bonding_sites)
+                        pos2 = np.dot([i, j+1, k], cell)
+                        add_ligand(crystal, ligand, pos1, pos2, cell[1], bonding_sites)
                     if k < 1:
-                        pos2 = pos1 + cell[2]
-                        add_ligand_with_orientation(crystal, ligand, pos1, pos2, 
-                                                 reference_clusters[0], bonding_sites)
+                        pos2 = np.dot([i, j, k+1], cell)
+                        add_ligand(crystal, ligand, pos1, pos2, cell[2], bonding_sites)
     
     # 5. Set Periodic Boundary Conditions
     crystal.set_cell(cell)
     crystal.set_pbc(True)
-
+    
     # Write structure to file
     write('metal_organic_crystal.xyz', crystal)
     
     return crystal
 
-def add_ligand_with_orientation(crystal, ligand, pos1, pos2, ref_cluster, bonding_sites):
-    """Add ligand between two points with orientation matching the reference structure"""
+def add_ligand(crystal, ligand, pos1, pos2, direction, bonding_sites):
+    """Helper function to add a ligand between two metal centers"""
     new_ligand = ligand.copy()
     
-    # Get reference connecting vector and current direction
-    ref_connect = ref_cluster['connect_vector']
-    current_direction = pos2 - pos1
-    current_direction = current_direction / np.linalg.norm(current_direction)
-    
-    # Calculate rotation to align with current direction
-    rotation_axis = np.cross(ref_connect, current_direction)
-    if np.any(rotation_axis):
-        rotation_axis = rotation_axis / np.linalg.norm(rotation_axis)
-        angle = np.arccos(np.clip(np.dot(ref_connect, current_direction), -1.0, 1.0))
-        
-        # Create rotation matrix
-        c = np.cos(angle)
-        s = np.sin(angle)
-        x, y, z = rotation_axis
-        R = np.array([[c + x*x*(1-c), x*y*(1-c) - z*s, x*z*(1-c) + y*s],
-                     [y*x*(1-c) + z*s, c + y*y*(1-c), y*z*(1-c) - x*s],
-                     [z*x*(1-c) - y*s, z*y*(1-c) + x*s, c + z*z*(1-c)]])
-        
-        # Apply rotation
-        positions = new_ligand.get_positions()
-        rotated_positions = np.dot(positions, R.T)
-        new_ligand.set_positions(rotated_positions)
-    
-    # Place ligand at midpoint
+    # Calculate translation and rotation
     mid_point = (pos1 + pos2) / 2
-    new_ligand.translate(mid_point)
+    direction = direction / np.linalg.norm(direction)
     
+    # Align ligand with direction
+    current_axis = np.array([1, 0, 0])  # Assume ligand aligned along x-axis initially
+    rotation_axis = np.cross(current_axis, direction)
+    
+    if np.any(rotation_axis):
+        angle = np.arccos(np.dot(current_axis, direction))
+        rotation_axis = rotation_axis / np.linalg.norm(rotation_axis)
+        new_ligand.rotate(angle * 180 / np.pi, rotation_axis)
+    
+    new_ligand.translate(mid_point)
     crystal += new_ligand
