@@ -60,13 +60,14 @@ def mof_lattice(
 
     # Get source and target metal centers
     source_metal_indices = metal_indices[extend_from_index]
+    target_metal_indices = metal_indices[1]  # Second metal center
     source_metal_positions = positions[source_metal_indices]
+    target_metal_positions = positions[target_metal_indices]
     source_metal_centroid = np.mean(source_metal_positions, axis=0)
+    target_metal_centroid = np.mean(target_metal_positions, axis=0)
 
-    # Find the coordinating atom on the source metal center
-    bonding_site_centroid = bonding_site1_centroid if extend_from_index == 0 else bonding_site2_centroid
-    distances = np.linalg.norm(source_metal_positions - bonding_site_centroid, axis=1)
-    source_coord_idx = np.argmin(distances)
+    # Calculate reference vector from source to target metal centroids
+    reference_vector = target_metal_centroid - source_metal_centroid
 
     # Get template structure (everything except source metal center)
     template_mask = np.ones(len(combined_structure), dtype=bool)
@@ -81,19 +82,20 @@ def mof_lattice(
     hull = ConvexHull(source_metal_positions)
     hull_atoms = np.unique(hull.simplices.flatten())
 
+    # Find the coordinating atom on the source metal center - the one closest to ligand
+    distances = np.linalg.norm(source_metal_positions - bonding_site1_centroid, axis=1)
+    source_coord_idx = np.argmin(distances)
+
     # Remove the atom that's already coordinated
     hull_atoms = hull_atoms[hull_atoms != source_coord_idx]
-
-    # Get vector from source metal centroid to coordinating atom
-    source_coord_vector = source_metal_positions[source_coord_idx] - source_metal_centroid
 
     # For each uncoordinated atom on convex hull
     for hull_atom_idx in hull_atoms:
         hull_atom_pos = source_metal_positions[hull_atom_idx]
         hull_vector = hull_atom_pos - source_metal_centroid
 
-        # Calculate rotation matrix to align hull_vector with source_coord_vector
-        rotation_matrix = calculate_rotation_matrix(source_coord_vector, hull_vector)
+        # Calculate rotation matrix to align reference_vector with hull_vector
+        rotation_matrix = calculate_rotation_matrix(reference_vector, hull_vector)
 
         # Create new segment from template
         new_segment = template_structure.copy()
