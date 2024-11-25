@@ -49,11 +49,6 @@ def mof_lattice(
     if len(metal_indices) < 1:
         raise ValueError(f"No metal centers found in structure")
 
-    # Identify which metal center atoms are coordinated to which bonding sites
-    def find_closest_metal_atom(bonding_site_centroid, metal_pos):
-        distances = np.linalg.norm(metal_pos - bonding_site_centroid, axis=1)
-        return np.argmin(distances)
-
     # Get geometric relationships from initial structure
     ligand_start_idx = metal_length
     ligand_positions = positions[ligand_start_idx:ligand_start_idx + ligand_length]
@@ -68,11 +63,10 @@ def mof_lattice(
     source_metal_positions = positions[source_metal_indices]
     source_metal_centroid = np.mean(source_metal_positions, axis=0)
 
-    # Find the coordinating atom on the source metal center
-    source_coord_idx = find_closest_metal_atom(
-        bonding_site1_centroid if extend_from_index == 0 else bonding_site2_centroid,
-        source_metal_positions
-    )
+    # Find the coordinating atom on the source metal center (previously find_closest_metal_atom)
+    bonding_site_centroid = bonding_site1_centroid if extend_from_index == 0 else bonding_site2_centroid
+    distances = np.linalg.norm(source_metal_positions - bonding_site_centroid, axis=1)
+    source_coord_idx = np.argmin(distances)
 
     # Get template structure (everything except source metal center)
     template_mask = np.ones(len(combined_structure), dtype=bool)
