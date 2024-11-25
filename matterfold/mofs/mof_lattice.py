@@ -6,16 +6,23 @@ from ase.io import write
 from scipy.spatial import ConvexHull
 
 
+# MOF lattice
+
+import numpy as np
+from ase import Atoms
+from ase.io import write
+from scipy.spatial import ConvexHull
+
+
 def mof_lattice(
     combined_structure: Atoms,
     ligand: Atoms,
     metal_center: Atoms,
     bonding_sites: list,
-    extend_from_index: int = 0  # 0 for first metal center, 1 for second
 ) -> Atoms:
     """
     Extends a metal-ligand structure by adding ligands and metal centers to all atoms
-    on the convex hull of a selected metal center, maintaining the same geometric relationships
+    on the convex hull of the first metal center, maintaining the same geometric relationships
     as the initial metal-ligand-metal coordination.
 
     Parameters:
@@ -23,7 +30,6 @@ def mof_lattice(
     - ligand: Original ligand Atoms object used to create combined_structure
     - metal_center: Original metal center Atoms object used to create combined_structure
     - bonding_sites: Original list of bonding site indices used in initial docking
-    - extend_from_index: Index of the metal center to extend from (0 or 1)
 
     Returns:
     - extended_structure: ASE Atoms object with the extended coordination structure
@@ -47,8 +53,9 @@ def mof_lattice(
         else:
             current_idx += ligand_length
 
-    if extend_from_index >= len(metal_indices):
-        raise ValueError(f"extend_from_index {extend_from_index} is out of range for {len(metal_indices)} metal centers")
+    extend_from_index = 0  # Always use first metal center
+    if len(metal_indices) < 1:
+        raise ValueError(f"No metal centers found in structure")
 
     # Identify which metal center atoms are coordinated to which bonding sites
     def find_closest_metal_atom(bonding_site_centroid, metal_pos):
