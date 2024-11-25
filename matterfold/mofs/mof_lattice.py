@@ -14,7 +14,7 @@ def mof_lattice(
 ) -> Atoms:
     """
     Extends a metal-ligand structure by adding ligands and metal centers to all atoms
-    on the convex hull of the first metal center, maintaining the same geometric relationships
+    on the convex hull of every metal center, maintaining the same geometric relationships
     as the initial metal-ligand-metal coordination.
 
     Parameters:
@@ -35,7 +35,7 @@ def mof_lattice(
     ligand_length = len(ligand)
     metal_length = len(metal_center)
 
-    # Find metal centers in combined_structure
+    # Find all metal centers in combined_structure
     metal_indices = []
     current_idx = 0
     while current_idx < len(combined_structure):
@@ -45,9 +45,8 @@ def mof_lattice(
         else:
             current_idx += ligand_length
 
-    extend_from_index = 0  # Always use first metal center
-    if len(metal_indices) < 1:
-        raise ValueError(f"No metal centers found in structure")
+    if len(metal_indices) < 2:
+        raise ValueError("Need at least two metal centers to determine geometric relationships")
 
     # Get geometric relationships from initial structure
     ligand_start_idx = metal_length
@@ -58,58 +57,82 @@ def mof_lattice(
     bonding_site2_centroid = np.mean(ligand_positions[bonding_sites[1]], axis=0)
     ligand_centroid = np.mean(ligand_positions, axis=0)
 
-    # Get source and target metal centers
-    source_metal_indices = metal_indices[extend_from_index]
-    target_metal_indices = metal_indices[1]  # Second metal center
-    source_metal_positions = positions[source_metal_indices]
-    target_metal_positions = positions[target_metal_indices]
-    source_metal_centroid = np.mean(source_metal_positions, axis=0)
-    target_metal_centroid = np.mean(target_metal_positions, axis=0)
-
-    # Calculate reference vector from source to target metal centroids
-    reference_vector = target_metal_centroid - source_metal_centroid
-
-    # Get template structure (everything except source metal center)
-    template_mask = np.ones(len(combined_structure), dtype=bool)
-    template_mask[source_metal_indices] = False
-    template_structure = combined_structure[template_mask]
-    template_positions = template_structure.get_positions()
-
     # Create extended structure starting with original
     extended_structure = combined_structure.copy()
 
-    # Get convex hull atoms of source metal center
-    hull = ConvexHull(source_metal_positions)
-    hull_atoms = np.unique(hull.simplices.flatten())
+    # Process each metal center
+    for source_metal_idx, source_metal_indices in enumerate(metal_indices):
+        # Get source metal center positions
+        source_metal_positions = positions[source_metal_indices]
+        source_metal_centroid = np.mean(source_metal_positions, axis=0)
 
-    # Find the coordinating atom on the source metal center - the one closest to ligand
-    distances = np.linalg.norm(source_metal_positions - bonding_site1_centroid, axis=1)
-    source_coord_idx = np.argmin(distances)
+        # Find the nearest connected metal center to use as reference
+        min_distance = float('inf')
+        target_metal_indices = None
+        target_metal_centroid = None
 
-    # Remove the atom that's already coordinated
-    hull_atoms = hull_atoms[hull_atoms != source_coord_idx]
+        for target_idx, target_indices in enumerate(metal_indices):
+            if target_idx == source_metal_idx:
+                continue
+            target_positions = positions[target_indices]
+            target_centroid = np.mean(target_positions, axis=0)
+            distance = np.linalg.norm(target_centroid - source_metal_centroid)
+            
+            if distance < min_distance:
+                min_distance = distance
+                target_metal_indices = target_indices
+                target_metal_centroid = target_centroid
 
-    # For each uncoordinated atom on convex hull
-    for hull_atom_idx in hull_atoms:
-        hull_atom_pos = source_metal_positions[hull_atom_idx]
-        hull_vector = hull_atom_pos - source_metal_centroid
+        # Calculate reference vector from source to target metal centroids
+        reference_vector = target_metal_centroid - source_metal_centroid
 
-        # Calculate rotation matrix to align reference_vector with hull_vector
-        rotation_matrix = calculate_rotation_matrix(reference_vector, hull_vector)
+        # Get template structure (everything except source metal center)
+        template_mask = np.ones(len(combined_structure), dtype=bool)
+        template_mask[source_metal_indices] = False
+        template_structure = combined_structure[template_mask]
+        template_positions = template_structure.get_positions()
 
-        # Create new segment from template
-        new_segment = template_structure.copy()
-        new_segment_positions = template_positions.copy()
+        # Get convex hull atoms of source metal center
+        hull = ConvexHull(source_metal_positions)
+        hull_atoms = np.unique(hull.simplices.flatten())
 
-        # Transform new segment positions
-        translation = hull_atom_pos - source_metal_positions[source_coord_idx]
-        new_segment_positions = np.dot(
-            new_segment_positions - source_metal_positions[source_coord_idx],
-            rotation_matrix.T
-        ) + hull_atom_pos
+        # Find the coordinating atoms on the source metal center
+        # These are atoms that are already connected to ligands
+        coordinated_atoms = set()
+        for other_metal_idx, other_metal_indices in enumerate(metal_indices):
+            if other_metal_idx == source_metal_idx:
+                continue
+            other_centroid = np.mean(positions[other_metal_indices], axis=0)
+            distances = np.linalg.norm(source_metal_positions - other_centroid, axis=1)
+            coordinated_atoms.add(np.argmin(distances))
 
-        new_segment.set_positions(new_segment_positions)
-        extended_structure += new_segment
+        # Remove atoms that are already coordinated
+        hull_atoms = np.array([atom for atom in hull_atoms if atom not in coordinated_atoms])
+
+        # For each uncoordinated atom on convex hull
+        for hull_atom_idx in hull_atoms:
+            hull_atom_pos = source_metal_positions[hull_atom_idx]
+            hull_vector = hull_atom_pos - source_metal_centroid
+
+            # Calculate rotation matrix to align reference_vector with hull_vector
+            rotation_matrix = calculate_rotation_matrix(reference_vector, hull_vector)
+
+            # Create new segment from template
+            new_segment = template_structure.copy()
+            new_segment_positions = template_positions.copy()
+
+            # Transform new segment positions
+            closest_coord_atom = min(coordinated_atoms, 
+                                   key=lambda x: np.linalg.norm(source_metal_positions[x] - hull_atom_pos))
+            translation = hull_atom_pos - source_metal_positions[closest_coord_atom]
+            
+            new_segment_positions = np.dot(
+                new_segment_positions - source_metal_positions[closest_coord_atom],
+                rotation_matrix.T
+            ) + hull_atom_pos
+
+            new_segment.set_positions(new_segment_positions)
+            extended_structure += new_segment
 
     ligand_formula = ligand.get_chemical_formula()
     metal_center_formula = metal_center.get_chemical_formula()
@@ -117,7 +140,7 @@ def mof_lattice(
     write(filename, extended_structure)
 
     return extended_structure
-
+    
 def calculate_rotation_matrix(vec1, vec2):
     """Calculate rotation matrix to align vec1 with vec2."""
     vec1 = vec1 / np.linalg.norm(vec1)
