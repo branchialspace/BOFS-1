@@ -6,14 +6,6 @@ from ase.io import write
 from scipy.spatial import ConvexHull
 
 
-# MOF lattice
-
-import numpy as np
-from ase import Atoms
-from ase.io import write
-from scipy.spatial import ConvexHull
-
-
 def mof_lattice(
     combined_structure: Atoms,
     ligand: Atoms,
