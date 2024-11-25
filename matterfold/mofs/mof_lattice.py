@@ -63,7 +63,7 @@ def mof_lattice(
     source_metal_positions = positions[source_metal_indices]
     source_metal_centroid = np.mean(source_metal_positions, axis=0)
 
-    # Find the coordinating atom on the source metal center (previously find_closest_metal_atom)
+    # Find the coordinating atom on the source metal center
     bonding_site_centroid = bonding_site1_centroid if extend_from_index == 0 else bonding_site2_centroid
     distances = np.linalg.norm(source_metal_positions - bonding_site_centroid, axis=1)
     source_coord_idx = np.argmin(distances)
