@@ -142,7 +142,7 @@ def mof_lattice(
     return extended_structure
     
 def calculate_rotation_matrix(vec1, vec2):
-    """Calculate rotation matrix to align vec1 with vec2."""
+    """Calculate rotation matrix to align vec1 with vec2 using Rodrigues' rotation formula."""
     vec1 = vec1 / np.linalg.norm(vec1)
     vec2 = vec2 / np.linalg.norm(vec2)
 
