@@ -1,7 +1,5 @@
 # MOF lattice
 
-# MOF lattice
-
 import numpy as np
 from ase import Atoms
 from ase.io import write
