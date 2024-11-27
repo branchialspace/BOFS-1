@@ -13,7 +13,7 @@ def mof_lattice(
     bonding_sites: list,
 ) -> Atoms:
     """
-    Extends a metal-ligand structure by adding ligands and metal centers to all atoms
+    Extends a metal-ligand structure by adding ligands and metal centers to all available atoms
     on the convex hull of every metal center, maintaining the same geometric relationships
     as the initial metal-ligand-metal coordination.
 
