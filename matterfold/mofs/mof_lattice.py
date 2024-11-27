@@ -1,5 +1,7 @@
 # MOF lattice
 
+# MOF lattice
+
 import numpy as np
 from ase import Atoms
 from ase.io import write
@@ -14,8 +16,8 @@ def mof_lattice(
 ) -> Atoms:
     """
     Extends a metal-ligand structure by adding ligands and metal centers to all available atoms
-    on the convex hull of every metal center, maintaining the same geometric relationships
-    as the initial metal-ligand-metal coordination.
+    on the convex hull of every metal center, using the geometric relationships from all
+    metal-template pairs in the initial structure.
 
     Parameters:
     - combined_structure: ASE Atoms object of the initial metal-ligand-metal structure
@@ -60,16 +62,48 @@ def mof_lattice(
     # Create extended structure starting with original
     extended_structure = combined_structure.copy()
 
-    # Precompute template structures for each metal center
+    # Precompute template structures and their geometric relationships
     templates = []
-    template_positions_list = []
+    template_orientations = []
     for metal_indices_item in metal_indices:
+        # Create template by masking current metal center
         template_mask = np.ones(len(combined_structure), dtype=bool)
         template_mask[metal_indices_item] = False
         template_structure = combined_structure[template_mask]
+        
+        # Calculate metal center centroid
+        metal_positions = positions[metal_indices_item]
+        metal_centroid = np.mean(metal_positions, axis=0)
+        
+        # Find template's metal center positions and calculate centroid
+        template_metal_indices = []
         template_positions = template_structure.get_positions()
+        template_symbols = template_structure.get_chemical_symbols()
+        
+        current_idx = 0
+        while current_idx < len(template_structure):
+            if template_symbols[current_idx] == metal_symbol:
+                template_metal_indices.append(list(range(current_idx, current_idx + metal_length)))
+                current_idx += metal_length
+            else:
+                current_idx += ligand_length
+        
+        # Calculate orientations for each template metal center
+        orientations = []
+        for template_metal_idx in template_metal_indices:
+            template_metal_positions = template_positions[template_metal_idx]
+            template_metal_centroid = np.mean(template_metal_positions, axis=0)
+            
+            # Calculate orientation vector from masked metal center to template metal center
+            orientation_vector = template_metal_centroid - metal_centroid
+            orientations.append({
+                'vector': orientation_vector,
+                'distance': np.linalg.norm(orientation_vector),
+                'template_positions': template_positions
+            })
+        
         templates.append(template_structure)
-        template_positions_list.append(template_positions)
+        template_orientations.append(orientations)
 
     # Process each metal center
     for source_metal_idx, source_metal_indices in enumerate(metal_indices):
@@ -77,36 +111,15 @@ def mof_lattice(
         source_metal_positions = positions[source_metal_indices]
         source_metal_centroid = np.mean(source_metal_positions, axis=0)
 
-        # Find the nearest connected metal center to use as reference
-        min_distance = float('inf')
-        target_metal_indices = None
-        target_metal_centroid = None
-
-        for target_idx, target_indices in enumerate(metal_indices):
-            if target_idx == source_metal_idx:
-                continue
-            target_positions = positions[target_indices]
-            target_centroid = np.mean(target_positions, axis=0)
-            distance = np.linalg.norm(target_centroid - source_metal_centroid)
-            
-            if distance < min_distance:
-                min_distance = distance
-                target_metal_indices = target_indices
-                target_metal_centroid = target_centroid
-
-        # Calculate reference vector from source to target metal centroids
-        reference_vector = target_metal_centroid - source_metal_centroid
-
-        # Use precomputed template structure
+        # Get template and its orientations for this metal center
         template_structure = templates[source_metal_idx]
-        template_positions = template_positions_list[source_metal_idx]
+        orientations = template_orientations[source_metal_idx]
 
         # Get convex hull atoms of source metal center
         hull = ConvexHull(source_metal_positions)
         hull_atoms = np.unique(hull.simplices.flatten())
 
         # Find the coordinating atoms on the source metal center
-        # These are atoms that are already connected to ligands
         coordinated_atoms = set()
         for other_metal_idx, other_metal_indices in enumerate(metal_indices):
             if other_metal_idx == source_metal_idx:
@@ -123,25 +136,27 @@ def mof_lattice(
             hull_atom_pos = source_metal_positions[hull_atom_idx]
             hull_vector = hull_atom_pos - source_metal_centroid
 
-            # Calculate rotation matrix to align reference_vector with hull_vector
-            rotation_matrix = calculate_rotation_matrix(reference_vector, hull_vector)
+            # For each orientation from the template
+            for orientation in orientations:
+                # Calculate rotation matrix to align orientation vector with hull vector
+                rotation_matrix = calculate_rotation_matrix(orientation['vector'], hull_vector)
 
-            # Create new segment from template
-            new_segment = template_structure.copy()
-            new_segment_positions = template_positions.copy()
+                # Create new segment from template
+                new_segment = template_structure.copy()
+                new_segment_positions = orientation['template_positions'].copy()
 
-            # Transform new segment positions
-            closest_coord_atom = min(coordinated_atoms, 
-                                     key=lambda x: np.linalg.norm(source_metal_positions[x] - hull_atom_pos))
-            translation = hull_atom_pos - source_metal_positions[closest_coord_atom]
-            
-            new_segment_positions = np.dot(
-                new_segment_positions - source_metal_positions[closest_coord_atom],
-                rotation_matrix.T
-            ) + hull_atom_pos
+                # Transform new segment positions
+                closest_coord_atom = min(coordinated_atoms, 
+                                      key=lambda x: np.linalg.norm(source_metal_positions[x] - hull_atom_pos))
+                translation = hull_atom_pos - source_metal_positions[closest_coord_atom]
+                
+                new_segment_positions = np.dot(
+                    new_segment_positions - source_metal_positions[closest_coord_atom],
+                    rotation_matrix.T
+                ) + hull_atom_pos
 
-            new_segment.set_positions(new_segment_positions)
-            extended_structure += new_segment
+                new_segment.set_positions(new_segment_positions)
+                extended_structure += new_segment
 
     ligand_formula = ligand.get_chemical_formula()
     metal_center_formula = metal_center.get_chemical_formula()
