@@ -60,6 +60,17 @@ def mof_lattice(
     # Create extended structure starting with original
     extended_structure = combined_structure.copy()
 
+    # Precompute template structures for each metal center
+    templates = []
+    template_positions_list = []
+    for metal_indices_item in metal_indices:
+        template_mask = np.ones(len(combined_structure), dtype=bool)
+        template_mask[metal_indices_item] = False
+        template_structure = combined_structure[template_mask]
+        template_positions = template_structure.get_positions()
+        templates.append(template_structure)
+        template_positions_list.append(template_positions)
+
     # Process each metal center
     for source_metal_idx, source_metal_indices in enumerate(metal_indices):
         # Get source metal center positions
@@ -86,11 +97,9 @@ def mof_lattice(
         # Calculate reference vector from source to target metal centroids
         reference_vector = target_metal_centroid - source_metal_centroid
 
-        # Get template structure (everything except source metal center)
-        template_mask = np.ones(len(combined_structure), dtype=bool)
-        template_mask[source_metal_indices] = False
-        template_structure = combined_structure[template_mask]
-        template_positions = template_structure.get_positions()
+        # Use precomputed template structure
+        template_structure = templates[source_metal_idx]
+        template_positions = template_positions_list[source_metal_idx]
 
         # Get convex hull atoms of source metal center
         hull = ConvexHull(source_metal_positions)
@@ -123,7 +132,7 @@ def mof_lattice(
 
             # Transform new segment positions
             closest_coord_atom = min(coordinated_atoms, 
-                                   key=lambda x: np.linalg.norm(source_metal_positions[x] - hull_atom_pos))
+                                     key=lambda x: np.linalg.norm(source_metal_positions[x] - hull_atom_pos))
             translation = hull_atom_pos - source_metal_positions[closest_coord_atom]
             
             new_segment_positions = np.dot(
@@ -140,7 +149,7 @@ def mof_lattice(
     write(filename, extended_structure)
 
     return extended_structure
-    
+
 def calculate_rotation_matrix(vec1, vec2):
     """Calculate rotation matrix to align vec1 with vec2 using Rodrigues' rotation formula."""
     vec1 = vec1 / np.linalg.norm(vec1)
