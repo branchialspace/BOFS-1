@@ -15,13 +15,13 @@ def mof_lattice(
     """
     Extends a metal-ligand structure by adding ligands and metal centers to all available atoms
     on the convex hull of every metal center, using the geometric relationships from all
-    metal-template pairs in the initial structure.
+    metal-template pairs in the initial structure. 
 
     Parameters:
     - combined_structure: ASE Atoms object of the initial metal-ligand-metal structure
     - ligand: Original ligand Atoms object used to create combined_structure
     - metal_center: Original metal center Atoms object used to create combined_structure
-    - bonding_sites: Original list of bonding site indices used in initial docking
+    - bonding_sites: List of lists, each containing atom indices (0-based) of a bonding site
 
     Returns:
     - extended_structure: ASE Atoms object with the extended coordination structure
@@ -52,10 +52,20 @@ def mof_lattice(
     ligand_start_idx = metal_length
     ligand_positions = positions[ligand_start_idx:ligand_start_idx + ligand_length]
 
-    # Calculate bonding site centroids
-    bonding_site1_centroid = np.mean(ligand_positions[bonding_sites[0]], axis=0)
-    bonding_site2_centroid = np.mean(ligand_positions[bonding_sites[1]], axis=0)
+    # Calculate bonding site centroids for all sites
+    bonding_site_centroids = []
+    for site_indices in bonding_sites:
+        site_centroid = np.mean(ligand_positions[site_indices], axis=0)
+        bonding_site_centroids.append(site_centroid)
+    
+    # Calculate overall ligand centroid
     ligand_centroid = np.mean(ligand_positions, axis=0)
+
+    # Create vectors from ligand centroid to each bonding site
+    bonding_vectors = [centroid - ligand_centroid for centroid in bonding_site_centroids]
+    
+    # Normalize bonding vectors
+    bonding_vectors = [vector / np.linalg.norm(vector) for vector in bonding_vectors]
 
     # Create extended structure starting with original
     extended_structure = combined_structure.copy()
@@ -94,10 +104,13 @@ def mof_lattice(
             
             # Calculate orientation vector from masked metal center to template metal center
             orientation_vector = template_metal_centroid - metal_centroid
+            
+            # Store normalized orientation vector along with bonding geometry
             orientations.append({
                 'vector': orientation_vector,
                 'distance': np.linalg.norm(orientation_vector),
-                'template_positions': template_positions
+                'template_positions': template_positions,
+                'bonding_vectors': bonding_vectors  # Store normalized bonding vectors
             })
         
         templates.append(template_structure)
@@ -148,6 +161,7 @@ def mof_lattice(
                                       key=lambda x: np.linalg.norm(source_metal_positions[x] - hull_atom_pos))
                 translation = hull_atom_pos - source_metal_positions[closest_coord_atom]
                 
+                # Rotate the positions while preserving the bonding geometry
                 new_segment_positions = np.dot(
                     new_segment_positions - source_metal_positions[closest_coord_atom],
                     rotation_matrix.T
