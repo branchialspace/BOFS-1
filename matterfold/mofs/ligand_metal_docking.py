@@ -26,7 +26,6 @@ def ligand_metal_docking(
     - ligand: ASE Atoms object of the ligand
     - metal_center: ASE Atoms object of the metal cluster
     - bonding_sites: List of lists, each containing atom indices (0-based) of a bonding site
-    - bond_distance: Desired bond distance between the ligand and metal atoms
 
     Returns:
     - combined_structure: ASE Atoms object with metal centers placed at each bonding site
