@@ -1,4 +1,4 @@
-# MOF Cell
+# MOF primitive cubic lattice unit cell
 
 import numpy as np
 from ase.io import write
