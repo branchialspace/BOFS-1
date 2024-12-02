@@ -16,6 +16,7 @@ def mof_cell(
     """
     Creates a primitive cubic unit cell of our MOF model.
     Uses relative positions from the combined_structure to coordinate ligands to surface atoms of the cluster.
+    The lattice constant is determined by the distance between coordinating metal atoms plus the metal center extent.
     
     Parameters:
     - combined_structure: ASE Atoms object of a linear bridging ligand with metal centers placed at each bonding site
@@ -25,7 +26,6 @@ def mof_cell(
 
     Returns:
     - unit_cell: ASE Atoms object of our MOF primitive cubic lattice unit cell
-
     """
     # Number of metal atoms and ligand atoms
     n_metal_single = len(metal_center)
@@ -47,6 +47,39 @@ def mof_cell(
     bonding_site_positions = [ligand_positions_combined[idx] for idx in bonding_sites[0]]
     bonding_site_centroid = np.mean(bonding_site_positions, axis=0)
     
+    # Find coordinating metal atoms from both metal centers
+    surface_atom1_idx = None
+    surface_atom2_idx = None
+    min_distance1 = float('inf')
+    min_distance2 = float('inf')
+    
+    # Find surface atoms for first metal center
+    hull1 = ConvexHull(metal_center1)
+    surface_indices1 = np.unique(hull1.simplices.flatten())
+    for idx in surface_indices1:
+        surface_pos = metal_center1[idx]
+        distance = np.linalg.norm(bonding_site_centroid - surface_pos)
+        if distance < min_distance1:
+            min_distance1 = distance
+            surface_atom1_idx = idx
+            
+    # Find surface atoms for second metal center
+    hull2 = ConvexHull(metal_center2)
+    surface_indices2 = np.unique(hull2.simplices.flatten())
+    for idx in surface_indices2:
+        surface_pos = metal_center2[idx]
+        distance = np.linalg.norm(bonding_site_centroid - surface_pos)
+        if distance < min_distance2:
+            min_distance2 = distance
+            surface_atom2_idx = idx
+    
+    # Get positions of coordinating metal atoms
+    coord_metal1_pos = metal_center1[surface_atom1_idx]
+    coord_metal2_pos = metal_center2[surface_atom2_idx]
+    
+    # Calculate distance between coordinating metal atoms
+    metal_metal_distance = np.linalg.norm(coord_metal2_pos - coord_metal1_pos)
+    
     # Determine which metal center is closer to the bonding site
     dist1 = np.linalg.norm(bonding_site_centroid - centroid1)
     dist2 = np.linalg.norm(bonding_site_centroid - centroid2)
@@ -54,24 +87,8 @@ def mof_cell(
     # Select the closer metal center and its positions
     metal_positions = metal_center1 if dist1 < dist2 else metal_center2
     metal_centroid = centroid1 if dist1 < dist2 else centroid2
+    surface_atom_pos = coord_metal1_pos if dist1 < dist2 else coord_metal2_pos
         
-    # Find coordinating surface atom in the selected metal center
-    metal_hull = ConvexHull(metal_positions)
-    surface_atom_indices = np.unique(metal_hull.simplices.flatten())
-    
-    # Find the surface atom closest to the bonding site
-    min_distance = float('inf')
-    surface_atom_idx = None
-    
-    for idx in surface_atom_indices:
-        surface_pos = metal_positions[idx]
-        distance = np.linalg.norm(bonding_site_centroid - surface_pos)
-        if distance < min_distance:
-            min_distance = distance
-            surface_atom_idx = idx
-            
-    surface_atom_pos = metal_positions[surface_atom_idx]
-    
     # Calculate relative positions of ligand atoms to the surface atom
     ligand_relative_positions = ligand_positions_combined - surface_atom_pos
     
@@ -79,15 +96,12 @@ def mof_cell(
     original_direction = ligand_relative_positions.mean(axis=0)
     original_direction /= np.linalg.norm(original_direction)
     
-    # Calculate maximum ligand extent from coordination point
-    max_ligand_extent = np.max(np.linalg.norm(ligand_relative_positions, axis=1))
-    
     # Calculate metal center extent in x, y, z directions from its centroid
     metal_positions_centered = metal_center.positions - np.mean(metal_center.positions, axis=0)
     metal_extent = np.max(np.abs(metal_positions_centered))
     
-    # Calculate lattice constant based on metal center extent plus ligand extent in each direction
-    lattice_constant = 2 * (metal_extent + max_ligand_extent)
+    # Calculate lattice constant based on metal-metal distance plus metal extent
+    lattice_constant = metal_metal_distance + 2 * metal_extent
     
     # Create unit cell with centered metal center
     unit_cell = Atoms(
