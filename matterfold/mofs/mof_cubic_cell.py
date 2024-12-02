@@ -117,7 +117,7 @@ def mof_cell(
     
     metal_formula = metal_center.get_chemical_formula()
     ligand_formula = ligand.get_chemical_formula()
-    filename = f"{metal_formula}_{ligand_formula}_cell.xyz"
+    filename = f"{metal_formula}_{ligand_formula}_cubic_cell.xyz"
     write(filename, unit_cell)
     
     return unit_cell
