@@ -1,4 +1,4 @@
-# MOF lattice
+# MOF lattice emergeant generation
 
 import numpy as np
 from ase import Atoms
