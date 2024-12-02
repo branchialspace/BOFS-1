@@ -16,26 +16,64 @@ def mof_cell(
     """
     Creates a primitive cubic unit cell of our MOF model.
     Uses relative positions from the combined_structure to coordinate ligands to surface atoms of the cluster.
+    
+    Parameters:
+    - combined_structure: ASE Atoms object of a linear bridging ligand with metal centers placed at each bonding site
+    - metal_center: ASE Atoms object of the metal cluster
+    - ligand: ASE Atoms object of the ligand
+    - bonding_sites: List of lists, each containing atom indices (0-based) of a bonding site
+
+    Returns:
+    - unit_cell: ASE Atoms object of our MOF primitive cubic lattice unit cell
+
     """
     # Number of metal atoms and ligand atoms
-    n_metal = len(metal_center)
+    n_metal_single = len(metal_center)  # Should be 6
     n_ligand = len(ligand)
     
     # Extract ligand and metal positions from combined_structure
     ligand_positions_combined = combined_structure.positions[:n_ligand]
-    metal_positions_combined = combined_structure.positions[-n_metal:]
-    metal_centroid = np.mean(metal_positions_combined, axis=0)
+    metal_positions_combined = combined_structure.positions[-2*n_metal_single:]  # Get all metal positions
     
-    # Find coordinating surface atom in combined_structure
-    metal_hull = ConvexHull(metal_positions_combined)
-    surface_atom_indices_combined = np.unique(metal_hull.simplices.flatten())
+    # Split into two metal centers (each should have 6 atoms)
+    metal_center1 = metal_positions_combined[:n_metal_single]
+    metal_center2 = metal_positions_combined[n_metal_single:]
     
-    # Assume that the first surface atom is the coordinating one for ligand
-    surface_atom_idx_combined = surface_atom_indices_combined[0]
-    surface_atom_pos_combined = metal_positions_combined[surface_atom_idx_combined]
+    # Calculate metal center centroids
+    centroid1 = np.mean(metal_center1, axis=0)
+    centroid2 = np.mean(metal_center2, axis=0)
     
-    # Calculate relative positions of ligand atoms to the surface atom in combined_structure
-    ligand_relative_positions = ligand_positions_combined - surface_atom_pos_combined
+    # Find the first bonding site centroid
+    bonding_site_positions = [ligand_positions_combined[idx] for idx in bonding_sites[0]]
+    bonding_site_centroid = np.mean(bonding_site_positions, axis=0)
+    
+    # Determine which metal center is closer to the bonding site
+    dist1 = np.linalg.norm(bonding_site_centroid - centroid1)
+    dist2 = np.linalg.norm(bonding_site_centroid - centroid2)
+    
+    # Select the closer metal center and its positions
+    metal_positions = metal_center1 if dist1 < dist2 else metal_center2
+    metal_centroid = centroid1 if dist1 < dist2 else centroid2
+        
+    # Find coordinating surface atom in the selected metal center
+    metal_hull = ConvexHull(metal_positions)
+    surface_atom_indices = np.unique(metal_hull.simplices.flatten())
+    
+    # Find the surface atom closest to the bonding site
+    min_distance = float('inf')
+    surface_atom_idx = None
+    
+    for idx in surface_atom_indices:
+        surface_pos = metal_positions[idx]
+        distance = np.linalg.norm(bonding_site_centroid - surface_pos)
+        if distance < min_distance:
+            min_distance = distance
+            surface_atom_idx = idx
+            
+    surface_atom_pos = metal_positions[surface_atom_idx]
+    
+    # Calculate relative positions of ligand atoms to the surface atom
+    ligand_relative_positions = ligand_positions_combined - surface_atom_pos
     
     # Calculate the original ligand direction (mean direction)
     original_direction = ligand_relative_positions.mean(axis=0)
