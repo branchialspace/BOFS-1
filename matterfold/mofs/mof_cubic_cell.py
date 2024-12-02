@@ -28,14 +28,14 @@ def mof_cell(
 
     """
     # Number of metal atoms and ligand atoms
-    n_metal_single = len(metal_center)
+    n_metal_single = len(metal_center)  # Should be 6
     n_ligand = len(ligand)
     
     # Extract ligand and metal positions from combined_structure
     ligand_positions_combined = combined_structure.positions[:n_ligand]
     metal_positions_combined = combined_structure.positions[-2*n_metal_single:]  # Get all metal positions
     
-    # Split into two metal centers
+    # Split into two metal centers (each should have 6 atoms)
     metal_center1 = metal_positions_combined[:n_metal_single]
     metal_center2 = metal_positions_combined[n_metal_single:]
     
@@ -79,9 +79,15 @@ def mof_cell(
     original_direction = ligand_relative_positions.mean(axis=0)
     original_direction /= np.linalg.norm(original_direction)
     
-    # Calculate lattice constant based on the combined structure dimensions
-    max_distance = np.max(np.linalg.norm(ligand_relative_positions, axis=1))
-    lattice_constant = max_distance * 6  # Ensure enough space
+    # Calculate maximum ligand extent from coordination point
+    max_ligand_extent = np.max(np.linalg.norm(ligand_relative_positions, axis=1))
+    
+    # Calculate metal center extent in x, y, z directions from its centroid
+    metal_positions_centered = metal_center.positions - np.mean(metal_center.positions, axis=0)
+    metal_extent = np.max(np.abs(metal_positions_centered))
+    
+    # Calculate lattice constant based on metal center extent plus ligand extent in each direction
+    lattice_constant = 2 * (metal_extent + max_ligand_extent)
     
     # Create unit cell with centered metal center
     unit_cell = Atoms(
