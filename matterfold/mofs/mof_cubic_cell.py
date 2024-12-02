@@ -28,14 +28,14 @@ def mof_cell(
 
     """
     # Number of metal atoms and ligand atoms
-    n_metal_single = len(metal_center)  # Should be 6
+    n_metal_single = len(metal_center)
     n_ligand = len(ligand)
     
     # Extract ligand and metal positions from combined_structure
     ligand_positions_combined = combined_structure.positions[:n_ligand]
     metal_positions_combined = combined_structure.positions[-2*n_metal_single:]  # Get all metal positions
     
-    # Split into two metal centers (each should have 6 atoms)
+    # Split into two metal centers
     metal_center1 = metal_positions_combined[:n_metal_single]
     metal_center2 = metal_positions_combined[n_metal_single:]
     
