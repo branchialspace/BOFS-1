@@ -103,16 +103,15 @@ def mof_cell(
     # Calculate lattice constant based on metal-metal distance plus metal extent
     lattice_constant = metal_metal_distance + 2 * metal_extent
     
-    # Create unit cell with centered metal center
+    # Create unit cell
     unit_cell = Atoms(
         symbols=metal_center.get_chemical_symbols(),
         positions=metal_center.get_positions(),
         cell=[lattice_constant, lattice_constant, lattice_constant],
         pbc=True
     )
-    unit_cell.center()
     
-    # Get positions after centering
+    # Get positions
     unit_cell_positions = unit_cell.get_positions()
     center_pos = unit_cell.get_center_of_mass()
     
