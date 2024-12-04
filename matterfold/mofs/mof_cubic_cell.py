@@ -16,7 +16,6 @@ def mof_cell(
     """
     Creates a primitive cubic unit cell of our MOF model.
     Uses relative positions from the combined_structure to coordinate ligands to surface atoms of the cluster.
-    The lattice constant is determined by the distance between coordinating metal atoms plus the metal center extent.
     
     Parameters:
     - combined_structure: ASE Atoms object of a linear bridging ligand with metal centers placed at each bonding site
@@ -85,9 +84,18 @@ def mof_cell(
     dist2 = np.linalg.norm(bonding_site_centroid - centroid2)
     
     # Select the closer metal center and its positions
-    metal_positions = metal_center1 if dist1 < dist2 else metal_center2
-    metal_centroid = centroid1 if dist1 < dist2 else centroid2
-    surface_atom_pos = coord_metal1_pos if dist1 < dist2 else coord_metal2_pos
+    if dist1 < dist2:
+        metal_positions = metal_center1
+        metal_centroid = centroid1
+        surface_atom_pos = coord_metal1_pos
+        unused_metal_center = metal_center2
+        unused_coord_metal_pos = coord_metal2_pos
+    else:
+        metal_positions = metal_center2
+        metal_centroid = centroid2
+        surface_atom_pos = coord_metal2_pos
+        unused_metal_center = metal_center1
+        unused_coord_metal_pos = coord_metal1_pos
         
     # Calculate relative positions of ligand atoms to the surface atom
     ligand_relative_positions = ligand_positions_combined - surface_atom_pos
@@ -96,12 +104,23 @@ def mof_cell(
     original_direction = ligand_relative_positions.mean(axis=0)
     original_direction /= np.linalg.norm(original_direction)
     
-    # Calculate metal center extent in x, y, z directions from its centroid
-    metal_positions_centered = metal_center.positions - np.mean(metal_center.positions, axis=0)
-    metal_extent = np.max(np.abs(metal_positions_centered))
+    # Find surface atoms for the metal center we are using
+    hull = ConvexHull(metal_positions)
+    surface_indices = np.unique(hull.simplices.flatten())
+    max_distance = -float('inf')
+    opposite_surface_atom_idx = None
+    for idx in surface_indices:
+        pos = metal_positions[idx]
+        distance = np.linalg.norm(pos - surface_atom_pos)
+        if distance > max_distance:
+            max_distance = distance
+            opposite_surface_atom_idx = idx
+    opposite_surface_atom_pos = metal_positions[opposite_surface_atom_idx]
     
-    # Calculate lattice constant based on metal-metal distance plus metal extent
-    lattice_constant = metal_metal_distance + 2 * metal_extent
+    # Calculate lattice constant based on the distance between the opposite surface atom
+    # and the coordinating atom of the unused metal center
+    lattice_constant = np.linalg.norm(opposite_surface_atom_pos - unused_coord_metal_pos)
+
     
     # Create unit cell
     unit_cell = Atoms(
@@ -123,14 +142,21 @@ def mof_cell(
     ]
     
     surface_atoms = []
-    for direction in directions:
+    ligand_rotations = []  # To store rotation matrices for each ligand
+    ligand_translations = []  # To store translations (surface positions) for each ligand
+    far_side_coord_atom_positions = []  # Store far-side coordinating atom positions
+    vectors_v = []  # Vectors from surface atom to far-side coordinating atom
+    unit_vectors_u = []  # Target vectors along lattice vectors
+    
+    # Compute vector from bonding site centroid to unused coord_metal_pos
+    unused_coord_vector = unused_coord_metal_pos - bonding_site_centroid
+    
+    for idx, direction in enumerate(directions):
         # Project positions onto direction vector
         projections = np.dot(unit_cell_positions - center_pos, direction)
         surface_idx = np.argmax(projections)
         surface_atoms.append(surface_idx)
-    
-    # Add coordinated ligands to each surface atom with correct orientation
-    for surface_idx in surface_atoms:
+        
         new_surface_pos = unit_cell_positions[surface_idx]
         
         # Calculate the new direction vector from metal centroid to surface atom
@@ -162,6 +188,10 @@ def mof_cell(
             rotation = R.from_rotvec(rotation_axis * angle)
             rotation_matrix = rotation.as_matrix()
         
+        # Store rotation and translation
+        ligand_rotations.append(rotation_matrix)
+        ligand_translations.append(new_surface_pos)
+        
         # Apply rotation to ligand_relative_positions
         rotated_ligand_rel_pos = np.dot(ligand_relative_positions, rotation_matrix.T)
         
@@ -171,6 +201,93 @@ def mof_cell(
         ligand_copy.set_positions(new_ligand_positions)
         
         unit_cell += ligand_copy
+        
+        # Compute far-side coordinating atom position
+        far_side_coord_atom_pos = np.dot(unused_coord_vector, rotation_matrix.T) + new_surface_pos
+        far_side_coord_atom_positions.append(far_side_coord_atom_pos)
+        
+        # Compute vector v_i from surface atom to far-side coordinating atom
+        v_i = far_side_coord_atom_pos - new_surface_pos
+        vectors_v.append(v_i)
+        
+        # Target vector along lattice vector direction
+        unit_vectors_u.append(direction * lattice_constant)
+    
+    # Adjust the position and rotation of the entire structure to align with unit cell boundaries
+    
+    # Stack vectors_v and unit_vectors_u
+    V = np.array(vectors_v).T  # Shape (3, 3)
+    U = np.array(unit_vectors_u).T  # Shape (3, 3)
+    
+    # Compute the covariance matrix
+    H = V @ U.T
+    
+    # Compute SVD
+    U_SVD, S, Vt_SVD = np.linalg.svd(H)
+    
+    # Compute rotation matrix
+    R_opt = Vt_SVD.T @ U_SVD.T
+    
+    # Correct for reflection
+    if np.linalg.det(R_opt) < 0:
+        Vt_SVD[-1, :] *= -1
+        R_opt = Vt_SVD.T @ U_SVD.T
+    
+    # Apply rotation to the entire unit cell
+    positions = unit_cell.get_positions() - center_pos  # Center positions
+    rotated_positions = np.dot(positions, R_opt.T)
+    unit_cell.set_positions(rotated_positions + center_pos)
+    
+    # Update far_side_coord_atom_positions and surface atom positions
+    # Rotate extreme points
+    extreme_points = np.array(far_side_coord_atom_positions + [unit_cell.get_positions()[i] for i in surface_atoms])
+    extreme_points_centered = extreme_points - center_pos
+    rotated_extreme_points = np.dot(extreme_points_centered, R_opt.T) + center_pos
+    
+    # Compute min and max extremes
+    min_extremes = np.min(rotated_extreme_points, axis=0)
+    max_extremes = np.max(rotated_extreme_points, axis=0)
+    
+    # Compute the center of the extreme points
+    center_extremes = (min_extremes + max_extremes) / 2
+    
+    # Compute translation to align center_extremes with cell center
+    cell_center = np.array([lattice_constant/2]*3)
+    translation = cell_center - center_extremes
+    
+    # Apply translation to the entire unit cell
+    unit_cell.translate(translation)
+
+    # Now adjust the positions to ensure all atoms are within the cell boundaries
+    positions = unit_cell.get_positions()
+
+    min_positions = np.min(positions, axis=0)
+    max_positions = np.max(positions, axis=0)
+
+    # Initialize additional translation
+    additional_translation = np.zeros(3)
+
+    # Adjust along x-axis
+    if min_positions[0] < 0:
+        additional_translation[0] = -min_positions[0]
+    elif max_positions[0] > lattice_constant:
+        additional_translation[0] = lattice_constant - max_positions[0]
+
+    # Adjust along y-axis
+    if min_positions[1] < 0:
+        additional_translation[1] = -min_positions[1]
+    elif max_positions[1] > lattice_constant:
+        additional_translation[1] = lattice_constant - max_positions[1]
+
+    # Adjust along z-axis
+    if min_positions[2] < 0:
+        additional_translation[2] = -min_positions[2]
+    elif max_positions[2] > lattice_constant:
+        additional_translation[2] = lattice_constant - max_positions[2]
+
+    # Apply additional translation
+    positions += additional_translation
+    unit_cell.set_positions(positions)
     
     metal_formula = metal_center.get_chemical_formula()
     ligand_formula = ligand.get_chemical_formula()
