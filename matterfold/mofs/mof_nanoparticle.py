@@ -13,13 +13,13 @@ def mof_supercell(
     ligand: Atoms,
     combined_structure: Atoms,
     bonding_sites: list,
-    target_size: int = 8, # 27, 64
+    target_size: int = 8, # 27, 63, 125
     target_shape: str = 'sc',
-    wrap: bool = True
+    wrap: bool = False
 ) -> Atoms:
     """
-    Creates an extended lattice nanoparticle structure from a MOF unit cell and removes
-    surface atoms and ligands on the convex hull.
+    Creates an extended cubic lattice nanoparticle from a MOF unit cell and removes
+    surface metal atoms and ligands along the convex hull.
 
     Parameters:
     - unit_cell: ASE Atoms object of the MOF primitive cubic unit cell
@@ -29,14 +29,14 @@ def mof_supercell(
     - bonding_sites: List of lists, each containing atom indices (0-based) of a bonding site
     - target_size: Target number of unit cells in the supercell (default: 8 for 2x2x2)
     - target_shape: Desired supercell shape, 'sc' for simple cubic or 'fcc' for face-centered cubic (default: 'sc')
-    - wrap: Whether to wrap atoms at the boundaries (default: True)
+    - wrap: Whether to wrap atoms at the boundaries (default: False)
 
     Returns:
     - extended_lattice: ASE Atoms object of the extended MOF lattice with surface atoms and ligands removed
     """
     n_metal_center = len(metal_center)
     n_ligand = len(ligand)
-    n_total = len(unit_cell)  # Total atoms in one unit cell
+    n_total = len(unit_cell)
 
     # Create the supercell using the transformation matrix
     P = find_optimal_cell_shape(
@@ -54,11 +54,27 @@ def mof_supercell(
     )
 
     # Remove surface structures to maintain charge balance and geometry for aperiodic structure
-    
+
     # Compute the convex hull of the extended lattice
     positions = extended_lattice.get_positions()
     hull = ConvexHull(positions)
-    hull_indices = np.unique(hull.vertices)
+
+    # Each row of hull.equations is of form [A, B, C, D] defining a plane A*x + B*y + C*z + D = 0
+    equations = hull.equations
+    tol = 1e-2
+    on_hull_indices = []
+
+    for i, pos in enumerate(positions):
+        # Check each facet inequality:
+        # For a point inside the hull, (A*x+B*y+C*z+D) < 0 for all facets (if normals point outward).
+        # Points on or outside will satisfy (A*x+B*y+C*z+D) >= -tol for at least one facet.
+        distances = np.dot(equations[:, :3], pos) + equations[:, 3]
+        # If this point is on or outside one of the hull facets (within a small tolerance),
+        # consider it a hull atom.
+        if np.any(distances >= -tol):
+            on_hull_indices.append(i)
+
+    hull_indices = np.array(on_hull_indices)
 
     # Initialize a set to collect indices of atoms to remove
     atoms_to_remove = set()
@@ -75,12 +91,24 @@ def mof_supercell(
             atoms_to_remove.add(idx)
         else:
             # It's a ligand atom
-            # Remove all ligand atoms in this unit cell
-            ligand_atom_indices = [unit_cell_index * n_total + i for i in range(n_metal_center, n_total)]
-            atoms_to_remove.update(ligand_atom_indices)
+            # Remove only the ligand connected to this atom
+            # First, find all ligand atoms connected to this atom in the unit cell
+            ligand_start_idx = unit_cell_index * n_total + n_metal_center
+            ligand_end_idx = unit_cell_index * n_total + n_total
+            ligand_atom_indices = list(range(ligand_start_idx, ligand_end_idx))
 
-            # Find the closest metal center atom in the same unit cell to this ligand
-            ligand_positions = extended_lattice.get_positions()[ligand_atom_indices]
+            # Remove only the ligand atoms corresponding to this ligand molecule
+            # Assuming ligands are added in the same order and structure as in the ligand Atoms object
+            n_atoms_per_ligand = len(ligand)
+            # Find which ligand molecule this atom belongs to
+            ligand_molecule_index = (atom_in_unit_cell_index - n_metal_center) // n_atoms_per_ligand
+            ligand_molecule_start = ligand_start_idx + ligand_molecule_index * n_atoms_per_ligand
+            ligand_molecule_end = ligand_molecule_start + n_atoms_per_ligand
+            ligand_molecule_indices = list(range(ligand_molecule_start, ligand_molecule_end))
+            atoms_to_remove.update(ligand_molecule_indices)
+
+            # Find the closest metal center atom to this ligand molecule
+            ligand_positions = extended_lattice.get_positions()[ligand_molecule_indices]
             metal_center_indices = [unit_cell_index * n_total + i for i in range(n_metal_center)]
             metal_center_positions = extended_lattice.get_positions()[metal_center_indices]
 
@@ -97,14 +125,15 @@ def mof_supercell(
             # Remove this metal center atom
             atoms_to_remove.add(closest_metal_atom_idx)
 
-    # Remove the identified atoms from the extended lattice
+    # Remove the identified atoms and pbc from the extended lattice
     keep_indices = [i for i in range(len(extended_lattice)) if i not in atoms_to_remove]
     extended_lattice = extended_lattice[keep_indices]
+    extended_lattice.pbc = False
 
-    # Write the extended lattice to a file
     ligand_formula = ligand.get_chemical_formula()
     metal_center_formula = metal_center.get_chemical_formula()
-    filename = f"{metal_center_formula}_{ligand_formula}_{target_size}_{target_shape}_nanoparticle.cif" # xyz fails for 64 cell
+    filename = f"{metal_center_formula}_{ligand_formula}_{target_size}_{target_shape}_nanoparticle.cif" # xyz fails for 64 cell and larger
     write(filename, extended_lattice)
 
     return extended_lattice
+
