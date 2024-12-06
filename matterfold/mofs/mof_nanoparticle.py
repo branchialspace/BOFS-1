@@ -7,7 +7,7 @@ from scipy.spatial import ConvexHull
 import numpy as np
 
 
-def mof_supercell(
+def mof_nanoparticle(
     unit_cell: Atoms,
     metal_center: Atoms,
     ligand: Atoms,
