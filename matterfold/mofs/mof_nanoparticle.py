@@ -13,7 +13,7 @@ def mof_supercell(
     ligand: Atoms,
     combined_structure: Atoms,
     bonding_sites: list,
-    target_size: int = 8, # 27, 63, 125
+    target_size: int = 8, # 27, 64, 125
     target_shape: str = 'sc',
     wrap: bool = False
 ) -> Atoms:
