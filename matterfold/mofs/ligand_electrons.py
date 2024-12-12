@@ -1,5 +1,5 @@
-# Mayer and Minimal Basis Iterative Stockholder (MBIS) bonding site analysis in ORCA. 
-# Determine non-bonded electrons.
+# Ligand DFT and orbital analysis in ORCA
+# Mayer, MBIS, NBO
 
 import os
 import subprocess
@@ -7,21 +7,21 @@ import re
 from ase import Atoms
 
 
-def non_bonded_electrons(ligand, charge=0, mult=1, method='B3LYP', basis_set='def2-SVP'):
+def ligand_electron_analysis(ligand, charge=0, mult=1, method='B3LYP', basis_set='def2-SVP'):
     """
 
     Parameters:
     - ligand: ASE Atoms object representing the ligand molecule.
     - charge: Overall charge of the ligand.
     - mult: Spin multiplicity of the ligand.
-    - method: Quantum chemistry method to use (e.g., 'B3LYP').
+    - method: Density functional method to use (e.g., 'B3LYP').
     - basis_set: Basis set to use (e.g., 'def2-SVP').
 
     Returns:
-    - bonding_site_analysis: Dictionary containing information about each atom's bonding role.
+    - ligand_electron_analysis: Dictionary containing information about each atoms electron properties.
     """
     # Define the ORCA executable path
-    orca_path = '/root/orca_6_0_0/orca'
+    orca_path = '/root/orca_6_0_1/orca'
 
     # Define filenames
     input_filename = 'orca_input.inp'
@@ -46,17 +46,20 @@ def non_bonded_electrons(ligand, charge=0, mult=1, method='B3LYP', basis_set='de
     # Parse the output file
     mayer_data = parse_mayer_data(output_filename)
     mbis_data = parse_mbis_data(output_filename)
-    bonding_site_analysis = valence_minus_bonded(mayer_data, mbis_data)
+    nbo_data = parse_nbo(output_filename)
+    ligand_electron_analysis = process_orca_data(mayer_data, mbis_data, nbo_data)
 
-    return bonding_site_analysis
+    return ligand_electron_analysis
 
 def write_orca_input(ligand, filename, charge, mult, method, basis_set):
     with open(filename, 'w') as f:
         # Write method and basis set
-        f.write(f"! {method} {basis_set} MBIS\n")
+        f.write(f"! {method} {basis_set} MBIS NBO\n")
         f.write("%output\n")
         f.write("    Print[P_MBIS] 1\n")
         f.write("    Print[P_Mayer] 1\n")
+        f.write("    Print[P_NBO] 1\n")
+        f.write("    Print[P_NPA] 1\n")
         f.write("end\n\n")
         f.write("%method\n")
         f.write("    MAYER_BONDORDERTHRESH 0.05\n")
@@ -169,39 +172,101 @@ def parse_mbis_data(filename):
             continue
     return mbis_data
 
-def valence_minus_bonded(mayer_data, mbis_data):
-    """
-    Subtract the mbis valence population from the mayer bond orders to determine non-bonded electrons. Return all data.
+def parse_nbo(filename):
+    nbo_data = {'npa_charges': {}, 'lone_pairs': {}}    
+    with open(filename, 'r') as f:
+        lines = f.readlines()
 
+    npa_section = False
+    lone_pair_section = False
+
+    # Parse NPA charges
+    for line in lines:
+        if 'Summary of Natural Population Analysis:' in line:
+            npa_section = True
+            continue
+        if npa_section:
+            if '===' in line:
+                npa_section = False
+                continue
+            parts = line.strip().split()
+            if len(parts) >= 6 and parts[0].isalpha() and parts[1].isdigit():
+                atom_index = int(parts[1]) - 1
+                charge = float(parts[2])
+                nbo_data['npa_charges'][atom_index] = charge
+
+    # Parse lone pairs from the NBO summary
+    lp_line_pattern = re.compile(r'^\s*(\d+\.)\s*LP\s*\(\s*(\d+)\s*\)\s+([A-Za-z]+)\s+(\d+)\s+([-\d\.]+)\s+([-\d\.]+)')
+    for line in lines:
+        if 'NATURAL BOND ORBITALS (Summary):' in line:
+            lone_pair_section = True
+            continue
+        if lone_pair_section:
+            if '------ non-Lewis' in line:
+                break
+            match = lp_line_pattern.match(line)
+            if match:
+                # Extract groups from regex, example:
+                # group(1) = "9.", group(2) = LP number, group(3)=Element, group(4)=Atom index, group(5)=Occupancy, group(6)=Energy
+                lp_number = int(match.group(2))
+                element = match.group(3)
+                atom_index = int(match.group(4)) - 1
+                occupancy = float(match.group(5))
+                energy = float(match.group(6))
+
+                if atom_index not in nbo_data['lone_pairs']:
+                    nbo_data['lone_pairs'][atom_index] = []
+                
+                nbo_data['lone_pairs'][atom_index].append({
+                    'lp_number': lp_number,
+                    'occupancy': occupancy,
+                    'energy': energy
+                })
+
+    return nbo_data
+
+def process_orca_data(mayer_data, mbis_data, nbo_data):
+    """
+    Return all data including NBO analysis.
+    
     Parameters:
-    - mayer_data: Dictionary containing Mayer bond orders.
-    - mbis_data: Dictionary containing MBIS charges and valence populations.
-
+    - mayer_data: Dictionary containing Mayer bond orders
+    - mbis_data: Dictionary containing MBIS charges and valence populations
+    - nbo_data: Dictionary containing NPA charges and lone pair information
+    
     Returns:
-    - bonding_site_analysis: Dictionary with bonding information for each atom.
+    - ligand_electron_analysis: Dictionary containing information about each atoms electron properties.
     """
-    bonding_site_analysis = {}
+    ligand_electron_analysis = {}
 
     for atom_index, mbis_info in mbis_data.items():
         element = mbis_info['element']
         mbis_charge = mbis_info.get('mbis_charge', None)
         valence_population = mbis_info.get('valence_population', None)
 
-        if valence_population is None:
-            print(f"No valence population data for atom {atom_index}")
-            continue
-
         # Get bonded electrons from Mayer bond orders
-        bonded_electrons = sum(order for (a1, a2), order in mayer_data['bond_orders'].items() if atom_index in (a1, a2))
+        bonded_electrons = sum(order for (a1, a2), order in mayer_data['bond_orders'].items() 
+                             if atom_index in (a1, a2))
 
-        non_bonded_electrons = valence_population - bonded_electrons
+        # Get non-bonded electrons
+        non_bonded_electrons = valence_population - bonded_electrons if valence_population is not None else None
 
-        bonding_site_analysis[atom_index] = {
+        # Get NBO information
+        npa_charge = nbo_data['npa_charges'].get(atom_index, None)
+        lone_pairs = nbo_data['lone_pairs'].get(atom_index, [])
+        
+        # Calculate total lone pair electrons
+        total_lp_electrons = sum(lp['occupancy'] for lp in lone_pairs)
+
+        ligand_electron_analysis[atom_index] = {
             'element': element,
             'valence_population': valence_population,
             'mbis_charge': mbis_charge,
             'bonded_electrons': bonded_electrons,
-            'non_bonded_electrons': non_bonded_electrons
+            'non_bonded_electrons': non_bonded_electrons,
+            'npa_charge': npa_charge,
+            'nbo_lp': lone_pairs,
+            'total_lp_electrons': total_lp_electrons
         }
 
-    return bonding_site_analysis
+    return ligand_electron_analysis
