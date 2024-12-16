@@ -1,7 +1,6 @@
 # Ligand DFT and orbital analysis in ORCA
 # Mayer, MBIS, NBO
 
-import os
 import subprocess
 import re
 from ase import Atoms
