@@ -63,7 +63,7 @@ def generate_metal_polyhedron(species: str, num_atoms: int) -> Atoms:
     atoms = Atoms(atoms_list, positions=positions)
 
     formula = atoms.get_chemical_formula()
-    filename = f"{formula}_polyhedron.xyz"
+    filename = f"{formula}_center.xyz"
     write(filename, atoms)
 
     return atoms
