@@ -16,10 +16,10 @@ def ligand_metal_docking(
     bonding_sites: list,
 ) -> Atoms:
     """
-    Place metal centers at each bonding site on the ligand using geometric centroids and normalized 
-    bond vectors as initial direction vectors. Final positions are optimized using the law of 
-    cosines and L-BFGS-B minimization to achieve exact covalent radii-based distances between the 
-    metal center and each bonding site atom. Metal center orientations are then optimized for 
+    Place metal centers at each bonding site on the ligand using geometric centroids and normalized  
+    intersections of bonding site atoms as initial direction vectors. Final positions are optimized
+    with law of cosines and L-BFGS-B minimization for covalent radii-based distances between the 
+    metal center and each bonding site atom. Metal center orientations are optimized for 
     rotation around the bonding site to minimize steric hindrance.
 
     Parameters:
