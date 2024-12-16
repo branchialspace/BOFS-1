@@ -45,8 +45,8 @@ def sphere_pack_cluster(species, n_atoms, max_iterations=2000, seed=42):
 
     return positions
 
-# Generate a metal polyhedron with a specified number of atoms
-def generate_metal_polyhedron(species: str, num_atoms: int) -> Atoms:
+# Generate a metal polyhedron with a specified number of atoms, or a single centered atom
+def generate_metal_center(species: str, num_atoms: int) -> Atoms:
     species_str = species.capitalize()
 
     if num_atoms == 1:
