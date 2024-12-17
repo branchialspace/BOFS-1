@@ -3,7 +3,7 @@
 import subprocess
 
 
-def ligand_metal_docking(host, guest_xyz_file, charge=0, mult=1, docking_method='XTB', docker_options=None):
+def ligand_metal_docking(host, guest_xyz_file, charge=0, mult=1, docking_method='!XTB', docker_options=None):
     """
     Performs an ORCA docking calculation using the given HOST (as an ASE Atoms object)
     and a specified GUEST .xyz file.
@@ -28,11 +28,9 @@ def ligand_metal_docking(host, guest_xyz_file, charge=0, mult=1, docking_method=
     if docker_options is None:
         docker_options = {}
 
-    # Input and output filenames
+    # Write the ORCA DOCKER input file
     input_filename = 'orca_docker_input.inp'
     output_filename = 'orca_docker_output.out'
-
-    # Write the ORCA DOCKER input file
     write_orca_docker_input(host, guest_xyz_file, input_filename, charge, mult, docking_method, docker_options)
 
     # Run ORCA docking calculation
@@ -45,9 +43,6 @@ def ligand_metal_docking(host, guest_xyz_file, charge=0, mult=1, docking_method=
 
 def write_orca_docker_input(host, guest_xyz_file, filename, charge, mult, docking_method, docker_options):
 
-    # Determine the keyword line based on docking_method
-    method_keyword = f"!{docking_method}"
-
     # Prepare DOCKER block
     # The minimal DOCKER block requires a GUEST line:
     # %DOCKER GUEST "guest.xyz" END
@@ -59,7 +54,7 @@ def write_orca_docker_input(host, guest_xyz_file, filename, charge, mult, dockin
 
     with open(filename, 'w') as f:
         # Write the docking method
-        f.write(method_keyword + "\n")
+        f.write(docking_method + "\n")
 
         # Write the DOCKER block
         f.write("\n".join(docker_lines))
