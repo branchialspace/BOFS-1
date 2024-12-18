@@ -30,4 +30,6 @@ os.environ['NBOBIN'] = '/content/nbo7/bin'
 ```
 
 
+Example Bi2C4H2O4 MOF Nanoparticle:
+
 ![](bi2_fumarate_nanoparticle.png)
