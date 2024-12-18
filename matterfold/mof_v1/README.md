@@ -28,3 +28,6 @@ os.environ['NBOBIN'] = '/content/nbo7/bin'
 # !apt install python3-mpi4py cython3 libxc-dev gpaw-data
 # !pip -q install gpaw
 ```
+
+
+![](bi2_fumarate_nanoparticle.png)
