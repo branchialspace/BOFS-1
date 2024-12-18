@@ -8,7 +8,7 @@ from ase import Atoms
 
 def ligand_bonding_sites(
     ligand: Atoms,
-    bonding_site_analysis: dict,
+    ligand_electron_analysis: dict,
     donor_elements=['N', 'O', 'S', 'P', 'F', 'Cl', 'Se', 'Br', 'I', 'At', 'Ts'],
     min_unbonded_electrons=1.0,
     clustering_distance_threshold=3.4
@@ -18,7 +18,7 @@ def ligand_bonding_sites(
 
     Parameters:
     - ligand: ASE Atoms object representing the ligand molecule.
-    - bonding_site_analysis: Dictionary containing unbonded electron counts per atom.
+    - ligand_electron_analysis: Dictionary containing unbonded electron counts per atom.
     - donor_elements: List of element symbols to consider as potential donors.
     - min_unbonded_electrons: Minimum number of unbonded electrons required.
     - clustering_distance_threshold: Distance threshold for clustering (in Angstroms).
@@ -29,7 +29,7 @@ def ligand_bonding_sites(
     # Step 1: Filter for potential donor atoms
     donor_atom_indices = []
     donor_positions = []
-    for atom_index, info in bonding_site_analysis.items():
+    for atom_index, info in ligand_electron_analysis.items():
         element = info['element']
         non_bonded_electrons = info['non_bonded_electrons']
         if element in donor_elements and non_bonded_electrons >= min_unbonded_electrons:
