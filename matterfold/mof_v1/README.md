@@ -1,6 +1,5 @@
+Requirements (Colab Runtime):
 ```bash
-#  Requirements (Colab Runtime)
-
 !pip install rdkit
 !pip install ase
 !pip install pymatgen
@@ -28,8 +27,5 @@ os.environ['NBOBIN'] = '/content/nbo7/bin'
 # !apt install python3-mpi4py cython3 libxc-dev gpaw-data
 # !pip -q install gpaw
 ```
-
-
 Example Bi2C4H2O4 MOF Nanoparticle:
-
 ![](bi2_fumarate_nanoparticle.png)
