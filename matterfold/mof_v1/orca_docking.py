@@ -3,7 +3,7 @@
 import subprocess
 
 
-def ligand_metal_docking(host, guest_xyz_file, charge=0, mult=1, docking_method='!XTB', docker_options=None):
+def orca_docking(host, guest_xyz_file, charge=0, mult=1, docking_method='!XTB', docker_options=None):
     """
     Performs an ORCA docking calculation using the given HOST (as an ASE Atoms object)
     and a specified GUEST .xyz file.
@@ -70,5 +70,5 @@ def write_orca_docker_input(host, guest_xyz_file, filename, charge, mult, dockin
 
 if __name__ == "__main__":
   
-    perform_docking(host=ligand, guest_xyz_file="/content/Bi_center.xyz", charge=-4,
+    orca_docking(host=ligand, guest_xyz_file="/content/Bi_center.xyz", charge=-4,
                     docker_options={'GUESTCHARGE': 2, 'FIXHOST': 'FALSE', 'NREPEATGUEST': 2, 'DOCKLEVEL': 'COMPLETE'})
