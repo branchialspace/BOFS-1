@@ -71,4 +71,4 @@ def write_orca_docker_input(host, guest_xyz_file, filename, charge, mult, dockin
 if __name__ == "__main__":
   
     orca_docking(host=ligand, guest_xyz_file="/content/Bi_center.xyz", charge=-4,
-                    docker_options={'GUESTCHARGE': 2, 'FIXHOST': 'FALSE', 'NREPEATGUEST': 2, 'DOCKLEVEL': 'COMPLETE'})
+                    docker_options={'GUESTCHARGE': 2, 'NREPEATGUEST': 2, 'DOCKLEVEL': 'COMPLETE'})
