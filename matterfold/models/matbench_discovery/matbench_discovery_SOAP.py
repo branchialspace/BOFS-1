@@ -9,7 +9,7 @@ from tqdm import tqdm
 
 def soap_local(data_path, r_cut=5.0, n_max=4, l_max=4, sigma=0.4):
     data = torch.load(data_path)
-    
+
     soap = SOAP(species=["H"], periodic=True, r_cut=r_cut, n_max=n_max, l_max=l_max, sigma=sigma)
     for graph in tqdm(data['mp_graphs'], desc="Processing MP graphs local SOAP"):
         process_graph(graph, soap)
@@ -20,7 +20,7 @@ def soap_local(data_path, r_cut=5.0, n_max=4, l_max=4, sigma=0.4):
 
 def soap_global(data_path, r_cut=5.0, n_max=4, l_max=4, sigma=0.4):
     data = torch.load(data_path)
-    
+
     average_soap = SOAP(species=["H"], periodic=True, r_cut=r_cut, n_max=n_max, l_max=l_max, sigma=sigma, average="inner")
     for graph in tqdm(data['mp_graphs'], desc="Processing MP graphs global SOAP"):
         process_graph_global(graph, average_soap)
@@ -30,20 +30,36 @@ def soap_global(data_path, r_cut=5.0, n_max=4, l_max=4, sigma=0.4):
     print(f"Global SOAP descriptors calculated and saved to {data_path}.")
 
 def process_graph(graph, soap):
-    positions = graph.pos.numpy()
-    num_atoms = positions.shape[0]
-    system = Atoms(numbers=np.ones(num_atoms), positions=positions, cell=graph.cell, pbc=graph.pbc)
+    positions = graph.pos.cpu().numpy()
+    cell = graph.cell.cpu().numpy() if isinstance(graph.cell, torch.Tensor) else graph.cell
+    pbc = graph.pbc.cpu().numpy() if isinstance(graph.pbc, torch.Tensor) else graph.pbc
+
+    if isinstance(pbc, np.ndarray) and pbc.dtype != bool:
+        pbc = pbc.astype(bool)
+
+    system = Atoms(numbers=np.ones(len(positions), dtype=int),
+                   positions=positions,
+                   cell=cell,
+                   pbc=pbc)
     soap_descriptors = soap.create(system)
-    
     graph.soap = torch.tensor(soap_descriptors, dtype=torch.float32)
 
+
 def process_graph_global(graph, average_soap):
-    positions = graph.pos.numpy()
-    num_atoms = positions.shape[0]
-    system = Atoms(numbers=np.ones(num_atoms), positions=positions, cell=graph.cell, pbc=graph.pbc)
+    positions = graph.pos.cpu().numpy()
+    cell = graph.cell.cpu().numpy() if isinstance(graph.cell, torch.Tensor) else graph.cell
+    pbc = graph.pbc.cpu().numpy() if isinstance(graph.pbc, torch.Tensor) else graph.pbc
+
+    if isinstance(pbc, np.ndarray) and pbc.dtype != bool:
+        pbc = pbc.astype(bool)
+
+    system = Atoms(numbers=np.ones(len(positions), dtype=int),
+                   positions=positions,
+                   cell=cell,
+                   pbc=pbc)
     global_soap_descriptor = average_soap.create(system)
-    
     graph.global_soap = torch.tensor(global_soap_descriptor, dtype=torch.float32)
+
 
 if __name__ == "__main__":
     data_path = '/content/drive/MyDrive/matbench_discovery/MBDData.pt'
