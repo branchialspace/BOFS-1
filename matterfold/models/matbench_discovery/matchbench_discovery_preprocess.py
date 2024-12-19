@@ -41,13 +41,18 @@ def preprocess_matbench_discovery_data(path, cutoff: float = 5.0, batch_size: in
 
         graphs = []
         for i in range(batch_size):
+            # Find neighbors within cutoff distance
             neighbors = torch.nonzero(dist_matrix[i, :num_atoms[i]*27, :num_atoms[i]] < cutoff)
+            # edge_index: [2, num_edges], separate row and col indices
             edge_index = neighbors[neighbors[:, 0] // 27 != neighbors[:, 1]].T
+            # Convert 0-based extended atom indices to just 0-based atom indices
             edge_index[0] = edge_index[0] // 27
+
             x = atomic_numbers[i, :num_atoms[i]].unsqueeze(1).float()
             pos = positions[i, :num_atoms[i]]
             cell = cells[i]
             pbc = pbcs[i]
+
             graphs.append(Data(x=x, edge_index=edge_index, pos=pos, cell=cell, pbc=pbc, 
                                material_id=material_ids[i], formula=formulas[i]))
 
@@ -56,26 +61,21 @@ def preprocess_matbench_discovery_data(path, cutoff: float = 5.0, batch_size: in
     def process_dataset(structures_data, properties_data, structure_key, energy_key, formula_key, dataset_name):
         print(f"Processing {dataset_name} data...")
         
-        # Ensure data alignment
-        if dataset_name == 'MP':
-            common_ids = structures_data.index.intersection(properties_data.index)
-            structures_data = structures_data.loc[common_ids]
-            properties_data = properties_data.loc[common_ids]
-            material_ids = structures_data.index.tolist()
-        else:  # WBM
-            structures_data = structures_data.reset_index()
-            properties_data = properties_data.reset_index()
-            common_ids = structures_data['material_id'].intersection(properties_data['material_id'])
-            structures_data = structures_data[structures_data['material_id'].isin(common_ids)]
-            properties_data = properties_data[properties_data['material_id'].isin(common_ids)]
-            material_ids = structures_data['material_id'].tolist()
+        # For both MP and WBM, we will use the index intersection to ensure alignment
+        common_ids = structures_data.index.intersection(properties_data.index)
+        structures_data = structures_data.loc[common_ids]
+        properties_data = properties_data.loc[common_ids]
+        material_ids = structures_data.index.tolist()
 
+        # Extract structures and formulas
         if dataset_name == 'MP':
+            # MP data is stored differently: 'structure' is nested under `entry`
             structures = [Structure.from_dict(row[structure_key]['structure']) for _, row in structures_data.iterrows()]
             formulas = [row[structure_key]['composition'] for _, row in structures_data.iterrows()]
-        else:  # WBM
+        else:
+            # WBM data: 'initial_structure' is directly in the DataFrame row as a dict
             structures = [Structure.from_dict(row[structure_key]) for _, row in structures_data.iterrows()]
-            formulas = structures_data[formula_key].tolist()
+            formulas = properties_data[formula_key].tolist()
 
         energies = properties_data[energy_key].tolist()
 
@@ -103,29 +103,29 @@ def preprocess_matbench_discovery_data(path, cutoff: float = 5.0, batch_size: in
         print(f"Processed {dataset_name} structures: {len(graphs)}")
         return graphs, y_values
 
-    # Process MP data
+    # Load MP data
     mp_entries = load("mp_computed_structure_entries", version="1.0.0")
     mp_energies = load("mp_energies", version="1.0.0")
     mp_graphs, mp_y_values = process_dataset(
-        mp_entries, mp_energies, 
-        structure_key='entry', 
-        energy_key='energy_above_hull', 
+        mp_entries, mp_energies,
+        structure_key='entry',
+        energy_key='energy_above_hull',
         formula_key='formula_pretty',
         dataset_name='MP'
     )
 
-    # Process WBM data
+    # Load WBM data
     wbm_summary = load("wbm_summary", version="1.0.0")
     wbm_initial_structures = load("wbm_initial_structures", version="1.0.0")
-    
     wbm_graphs, wbm_y_values = process_dataset(
-        wbm_initial_structures, wbm_summary, 
-        structure_key='initial_structure', 
-        energy_key='e_above_hull_mp2020_corrected_ppd_mp', 
+        wbm_initial_structures, wbm_summary,
+        structure_key='initial_structure',
+        energy_key='e_above_hull_mp2020_corrected_ppd_mp',
         formula_key='formula',
         dataset_name='WBM'
     )
 
+    # Save processed data
     print(f"Saving processed data to {path}...")
     torch.save({
         'mp_graphs': mp_graphs,
