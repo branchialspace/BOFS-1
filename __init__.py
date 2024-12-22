@@ -7,3 +7,4 @@ from .matterfold.mof_v1.mof_nanoparticle import mof_nanoparticle
 from .matterfold.mof_v1.ligand_metal_docking import ligand_metal_docking
 from .matterfold.mof_v1.orca_docking import orca_docking
 from .matterfold.mof_v1 import utils
+from .matterfold.models.matbench_discovery import soap 
