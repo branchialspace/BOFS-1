@@ -11,7 +11,7 @@ from tqdm import tqdm
 import matterfold as mf
 
 
-def preprocess_matbench_discovery(path, cutoff: float = 5.0, batch_size: int = 100):
+def preprocess_matbench_discovery(path, cutoff: float = 3.0, batch_size: int = 100):
     # Decide which device to use
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -184,7 +184,7 @@ def preprocess_matbench_discovery(path, cutoff: float = 5.0, batch_size: int = 1
         data_save_path,
         soap_local=True,
         soap_global=True,
-        r_cut=5.0,
+        r_cut=3.0,
         n_max=4,
         l_max=4,
         sigma=0.4
