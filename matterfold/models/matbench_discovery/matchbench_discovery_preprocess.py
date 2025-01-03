@@ -11,7 +11,17 @@ from tqdm import tqdm
 import matterfold as mf
 
 
-def preprocess_matbench_discovery(path, cutoff: float = 3.0, batch_size: int = 100):
+def preprocess_matbench_discovery(
+    path,
+    cutoff: float = 3.0,
+    batch_size: int = 100,
+    local_soap: bool = False,
+    global_soap: bool = False,
+    soap_rcut: float = 3.0,
+    soap_nmax: int = 3,
+    soap_lmax: int = 3,
+    soap_sigma: float = 0.4
+):
     # Decide which device to use
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -100,7 +110,7 @@ def preprocess_matbench_discovery(path, cutoff: float = 3.0, batch_size: int = 1
         if dataset_name == 'MP':
             # MP data: 'structure' is nested under `entry`
             structures = [
-                Structure.from_dict(row[structure_key]['structure']) 
+                Structure.from_dict(row[structure_key]['structure'])
                 for _, row in structures_data.iterrows()
             ]
             formulas = [
@@ -110,7 +120,7 @@ def preprocess_matbench_discovery(path, cutoff: float = 3.0, batch_size: int = 1
         else:
             # WBM data: 'initial_structure' is directly in the DataFrame row
             structures = [
-                Structure.from_dict(row[structure_key]) 
+                Structure.from_dict(row[structure_key])
                 for _, row in structures_data.iterrows()
             ]
             formulas = properties_data[formula_key].tolist()
@@ -178,67 +188,73 @@ def preprocess_matbench_discovery(path, cutoff: float = 3.0, batch_size: int = 1
         'wbm_y_values': wbm_y_values
     }, data_save_path)
 
-    # Calculate SOAP descriptors
-    print("Calculating SOAP descriptors...")
-    mf.soap(
-        data_save_path,
-        soap_local=True,
-        soap_global=True,
-        r_cut=3.0,
-        n_max=4,
-        l_max=4,
-        sigma=0.4
-    )
-
-    # Reload the data (which now includes soap and global_soap features)
-    data = torch.load(data_save_path)
-    mp_graphs = data['mp_graphs']
-    wbm_graphs = data['wbm_graphs']
-
-    # Combine x=[atomic_number, soap, global_soap] in new graphs
-    print("Combining x, soap, and global_soap into new graphs...")
-
-    mp = []
-    print("Processing MP graphs with SOAP embeddings...")
-    for g in tqdm(mp_graphs, desc="MP Graphs"):
-        # Move each field to device and convert to float
-        atomic_numbers = g.x.view(-1, 1).float().to(device)
-        soap_local = g.soap.float().to(device)
-        # global_soap is shape [soap_size], expand to [num_atoms, soap_size]
-        soap_global = g.global_soap.unsqueeze(0).repeat(atomic_numbers.size(0), 1).float().to(device)
-
-        new_x = torch.cat([atomic_numbers, soap_local, soap_global], dim=1).to(device)
-
-        new_data = Data(
-            x=new_x,
-            edge_index=g.edge_index.to(device),
-            y=g.y.to(device)
+    # Calculate SOAP descriptors only if requested
+    if local_soap or global_soap:
+        print("Calculating SOAP descriptors...")
+        mf.soap(
+            data_save_path,
+            soap_local=local_soap,
+            soap_global=global_soap,
+            r_cut=soap_rcut,
+            n_max=soap_nmax,
+            l_max=soap_lmax,
+            sigma=soap_sigma
         )
-        mp.append(new_data)
 
-    wbm = []
-    print("Processing WBM graphs with SOAP embeddings...")
-    for g in tqdm(wbm_graphs, desc="WBM Graphs"):
-        atomic_numbers = g.x.view(-1, 1).float().to(device)
-        soap_local = g.soap.float().to(device)
-        soap_global = g.global_soap.unsqueeze(0).repeat(atomic_numbers.size(0), 1).float().to(device)
+        # Reload the data (which now includes soap and global_soap features)
+        data = torch.load(data_save_path)
+        mp_graphs = data['mp_graphs']
+        wbm_graphs = data['wbm_graphs']
 
-        new_x = torch.cat([atomic_numbers, soap_local, soap_global], dim=1).to(device)
+        # Combine features based on what's available
+        print("Processing graphs with SOAP embeddings...")
 
-        new_data = Data(
-            x=new_x,
-            edge_index=g.edge_index.to(device),
-            y=g.y.to(device)
-        )
-        wbm.append(new_data)
+        def process_graph_with_soap(g):
+            features = [g.x.view(-1, 1).float().to(device)]  # Start with atomic numbers
 
-    data['mp'] = mp
-    data['wbm'] = wbm
+            if local_soap:
+                soap_local = g.soap.float().to(device)
+                features.append(soap_local)
+
+            if global_soap:
+                soap_global = g.global_soap.unsqueeze(0).repeat(g.x.size(0), 1).float().to(device)
+                features.append(soap_global)
+
+            new_x = torch.cat(features, dim=1).to(device)
+
+            return Data(
+                x=new_x,
+                edge_index=g.edge_index.to(device),
+                y=g.y.to(device)
+            )
+
+        print("Processing MP graphs...")
+        mp = [process_graph_with_soap(g) for g in tqdm(mp_graphs, desc="MP Graphs")]
+
+        print("Processing WBM graphs...")
+        wbm = [process_graph_with_soap(g) for g in tqdm(wbm_graphs, desc="WBM Graphs")]
+    else:
+        print("Skipping SOAP calculations as both local_soap and global_soap are False")
+        # If no SOAP calculations, just use the graphs as is
+        mp = mp_graphs
+        wbm = wbm_graphs
+
+    data = {
+        'mp': mp,
+        'wbm': wbm,
+        'mp_graphs': mp_graphs,
+        'mp_y_values': mp_y_values,
+        'wbm_graphs': wbm_graphs,
+        'wbm_y_values': wbm_y_values
+    }
 
     torch.save(data, data_save_path)
     print(f"Preprocessing complete. Saved to: {data_save_path}.")
 
 
 if __name__ == "__main__":
-    preprocess_matbench_discovery(path="/content/drive/MyDrive/matbench_discovery")
-
+    preprocess_matbench_discovery(
+        path="/content/drive/MyDrive/matbench_discovery",
+        local_soap=False,
+        global_soap=False
+    )
