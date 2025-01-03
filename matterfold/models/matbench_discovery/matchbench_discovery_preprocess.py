@@ -210,7 +210,7 @@ def preprocess_matbench_discovery(
         print("Processing graphs with SOAP embeddings...")
 
         def process_graph_with_soap(g):
-            features = [g.x.to(device)]  # Start with atomic numbers
+            features = [g.x.view(-1, 1).float().to(device)] # Start with atomic numbers
 
             if local_soap:
                 soap_local = g.soap.float().to(device)
