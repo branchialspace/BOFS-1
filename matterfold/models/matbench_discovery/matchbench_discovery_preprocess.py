@@ -210,7 +210,7 @@ def preprocess_matbench_discovery(
         print("Processing graphs with SOAP embeddings...")
 
         def process_graph_with_soap(g):
-            features = [g.x.view(-1, 1).float().to(device)]  # Start with atomic numbers
+            features = [g.x.to(device)]  # Start with atomic numbers
 
             if local_soap:
                 soap_local = g.soap.float().to(device)
@@ -228,16 +228,27 @@ def preprocess_matbench_discovery(
                 y=g.y.to(device)
             )
 
-        print("Processing MP graphs...")
+    print("Processing MP graphs...")
+    if local_soap or global_soap:
         mp = [process_graph_with_soap(g) for g in tqdm(mp_graphs, desc="MP Graphs")]
+    else:
+        print("Skipping SOAP calculations as both local_soap and global_soap are False")
+        mp = [Data(
+            x=g.x.to(device),
+            edge_index=g.edge_index.to(device),
+            y=g.y.to(device)
+        ) for g in tqdm(mp_graphs, desc="MP Graphs")]
 
-        print("Processing WBM graphs...")
+    print("Processing WBM graphs...")
+    if local_soap or global_soap:
         wbm = [process_graph_with_soap(g) for g in tqdm(wbm_graphs, desc="WBM Graphs")]
     else:
         print("Skipping SOAP calculations as both local_soap and global_soap are False")
-        # If no SOAP calculations, just use the graphs as is
-        mp = mp_graphs
-        wbm = wbm_graphs
+        wbm = [Data(
+            x=g.x.to(device),
+            edge_index=g.edge_index.to(device),
+            y=g.y.to(device)
+        ) for g in tqdm(wbm_graphs, desc="WBM Graphs")]
 
     data = {
         'mp': mp,
@@ -250,7 +261,6 @@ def preprocess_matbench_discovery(
 
     torch.save(data, data_save_path)
     print(f"Preprocessing complete. Saved to: {data_save_path}.")
-
 
 if __name__ == "__main__":
     preprocess_matbench_discovery(
