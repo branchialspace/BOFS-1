@@ -41,10 +41,7 @@ import shutil
 
 def find_species_in_cifs(directory_paths, target_species, output_dir):
     count = 0
-    
-    # Create output directory if it doesn't exist
-    output_path = Path(output_dir)
-    output_path.mkdir(parents=True, exist_ok=True)
+    output_dir.mkdir(parents=True, exist_ok=True)
     
     # First, collect all .cif files from all directories
     all_cif_files = []
@@ -54,7 +51,7 @@ def find_species_in_cifs(directory_paths, target_species, output_dir):
             cif_files = [Path(root) / f for f in files if f.endswith('.cif')]
             all_cif_files.extend(cif_files)
     
-    # Process all CIF files with a progress bar
+    # Process all CIF files
     print(f"\nAnalyzing {len(all_cif_files)} CIF files for {target_species}...")
     for cif_path in tqdm(all_cif_files, desc="Processing CIFs"):
         try:
