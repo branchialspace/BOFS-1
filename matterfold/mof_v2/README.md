@@ -1,3 +1,5 @@
+Requirements (Colab Runtime):
+```bash
 !pip install torch_geometric
 !pip install wandb
 !pip install pymatgen
@@ -47,3 +49,4 @@ os.environ['NBOBIN'] = '/content/nbo7/bin'
 !gdown 1FoHw9CJT78LItQuaxvrsmgpJ5nrpK1gp
 !mkdir -p pseudo_sssp
 !tar -xf SSSP_1.3.0_PBE_efficiency.tar.gz -C pseudo_sssp
+```
