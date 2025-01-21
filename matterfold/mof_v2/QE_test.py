@@ -2,15 +2,28 @@ from ase.build import bulk
 from ase.calculators.espresso import Espresso, EspressoProfile
 from ase.optimize import LBFGS
 import os
+from pathlib import Path
 
 # Create the rocksalt structure
 rocksalt = bulk('NaCl', crystalstructure='rocksalt', a=6.0)
 
-# Pseudopotentials from SSSP Efficiency v1.3.0
-pseudopotentials = {
-    'Na': 'na_pbe_v1.5.uspp.F.UPF',
-    'Cl': 'cl_pbe_v1.4.uspp.F.UPF'
-}
+# Get unique species from structure
+species = set(atom.symbol for atom in rocksalt)
+
+# Find pseudopotentials for each species
+pseudo_dir = '/content/pseudo_sssp'
+pseudopotentials = {}
+for symbol in species:
+    # Find files starting with the species symbol
+    pseudo_path = Path(pseudo_dir)
+    matching_files = []
+    for file in pseudo_path.glob("*.UPF"):
+        if file.name.lower().startswith(symbol.lower()):
+            matching_files.append(file)
+    if matching_files:
+        pseudopotentials[symbol] = matching_files[0].name
+    else:
+        raise FileNotFoundError(f"No pseudopotential file found for {symbol}")
 
 # Define input parameters explicitly
 input_data = {
@@ -42,16 +55,13 @@ input_data = {
         'upscale': 100,      # Scale factor for BFGS
     },
 }
-
 # Create profile with explicit paths
 profile = EspressoProfile(
     command='/content/bin/pw.x',
     pseudo_dir='/content/pseudo_sssp'
 )
-
-# Create output directory if it doesn't exist
+# Create output directory
 os.makedirs('./tmp', exist_ok=True)
-
 # Initialize calculator with more detailed parameters
 calc = Espresso(
     profile=profile,
@@ -59,9 +69,7 @@ calc = Espresso(
     input_data=input_data,
     kpts=(4, 4, 4),
 )
-
 rocksalt.calc = calc
-
 try:
     # Run single point calculation first
     energy = rocksalt.get_potential_energy()
@@ -79,10 +87,8 @@ try:
     # Print optimized lattice constant
     final_lattice = (8 * rocksalt.get_volume() / len(rocksalt)) ** (1.0 / 3.0)
     print(f"\nOptimized lattice constant: {final_lattice:.3f} Å")
-
 except Exception as e:
     print(f"Error occurred: {str(e)}")
     # Print additional debugging information
     print("\nCalculator parameters:")
     print(calc.parameters)
-    
