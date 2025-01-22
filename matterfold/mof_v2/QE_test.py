@@ -7,6 +7,12 @@ from pathlib import Path
 # Create the rocksalt structure
 rocksalt = bulk('NaCl', crystalstructure='rocksalt', a=6.0)
 
+command='/content/bin/pw.x'
+pseudo_dir = '/content/pseudo_sssp'
+outdir = './tmp'
+os.makedirs('./tmp', exist_ok=True)
+trajectory = f'{rocksalt.get_chemical_formula()}_opt.traj'
+
 # Get unique species from structure
 species = set(atom.symbol for atom in rocksalt)
 
@@ -34,8 +40,8 @@ input_data = {
     'control': {
         'calculation': 'relax',  # Changed to relax to enable force calculations
         'restart_mode': 'from_scratch',
-        'pseudo_dir': '/content/pseudo_sssp',
-        'outdir': './tmp',
+        'pseudo_dir': pseudo_dir,
+        'outdir': outdir,
         'prefix': 'NaCl',
         'disk_io': 'low',
         'wf_collect': True,
@@ -61,11 +67,10 @@ input_data = {
 }
 # Create profile with explicit paths
 profile = EspressoProfile(
-    command='/content/bin/pw.x',
-    pseudo_dir='/content/pseudo_sssp'
+    command=command,
+    pseudo_dir=pseudo_dir
 )
 
-os.makedirs('./tmp', exist_ok=True)
 # Initialize calculator with more detailed parameters
 calc = Espresso(
     profile=profile,
@@ -85,7 +90,7 @@ try:
     print(forces)
 
     # Setup and run geometry optimization
-    opt = LBFGS(rocksalt, trajectory='NaCl_opt.traj')
+    opt = LBFGS(rocksalt, trajectory=trajectory)
     opt.run(fmax=0.005)
 
     # Print optimized lattice constant
