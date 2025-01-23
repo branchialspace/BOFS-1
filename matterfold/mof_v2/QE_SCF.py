@@ -58,8 +58,8 @@ input_data = {
     },
     'system': {
         # Basic plane-wave cutoffs
-        'ecutwfc': 50,
-        'ecutrho': 400,
+        'ecutwfc': 60,
+        'ecutrho': 480,
 
         # Smearing parameters (adjust as appropriate)
         'occupations': 'smearing',
@@ -68,6 +68,7 @@ input_data = {
 
         'noncolin': True, # spin-orbit coupling
         'lspinorb': True, # noncollinear magnetization
+        # 'nspin': 2,
         # 'lorbm': True, # orbital magnetization is needed for magneto-optical properties
     },
     'electrons': {
