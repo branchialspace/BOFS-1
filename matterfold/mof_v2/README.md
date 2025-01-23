@@ -45,9 +45,4 @@ os.environ['NBOBIN'] = '/content/nbo7/bin'
 !cd build
 !cmake -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 -DQE_FFTW_VENDOR=Internal /content/qe-7.3.1
 !make -j4
-# QE Pseudopotentials
-!gdown 1w--QOWnmlPZDy9qJp0NmFakRKHkY8_pt
-!gdown 1FoHw9CJT78LItQuaxvrsmgpJ5nrpK1gp
-!mkdir -p pseudo_sssp
-!tar -xf SSSP_1.3.0_PBE_efficiency.tar.gz -C pseudo_sssp
 ```
