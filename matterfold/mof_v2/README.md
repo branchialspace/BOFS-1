@@ -45,4 +45,7 @@ os.environ['NBOBIN'] = '/content/nbo7/bin'
 !cd build
 !cmake -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 -DQE_FFTW_VENDOR=Internal /content/qe-7.3.1
 !make -j4
+# Dalcorso fully-relativistic pseudopotentials
+!gdown 12BcBoX8R8MSf8u0UO40UzdAfUJKpl8Qa
+!unzip /content/rel_pbe.zip -d /content/rel_pbe
 ```
