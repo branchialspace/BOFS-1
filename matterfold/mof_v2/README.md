@@ -32,7 +32,7 @@ os.environ['NBOBIN'] = '/content/nbo7/bin'
 !apt-get install -y liblapack-dev libblas-dev libopenmpi-dev libscalapack-openmpi-dev libfftw3-dev
 !mkdir -p build
 !cd build
-!cmake -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 -DQE_FFTW_VENDOR=Internal /content/qe-7.3.1
+!cmake -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 -DQE_FFTW_VENDOR=Internal /content/qe-7.3.1 # -DQE_ENABLE_CUDA=ON  
 !make -j4
 # Dalcorso PAW fully-relativistic pseudopotentials
 !gdown 12BcBoX8R8MSf8u0UO40UzdAfUJKpl8Qa
