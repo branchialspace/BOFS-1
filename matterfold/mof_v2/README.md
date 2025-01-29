@@ -16,9 +16,8 @@ Requirements (Colab Runtime):
 import os
 os.environ['PATH'] = "/root/orca_6_0_1:" + os.environ['PATH']
 os.environ['LD_LIBRARY_PATH'] = "/root/orca_6_0_1:" + os.environ.get('LD_LIBRARY_PATH', '')
-
 !apt-get update && apt-get install -y tcsh
-!gdown 1ZoEm_2UjLmvl2bUSMvsyDsjHxW-cMqKQ
+!gdown ***drive path to NBO 7***
 !tar -xzvf /content/nbo7.0-bin-linux-x64.tar.gz
 #!export GENEXE=/content/nbo7/bin/gennbo.i4.exe
 #!export NBOEXE=/content/nbo7/bin/nbo7.i4.exe
