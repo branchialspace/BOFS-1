@@ -8,7 +8,7 @@ Requirements (Colab Runtime):
 !gdown 1N7l6xFk58BGrvY8zZiGa6Vk_GZzsqq2U # bi_mof_129 - Bi MOFs from ARCMOF, CSDMOF, QMOF ## zip and change path, unzip here
 !unzip bimofs1.zip
 
-'''
+
 # ORCA
 !gdown ***drive path to ORCA 6.0.1***
 !chmod +x orca_6_0_1_linux_x86-64_shared_openmpi416.run
@@ -29,13 +29,6 @@ os.environ['NBOEXE'] = '/content/nbo7/bin/nbo7.i8.exe'
 os.environ['NBOBIN'] = '/content/nbo7/bin'
 !chmod -R +x /content/nbo7/
 
-# !apt install python3-mpi4py cython3 libxc-dev gpaw-data
-# !pip -q install gpaw
-
-# MOFid failed setup
-# !git clone https://github.com/snurr-group/mofid.git
-# !cd /content/mofid && make init && python set_paths.py && pip install --user .
-'''
 
 # QuantumESPRESSO
 !wget https://www.quantum-espresso.org/rdm-download/488/v7-3-1/20c05f18ff3d167351b21c7b9043ac90/qe-7.3.1-ReleasePack.tar.gz
@@ -51,4 +44,14 @@ os.environ['NBOBIN'] = '/content/nbo7/bin'
 # ONCV fully-relativistic pseudopotentials
 !git clone https://github.com/pipidog/ONCVPSP.git
 !git clone https://github.com/MarioAndWario/ONCVPseudoPack.git
+
+
+# GPAW
+# !apt install python3-mpi4py cython3 libxc-dev gpaw-data
+# !pip -q install gpaw
+
+
+# MOFid failed setup
+# !git clone https://github.com/snurr-group/mofid.git
+# !cd /content/mofid && make init && python set_paths.py && pip install --user .
 ```
