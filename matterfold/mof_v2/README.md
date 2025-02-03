@@ -5,8 +5,8 @@ Requirements (Colab Runtime):
 !pip install pymatgen
 !pip install ase
 !pip install rdkit
-!gdown 1N7l6xFk58BGrvY8zZiGa6Vk_GZzsqq2U # bi_mof_129 - Bi MOFs from ARCMOF, CSDMOF, QMOF ## zip and change path, unzip here
-!unzip bimofs1.zip
+!gdown 19YlrDzpGNi6Fh-ueC4DWFvO1cOcr0KRp # 369 Bi MOFs from ARCMOF, CSDMOF, QMOF, MOSAEC-DB
+!unzip bimofs2.zip
 
 
 # ORCA
