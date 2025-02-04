@@ -6,8 +6,8 @@ Requirements (Colab Runtime):
 !pip install ase
 !pip install rdkit
 !gdown 19YlrDzpGNi6Fh-ueC4DWFvO1cOcr0KRp # 369 Bi MOFs from ARCMOF, CSDMOF, QMOF, MOSAEC-DB
-!unzip bimofs2.zip
-
+!mkdir -p /content/mofs
+!unzip bimofs2.zip -d /content/mofs
 
 # ORCA
 !gdown ***drive path to ORCA 6.0.1***
