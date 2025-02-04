@@ -7,5 +7,5 @@ Requirements (Colab Runtime):
 !pip install dscribe
 !pip install ase
 !pip install rdkit
-!git clone https://github.com/branchialspace/matterfold.git
+!git clone https://github.com/branchialspace/BOFS-1.git
 ```

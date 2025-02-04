@@ -8,7 +8,7 @@ from matbench_discovery.data import load
 from pymatgen.core import Structure
 import itertools
 from tqdm import tqdm
-import matterfold as mf
+import bofs1
 
 
 def preprocess_matbench_discovery(
@@ -191,7 +191,7 @@ def preprocess_matbench_discovery(
     # Calculate SOAP descriptors only if requested
     if local_soap or global_soap:
         print("Calculating SOAP descriptors...")
-        mf.soap(
+        bofs1.soap(
             data_save_path,
             soap_local=local_soap,
             soap_global=global_soap,

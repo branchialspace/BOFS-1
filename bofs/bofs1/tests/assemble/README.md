@@ -3,7 +3,7 @@ Requirements (Colab Runtime):
 !pip install rdkit
 !pip install ase
 !pip install pymatgen
-!git clone https://github.com/branchialspace/matterfold.git
+!git clone https://github.com/branchialspace/BOFS-1.git
 
 !gdown ***drive path to ORCA 6.0.1***
 !chmod +x orca_6_0_1_linux_x86-64_shared_openmpi416.run
