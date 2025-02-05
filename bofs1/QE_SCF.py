@@ -137,7 +137,7 @@ def run_qe(
     # Create QE input file
     write_espresso_input(structure, input_data, pseudopotentials, kpts, input_filename)
 
-    # Run QE
+    # Run QE as subprocess
     try:
         with open(output_filename, 'w') as f_out:
             subprocess.run(
