@@ -1,1 +1,1 @@
-Bismuth Organic Framework Sensor 1
+Characterization of Bismuth Metal Organic Frameworks for Optical to Spin State Transduction
