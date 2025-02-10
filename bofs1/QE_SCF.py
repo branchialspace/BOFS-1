@@ -179,7 +179,7 @@ input_data = {
         'tstress': True,
     },
     'system': {
-        'ibrav': 0, # fix
+        'ibrav': 0,
         'nat': 2,
         'ntyp': 1,
         'ecutwfc': 50,
