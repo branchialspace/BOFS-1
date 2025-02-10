@@ -5,6 +5,7 @@ Requirements (Colab Runtime):
 !pip install pymatgen
 !pip install ase
 !pip install rdkit
+!pip install mendeleev
 !gdown 19YlrDzpGNi6Fh-ueC4DWFvO1cOcr0KRp # 369 Bi MOFs from ARCMOF, CSDMOF, QMOF, MOSAEC-DB
 !mkdir -p /content/mofs
 !unzip bimofs2.zip -d /content/mofs
