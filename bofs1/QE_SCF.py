@@ -1,7 +1,9 @@
 # QuantumESPRESSO Single-Point SCF with SOC
 
 import os
+import re
 from pathlib import Path
+from math import ceil, pi
 import subprocess
 from subprocess import CalledProcessError
 from ase.data import atomic_masses, atomic_numbers
@@ -40,8 +42,11 @@ def run_qe(
     command = config['command']
     pseudo_dir = config['pseudo_dir']
     outdir = config['outdir']
-
     os.makedirs(outdir, exist_ok=True)
+
+    # Set nat and ntyp based on the current structure
+    config['system']['nat'] = len(structure)
+    config['system']['ntyp'] = len(set(structure.get_chemical_symbols()))
 
     # Pseudopotentials
     def find_pseudopotentials(ase_structure, pseudo_directory):
@@ -69,6 +74,61 @@ def run_qe(
         return pseudopot_dict
 
     pseudopotentials = find_pseudopotentials(structure, pseudo_dir)
+
+    # ecutwfc, ecutrho
+    def pseudo_cutoffs(pseudopot_dict, pseudo_directory):
+        """
+        Parse each pseudopotential file for wfc_cutoff and/or rho_cutoff.
+        If none of the files has wfc_cutoff, assume the single key we find
+        (rho_cutoff) is actually wfc_cutoff, then ecutrho = 4*wfc_cutoff.
+        Finally, multiply each by 1.15 and round up.
+        Returns (final_ecutwfc, final_ecutrho).
+        """
+        all_wfc = []
+        all_rho = []
+        for _, pp_filename in pseudopot_dict.items():
+            pp_path = Path(pseudo_directory) / pp_filename
+            with open(pp_path, 'r') as f:
+                content = f.read()
+            # Regex to grab wfc_cutoff, rho_cutoff
+            wfc_match = re.search(r'wfc_cutoff\s*=\s*"?\s*(?P<val>[\d.+Ee-]+)\s*"?', content)
+            rho_match = re.search(r'rho_cutoff\s*=\s*"?\s*(?P<val>[\d.+Ee-]+)\s*"?', content)
+            # Parse wfc_cutoff if found
+            if wfc_match:
+                raw_wfc = wfc_match.group('val').strip()
+                # Normalize exponentials
+                raw_wfc = raw_wfc.replace('E+', 'E').replace('e+', 'e')
+                wfc_val = float(raw_wfc)
+                all_wfc.append(wfc_val)
+            # Parse rho_cutoff if found
+            if rho_match:
+                raw_rho = rho_match.group('val').strip()
+                # Normalize exponentials
+                raw_rho = raw_rho.replace('E+', 'E').replace('e+', 'e')
+                rho_val = float(raw_rho)
+                all_rho.append(rho_val)
+        # Decide final cutoffs based on presence of wfc_cutoff
+        if len(all_wfc) == 0:
+            # That means each file must have had only 'rho_cutoff', which is wfc.
+            # We'll use the maximum of those as ecutwfc, and ecutrho = 4 * ecutwfc.
+            if not all_rho:
+                # No cutoffs found at all
+                raise ValueError("No wfc_cutoff or rho_cutoff found in any pseudopotential file.")
+            max_wfc = max(all_rho)
+            max_rho = 4.0 * max_wfc
+        else:
+            # We have proper wfc_cutoff in each file (and presumably also rho_cutoff).
+            max_wfc = max(all_wfc)
+            max_rho = max(all_rho)
+        # Multiply by 1.15 to be safe, then round up
+        ecutwfc = ceil(max_wfc * 1.15)
+        ecutrho = ceil(max_rho * 1.15)
+
+        return ecutwfc, ecutrho
+
+    ecutwfc, ecutrho = pseudo_cutoffs(pseudopotentials, pseudo_dir)
+    config['system']['ecutwfc'] = ecutwfc
+    config['system']['ecutrho'] = ecutrho
 
     # Write QE input file
     def write_espresso_input(
@@ -184,10 +244,6 @@ config = {
     },
     'system': {
         'ibrav': 0,
-        'nat': 2,
-        'ntyp': 1,
-        'ecutwfc': 16,
-        'ecutrho': 64,
         'occupations': 'smearing',
         'smearing': 'gaussian',
         'degauss': 0.01,
