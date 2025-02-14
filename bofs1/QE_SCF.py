@@ -189,7 +189,6 @@ def run_qe(
                     val = value
                 f.write(f"  {key} = {val}\n")
             f.write('/\n')
-
             # System section
             f.write('&system\n')
             for key, value in qe_config['system'].items():
@@ -201,7 +200,6 @@ def run_qe(
                     val = value
                 f.write(f"  {key} = {val}\n")
             f.write('/\n')
-
             # Electrons section
             f.write('&electrons\n')
             for key, value in qe_config['electrons'].items():
@@ -213,25 +211,21 @@ def run_qe(
                     val = value
                 f.write(f"  {key} = {val}\n")
             f.write('/\n')
-
             # Atomic species
             f.write('\nATOMIC_SPECIES\n')
             unique_symbols = set(ase_structure.get_chemical_symbols())
             for symbol in unique_symbols:
                 mass = atomic_masses[atomic_numbers[symbol]]
                 f.write(f"  {symbol.title()} {mass:.4f} {pps[symbol]}\n")
-
             # Atomic positions
             f.write('\nATOMIC_POSITIONS angstrom\n')
             abs_pos = ase_structure.get_positions()
             for atom, pos in zip(ase_structure, abs_pos):
                 f.write(f"  {atom.symbol.title()} "
                         f"{pos[0]:.10f} {pos[1]:.10f} {pos[2]:.10f}\n")
-
             # K-points grid
             f.write('\nK_POINTS automatic\n')
             f.write(f"  {kpoints[0]} {kpoints[1]} {kpoints[2]} {kpoints[3]} {kpoints[4]} {kpoints[5]}\n")
-
             # Cell parameters in angstrom
             f.write('\nCELL_PARAMETERS angstrom\n')
             for vec in ase_structure.cell:
@@ -267,7 +261,6 @@ def run_qe(
                 check=True
             )
         print("QE calculation completed successfully.")
-
     except CalledProcessError as cpe:
         print(f"Error running QE: {cpe}")
         try:
@@ -276,7 +269,6 @@ def run_qe(
                 print(f_out.read())
         except Exception as e:
             print(f"Could not read output file: {e}")
-
     except Exception as e:
         print(f"Unexpected error: {e}")
 
