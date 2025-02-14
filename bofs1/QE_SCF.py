@@ -13,6 +13,7 @@ from ase.data import atomic_masses, atomic_numbers
 from ase.build import bulk
 from mendeleev import element
 
+
 # ASE structure
 bi = bulk('Bi', 'rhombohedral', a=4.75, c=12.36, orthorhombic=False)
 
