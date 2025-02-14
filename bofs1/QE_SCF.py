@@ -132,26 +132,21 @@ def run_qe(
         # Extract real-space lattice vectors
         cell = atoms.get_cell()  # 3x3 array
         a1, a2, a3 = [np.array(vec) for vec in cell]
-
         # Compute real-space volume
         volume = np.dot(a1, np.cross(a2, a3))
-
         # Compute reciprocal lattice vectors b1, b2, b3
         # b1 = 2π * (a2 × a3) / (a1 · (a2 × a3)), etc.
         b1 = 2 * pi * np.cross(a2, a3) / volume
         b2 = 2 * pi * np.cross(a3, a1) / volume
         b3 = 2 * pi * np.cross(a1, a2) / volume
-
         # Compute magnitudes of reciprocal vectors
         b1_len = np.linalg.norm(b1)
         b2_len = np.linalg.norm(b2)
         b3_len = np.linalg.norm(b3)
-
         # Determine the number of divisions along each direction
         n1 = max(1, ceil(b1_len / k_spacing))
         n2 = max(1, ceil(b2_len / k_spacing))
         n3 = max(1, ceil(b3_len / k_spacing))
-
         # Unpack the shift
         s1, s2, s3 = shift
 
