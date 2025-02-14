@@ -249,7 +249,7 @@ def run_qe(
     kpts = kpoints(atoms, k_spacing=0.13, shift=(1,1,1))
     # Set bands
     config['system']['nbnd'] = nbnd(structure)
-    # write inout file
+    # write input file
     write_espresso_input(structure, config, pseudopotentials, kpts, input_filename)
     # Subprocess run
     try:
