@@ -242,7 +242,7 @@ def run_qe(
     # Set Cutoffs
     wfn_scalar = config['wfn_scalar']
     rho_scalar = config['rho_scalar']
-    ecutwfc, ecutrho = pseudo_cutoffs(pseudopotentials, pseudo_dir)
+    ecutwfc, ecutrho = pseudo_cutoffs(pseudopotentials, pseudo_dir, wfn_scalar, rho_scalar)
     config['system']['ecutwfc'] = ecutwfc
     config['system']['ecutrho'] = ecutrho
     # Set k-points
