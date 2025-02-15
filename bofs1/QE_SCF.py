@@ -1,4 +1,4 @@
-# QuantumESPRESSO Single-Point SCF with SOC
+# Run QuantumESPRESSO
 
 import os
 import re
@@ -20,7 +20,6 @@ def run_qe(
 ):
     """
     Run a QE calculation.
-    
     structure : ase.Atoms
         An ASE Atoms object defining the system to calculate.
     config : dict
@@ -54,12 +53,10 @@ def run_qe(
         """
         Parse pseudopotential files for wavefunction and density cutoffs, 
         select the largest and scale.
-
         wfn_scalar : float
             Scaling factor for wavefunction cutoff.
         rho_scalar : float
             Scaling factor for density cutoff.
-
         Returns 
         ecutwfc, ecutrho : tuple
             containing the largest scaled and
@@ -111,12 +108,10 @@ def run_qe(
         """
         Given a desired k-point spacing k_spacing (in Å^-1),
         compute a suitable (n1, n2, n3) Monkhorst–Pack grid for the structure.
-
         k_spacing : float
             Target spacing in reciprocal space, in Å^-1.
         shift : tuple of int
             The Monkhorst-Pack shift for each direction, either (0,0,0) or (1,1,1).
-
         Returns
         (n1, n2, n3, s1, s2, s3) : tuple of ints
             The grid subdivisions (n1, n2, n3) and the shift (s1, s2, s3).
@@ -124,26 +119,21 @@ def run_qe(
         # Extract real-space lattice vectors
         cell = structure.get_cell()  # 3x3 array
         a1, a2, a3 = [np.array(vec) for vec in cell]
-
         # Compute real-space volume
         volume = np.dot(a1, np.cross(a2, a3))
-
         # Compute reciprocal lattice vectors b1, b2, b3
         # b1 = 2π * (a2 × a3) / (a1 · (a2 × a3)), etc.
         b1 = 2 * pi * np.cross(a2, a3) / volume
         b2 = 2 * pi * np.cross(a3, a1) / volume
         b3 = 2 * pi * np.cross(a1, a2) / volume
-
         # Compute magnitudes of reciprocal vectors
         b1_len = np.linalg.norm(b1)
         b2_len = np.linalg.norm(b2)
         b3_len = np.linalg.norm(b3)
-
         # Determine the number of divisions along each direction
         n1 = max(1, ceil(b1_len / k_spacing))
         n2 = max(1, ceil(b2_len / k_spacing))
         n3 = max(1, ceil(b3_len / k_spacing))
-
         # Unpack the shift
         s1, s2, s3 = shift
 
@@ -153,10 +143,8 @@ def run_qe(
         """
         Number of electronic states (bands) to be calculated,
         scaled total valence count from Mendeleev.
-
         nbnd_scalar: float
             Scaling factor for bands.
-        
         Returns
         nbnd : int
             Number of electronic states (bands).
@@ -197,7 +185,6 @@ def run_qe(
                     val = value
                 f.write(f"  {key} = {val}\n")
             f.write('/\n')
-
             # System section
             f.write('&system\n')
             for key, value in config['system'].items():
@@ -209,7 +196,6 @@ def run_qe(
                     val = value
                 f.write(f"  {key} = {val}\n")
             f.write('/\n')
-
             # Electrons section
             f.write('&electrons\n')
             for key, value in config['electrons'].items():
@@ -221,25 +207,21 @@ def run_qe(
                     val = value
                 f.write(f"  {key} = {val}\n")
             f.write('/\n')
-
             # Atomic species
             f.write('\nATOMIC_SPECIES\n')
             unique_symbols = set(structure.get_chemical_symbols())
             for symbol in unique_symbols:
                 mass = atomic_masses[atomic_numbers[symbol]]
                 f.write(f"  {symbol.title()} {mass:.4f} {pseudopotentials[symbol]}\n")
-
             # Atomic positions
             f.write('\nATOMIC_POSITIONS angstrom\n')
             abs_pos = structure.get_positions()
             for atom, pos in zip(structure, abs_pos):
                 f.write(f"  {atom.symbol.title()} "
                         f"{pos[0]:.10f} {pos[1]:.10f} {pos[2]:.10f}\n")
-
             # K-points grid
             f.write('\nK_POINTS automatic\n')
             f.write(f"  {kpoints[0]} {kpoints[1]} {kpoints[2]} {kpoints[3]} {kpoints[4]} {kpoints[5]}\n")
-
             # Cell parameters in angstrom
             f.write('\nCELL_PARAMETERS angstrom\n')
             for vec in structure.cell:
@@ -283,7 +265,6 @@ def run_qe(
                 check=True
             )
         print("QE calculation completed successfully.")
-
     except CalledProcessError as cpe:
         print(f"Error running QE: {cpe}")
         try:
@@ -292,7 +273,6 @@ def run_qe(
                 print(f_out.read())
         except Exception as e:
             print(f"Could not read output file: {e}")
-
     except Exception as e:
         print(f"Unexpected error: {e}")
 
