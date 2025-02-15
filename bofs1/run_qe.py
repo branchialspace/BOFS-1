@@ -262,8 +262,7 @@ def run_qe(
                 command_list,
                 stdout=f_out,
                 stderr=subprocess.STDOUT,
-                check=True
-            )
+                check=True)
         print("QE calculation completed successfully.")
     except CalledProcessError as cpe:
         print(f"Error running QE: {cpe}")
