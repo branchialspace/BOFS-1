@@ -174,39 +174,18 @@ def run_qe(
         and selected pseudopotentials.
         """
         with open(input_filename, 'w') as f:
-            # Control section
-            f.write('&control\n')
-            for key, value in config['control'].items():
-                if isinstance(value, bool):
-                    val = '.true.' if value else '.false.'
-                elif isinstance(value, str):
-                    val = f"'{value}'"
-                else:
-                    val = value
-                f.write(f"  {key} = {val}\n")
-            f.write('/\n')
-            # System section
-            f.write('&system\n')
-            for key, value in config['system'].items():
-                if isinstance(value, bool):
-                    val = '.true.' if value else '.false.'
-                elif isinstance(value, str):
-                    val = f"'{value}'"
-                else:
-                    val = value
-                f.write(f"  {key} = {val}\n")
-            f.write('/\n')
-            # Electrons section
-            f.write('&electrons\n')
-            for key, value in config['electrons'].items():
-                if isinstance(value, bool):
-                    val = '.true.' if value else '.false.'
-                elif isinstance(value, str):
-                    val = f"'{value}'"
-                else:
-                    val = value
-                f.write(f"  {key} = {val}\n")
-            f.write('/\n')
+            # Control, System, Electrons
+            for section in ['control', 'system', 'electrons']:
+                f.write(f'&{section}\n')
+                for key, value in config[section].items():
+                    if isinstance(value, bool):
+                        val = '.true.' if value else '.false.'
+                    elif isinstance(value, str):
+                        val = f"'{value}'"
+                    else:
+                        val = value
+                    f.write(f"  {key} = {val}\n")
+                f.write('/\n')
             # Atomic species
             f.write('\nATOMIC_SPECIES\n')
             unique_symbols = set(structure.get_chemical_symbols())
@@ -235,7 +214,7 @@ def run_qe(
     config['control']['prefix'] = structure_name
     config['control']['outdir'] = structure_name
     os.makedirs(structure_name, exist_ok=True)
-    # Set nat and ntyp based on the current structure
+    # Set nat and ntyp
     config['system']['nat'] = len(structure)
     config['system']['ntyp'] = len(set(structure.get_chemical_symbols()))
     # Set Pseudos
@@ -287,7 +266,7 @@ config = {
     'control': {
         'calculation': 'scf',
         'restart_mode': 'from_scratch',
-        'pseudo_dir': '/content/ONCVPSP/abinit/',
+        'pseudo_dir': '/content/ONCVPseudoPack/Abinit_v0.4/UPF/PBEsol',
         'disk_io': 'medium',
         'wf_collect': True,
         'tprnfor': True,
