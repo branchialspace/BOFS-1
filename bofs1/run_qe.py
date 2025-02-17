@@ -15,7 +15,7 @@ from mendeleev import element
 
 
 def run_qe(
-    structure,
+    structure_path,
     config
 ):
     """
@@ -51,13 +51,13 @@ def run_qe(
 
     def pseudo_cutoffs(pseudo_dict, pseudo_directory, wfn_scalar=1.15, rho_scalar=1.15):
         """
-        Parse pseudopotential files for wavefunction and density cutoffs, 
+        Parse pseudopotential files for wavefunction and density cutoffs,
         select the largest and scale.
         wfn_scalar : float
             Scaling factor for wavefunction cutoff.
         rho_scalar : float
             Scaling factor for density cutoff.
-        Returns 
+        Returns
         ecutwfc, ecutrho : tuple
             containing the largest scaled and
             rounded cutoff values for wavefunctions and density.
@@ -227,13 +227,14 @@ def run_qe(
             for vec in structure.cell:
                 f.write(f"  {vec[0]:.10f} {vec[1]:.10f} {vec[2]:.10f}\n")
 
-    # Unpack top-level config items
+    # Args
+    structure = read(structure_path)
+    structure_name = os.path.splitext(os.path.basename(structure_path))[0]
     command = config['command']
-    pseudo_dir = config['pseudo_dir']
-    input_filename = config['input_filename']
-    output_filename = config['output_filename']
-    outdir = config['outdir']
-    os.makedirs(outdir, exist_ok=True)
+    pseudo_dir = config['control']['pseudo_dir']
+    config['control']['prefix'] = structure_name
+    config['control']['outdir'] = structure_name
+    os.makedirs(structure_name, exist_ok=True)
     # Set nat and ntyp based on the current structure
     config['system']['nat'] = len(structure)
     config['system']['ntyp'] = len(set(structure.get_chemical_symbols()))
@@ -252,12 +253,12 @@ def run_qe(
     # Set nbnd
     nbnd_scalar = config['nbnd_scalar']
     config['system']['nbnd'] = nbnd(structure, nbnd_scalar)
-    # write QE input file
-    write_espresso_input(structure, config, pseudopotentials, kpoints, input_filename)
+    # Write QE input file
+    write_espresso_input(structure, config, pseudopotentials, kpoints, f"{structure_name}.pwi")
     # Subprocess run
     try:
-        with open(output_filename, 'w') as f_out:
-            command_list = config['command'] + ['-in', input_filename]
+        with open(f"{structure_name}.pwo", 'w') as f_out:
+            command_list = config['command'] + ['-in', f"{structure_name}.pwi"]
             subprocess.run(
                 command_list,
                 stdout=f_out,
@@ -267,7 +268,7 @@ def run_qe(
     except CalledProcessError as cpe:
         print(f"Error running QE: {cpe}")
         try:
-            with open(output_filename, 'r') as f_out:
+            with open(f"{structure_name}.pwo", 'r') as f_out:
                 print("\nQE Output:")
                 print(f_out.read())
         except Exception as e:
@@ -278,10 +279,6 @@ def run_qe(
 
 config = {
     'command': ['/usr/bin/mpirun', '--allow-run-as-root', '-x', 'OMP_NUM_THREADS=2', '-np', '4', '/content/bin/pw.x'],
-    'pseudo_dir': '/content/ONCVPSP/abinit/',
-    'input_filename': 'espresso.pwi',
-    'output_filename': 'espresso.pwo',
-    'outdir': '/content/tmp',
     'wfn_scalar': 1.15,
     'rho_scalar': 1.15,
     'kpts_k_spacing': 0.13,
@@ -291,8 +288,6 @@ config = {
         'calculation': 'scf',
         'restart_mode': 'from_scratch',
         'pseudo_dir': '/content/ONCVPSP/abinit/',
-        'outdir': '/content/tmp',
-        'prefix': 'TIRDOO_full',
         'disk_io': 'medium',
         'wf_collect': True,
         'tprnfor': True,
@@ -315,6 +310,6 @@ config = {
 
 # ASE structure
 # bi = bulk('Bi', 'rhombohedral', a=4.75, c=12.36, orthorhombic=False)
-mof = read("/content/mofs/TIRDOO_full.cif")
+mof = "/content/mofs/TIRDOO_full.cif"
 # Run QE
 run_qe(mof, config)
