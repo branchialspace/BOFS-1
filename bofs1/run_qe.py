@@ -20,8 +20,8 @@ def run_qe(
 ):
     """
     Run a QE calculation.
-    structure : ase.Atoms
-        An ASE Atoms object defining the system to calculate.
+    structure_path : string
+        Path of a cif unit cell defining the system to calculate.
     config : dict
         Configuration dictionary containing required settings.
     """
@@ -228,7 +228,7 @@ def run_qe(
                 f.write(f"  {vec[0]:.10f} {vec[1]:.10f} {vec[2]:.10f}\n")
 
     # Args
-    structure = read(structure_path)
+    structure = read(structure_path) # ASE Atoms object
     structure_name = os.path.splitext(os.path.basename(structure_path))[0]
     command = config['command']
     pseudo_dir = config['control']['pseudo_dir']
