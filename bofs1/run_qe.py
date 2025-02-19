@@ -30,6 +30,9 @@ def run_qe(
         Determine the appropriate pseudopotential file for each atomic species of the structure
         from a given directory. Tries to pick up 'fr' (fully relativistic) files
         if they are present; otherwise, picks the first found.
+        Returns
+        pseudo_dict : dict
+            Dictionary of atomic species and associated pseudopotential files.
         """
         species = set(atom.symbol for atom in structure)
         pseudo_dict = {}
@@ -162,6 +165,46 @@ def run_qe(
 
         return nbnd
 
+    def charge(structure_path, structure_name):
+        """
+        Determine the total charge of the system from the structure name or (if '_charged'
+        is present) by parsing the CIF file's `_chemical_formula_moiety` key.
+        Returns : float
+            The system's total charge.
+        """
+        charge = 0.0
+        # If "_charged" is in structure_name
+        if "_charged" in structure_name.lower():
+            with open(structure_path, 'r') as f:
+                formula_line = None
+                for line in f:
+                    if '_chemical_formula_moiety' in line:
+                        match = re.search(r"_chemical_formula_moiety\s+'([^']+)'", line)
+                        if match:
+                            formula_line = match.group(1)
+                            break
+            if formula_line:
+                match_charge = re.search(r'(\d+)(\+|\-)\)n', formula_line)
+                if match_charge:
+                    digits = match_charge.group(1)
+                    sign_symbol = match_charge.group(2)
+                    if sign_symbol == '+':
+                        charge = float(digits)
+                    else:
+                        charge = -float(digits)
+        else:
+            # If structure_name ends with "_px" or "_nx" (x is integer)
+            match_sign_digits = re.search(r'_([pn])(\d+)$', structure_name)
+            if match_sign_digits:
+                sign = match_sign_digits.group(1)
+                digits = match_sign_digits.group(2)
+                if sign == 'p':
+                    charge = float(digits)
+                else:
+                    charge = -float(digits)
+
+        return charge    
+
     def write_espresso_input(
         structure,
         config,
@@ -209,11 +252,13 @@ def run_qe(
     # Args
     structure = read(structure_path) # ASE Atoms object
     structure_name = os.path.splitext(os.path.basename(structure_path))[0]
+    calculation = config['control']['calculation']
+    run_name = f"{structure_name}_{calculation}"
     command = config['command']
     pseudo_dir = config['control']['pseudo_dir']
-    config['control']['prefix'] = structure_name
-    config['control']['outdir'] = structure_name
-    os.makedirs(structure_name, exist_ok=True)
+    config['control']['prefix'] = run_name
+    config['control']['outdir'] = run_name
+    os.makedirs(run_name, exist_ok=True)
     # Set nat and ntyp
     config['system']['nat'] = len(structure)
     config['system']['ntyp'] = len(set(structure.get_chemical_symbols()))
@@ -232,12 +277,15 @@ def run_qe(
     # Set nbnd
     nbnd_scalar = config['nbnd_scalar']
     config['system']['nbnd'] = nbnd(structure, nbnd_scalar)
+    # Set total charge
+    charge = charge(structure_path, structure_name)
+    config['system']['tot_charge'] = charge
     # Write QE input file
-    write_espresso_input(structure, config, pseudopotentials, kpoints, f"{structure_name}.pwi")
+    write_espresso_input(structure, config, pseudopotentials, kpoints, f"{run_name}.pwi")
     # Subprocess run
     try:
-        with open(f"{structure_name}.pwo", 'w') as f_out:
-            command_list = config['command'] + ['-in', f"{structure_name}.pwi"]
+        with open(f"{run_name}.pwo", 'w') as f_out:
+            command_list = config['command'] + ['-in', f"{run_name}.pwi"]
             subprocess.run(
                 command_list,
                 stdout=f_out,
@@ -247,7 +295,7 @@ def run_qe(
     except CalledProcessError as cpe:
         print(f"Error running QE: {cpe}")
         try:
-            with open(f"{structure_name}.pwo", 'r') as f_out:
+            with open(f"{run_name}.pwo", 'r') as f_out:
                 print("\nQE Output:")
                 print(f_out.read())
         except Exception as e:
@@ -260,35 +308,34 @@ config = {
     'command': ['/usr/bin/mpirun', '--allow-run-as-root', '-x', 'OMP_NUM_THREADS=2', '-np', '4', '/content/bin/pw.x'],
     'wfn_scalar': 1.15,
     'rho_scalar': 1.15,
-    'kpts_k_spacing': 0.13,
+    'kpts_k_spacing': 0.13, # scf: 0.13    nscf: 0.06
     'kpts_shift': (1,1,1),
     'nbnd_scalar': 2,
     'control': {
-        'calculation': 'scf',
+        'calculation': 'scf', # scf     nscf     bands
         'restart_mode': 'from_scratch',
         'pseudo_dir': '/content/ONCVPseudoPack/Abinit_v0.4/UPF/PBEsol',
         'disk_io': 'medium',
         'wf_collect': True,
         'tprnfor': True,
-        'tstress': True,
+        'tstress': True
     },
     'system': {
         'ibrav': 0,
         'occupations': 'smearing',
-        'smearing': 'gaussian',
+        'smearing': 'fermi-dirac', # gaussian     marzari-vanderbilt     fermi-dirac
         'degauss': 0.01,
         'noncolin': True,
         'lspinorb': True
     },
     'electrons': {
-        'conv_thr': 1.0e-6,
+        'conv_thr': 1.0e-6, # scf: 1.0e-6    nscf: 1.0e-8
         'mixing_beta': 0.3,
         'electron_maxstep': 300,
     }
 }
 
 # ASE structure
-# bi = bulk('Bi', 'rhombohedral', a=4.75, c=12.36, orthorhombic=False)
-mof = "/content/mofs/TIRDOO_full.cif"
+mof = "/content/mofs/SIWZOO_full_n2.cif" # /content/mofs/SIWZOO_full_n2.cif      /content/mofs/TIRDOO_full.cif
 # Run QE
 run_qe(mof, config)
