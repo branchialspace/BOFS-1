@@ -1,4 +1,4 @@
-# Run QuantumESPRESSO
+# Run QuantumESPRESSO Plane-Wave Self-Consistent Field
 
 import os
 import re
@@ -14,12 +14,12 @@ from ase.build import bulk
 from mendeleev import element
 
 
-def run_qe(
+def qe_PWscf(
     structure_path,
     config
 ):
     """
-    Run a QE calculation.
+    Run QE PWscf calculation.
     structure_path : string
         Path of a cif unit cell defining the system to calculate.
     config : dict
@@ -203,7 +203,7 @@ def run_qe(
                 else:
                     charge = -float(digits)
 
-        return charge    
+        return charge
 
     def write_espresso_input(
         structure,
@@ -213,7 +213,7 @@ def run_qe(
         input_filename
     ):
         """
-        Write the QE input file from an ASE structure, config,
+        Write the QE PWscf input file from an ASE structure, config,
         and selected pseudopotentials.
         """
         with open(input_filename, 'w') as f:
@@ -256,9 +256,9 @@ def run_qe(
     run_name = f"{structure_name}_{calculation}"
     command = config['command']
     pseudo_dir = config['control']['pseudo_dir']
-    config['control']['prefix'] = run_name
-    config['control']['outdir'] = run_name
-    os.makedirs(run_name, exist_ok=True)
+    config['control']['prefix'] = structure_name
+    config['control']['outdir'] = structure_name
+    os.makedirs(structure_name, exist_ok=True)
     # Set nat and ntyp
     config['system']['nat'] = len(structure)
     config['system']['ntyp'] = len(set(structure.get_chemical_symbols()))
@@ -280,7 +280,7 @@ def run_qe(
     # Set total charge
     charge = charge(structure_path, structure_name)
     config['system']['tot_charge'] = charge
-    # Write QE input file
+    # Write QE PWscf input file
     write_espresso_input(structure, config, pseudopotentials, kpoints, f"{run_name}.pwi")
     # Subprocess run
     try:
@@ -329,7 +329,7 @@ config = {
         'lspinorb': True
     },
     'electrons': {
-        'conv_thr': 1.0e-6, # scf: 1.0e-6    nscf: 1.0e-8
+        'conv_thr': 1.0e-6,
         'mixing_beta': 0.3,
         'electron_maxstep': 300,
     }
@@ -337,5 +337,5 @@ config = {
 
 # ASE structure
 mof = "/content/mofs/SIWZOO_full_n2.cif" # /content/mofs/SIWZOO_full_n2.cif      /content/mofs/TIRDOO_full.cif
-# Run QE
-run_qe(mof, config)
+# Run PWscf
+qe_PWscf(mof, config)
