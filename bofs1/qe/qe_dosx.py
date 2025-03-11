@@ -45,7 +45,6 @@ def qe_dosx(
     config['dos']['fildos'] = f"{structure_name}.dos"
     # Write QE dos.x input file
     write_dosx_input(config, f"{run_name}.dosi")
-    
     # Subprocess run
     try:
         with open(f"{run_name}.doso", 'w') as f_out:
