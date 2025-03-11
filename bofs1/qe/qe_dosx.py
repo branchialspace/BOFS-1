@@ -11,7 +11,6 @@ def qe_dosx(
 ):
     """
     Run QE dos.x calculation to compute Density of States.
-    Parameters:
     structure_path : string
         Path of the structure file that was used in the previous pw.x calculation.
         Used to derive the structure name, which must match the prefix used in pw.x.
