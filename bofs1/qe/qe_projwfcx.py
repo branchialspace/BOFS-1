@@ -5,7 +5,7 @@ import subprocess
 from subprocess import CalledProcessError
 
 
-def qe_wfcx(
+def qe_projwfcx(
     structure_path,
     config
 ):
@@ -85,4 +85,4 @@ wfcx_config = {
 # ASE structure
 mof = "/content/mofs/SIWZOO_full_n2.cif"
 # Run projwfc.x
-qe_wfcx(mof, wfcx_config)
+qe_projwfcx(mof, wfcx_config)
