@@ -14,12 +14,12 @@ from ase.build import bulk
 from mendeleev import element
 
 
-def qe_PWscf(
+def qe_pwx(
     structure_path,
     config
 ):
     """
-    Run QE PWscf calculation.
+    Run QE pw.x PWscf calculation.
     structure_path : string
         Path of a cif unit cell defining the system to calculate.
     config : dict
@@ -338,4 +338,4 @@ config = {
 # ASE structure
 mof = "/content/mofs/SIWZOO_full_n2.cif" # /content/mofs/SIWZOO_full_n2.cif      /content/mofs/TIRDOO_full.cif
 # Run PWscf
-qe_PWscf(mof, config)
+qe_pwx(mof, config)
