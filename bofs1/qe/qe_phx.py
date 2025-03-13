@@ -135,8 +135,9 @@ phx_config = {
     'inputph': {
         'tr2_ph': 1.0e-14,         # Convergence threshold for phonons
         'ldisp': True,             # Run phonons on a grid of q-points
-        'epsil': False,             # Calculate dielectric constant
+        'epsil': False,            # Calculate dielectric constant
         'trans': True,             # Calculate phonons
+        'elop': True,              # Calculate electro-optic tensor
         'electron_phonon': '',     # electron-phonon coefficient method
         'fildyn': 'dynmat',        # Prefix for dynamical matrices
         'fildrho': 'drho',         # File for charge density response
