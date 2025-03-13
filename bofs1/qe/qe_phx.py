@@ -21,18 +21,16 @@ def qe_phx(
     config : dict
         Configuration dictionary containing required settings.
     """
-    def qpoints(structure, q_spacing=0.25, shift=(1,1,1)):
+    def qpoints(structure, q_spacing=0.25):
         """
         Given a desired q-point spacing q_spacing (in Å^-1),
         compute a suitable (nq1, nq2, nq3) Monkhorst–Pack grid for phonons.
         q_spacing : float
             Target spacing in reciprocal space, in Å^-1.
             For phonons, typically coarser than k-points (0.2-0.3 is common).
-        shift : tuple of int
-            The Monkhorst-Pack shift for each direction, either (0,0,0) or (1,1,1).
         Returns
-        (nq1, nq2, nq3, s1, s2, s3) : tuple of ints
-            The grid subdivisions (nq1, nq2, nq3) and the shift (s1, s2, s3).
+        (nq1, nq2, nq3) : tuple of ints
+            The grid subdivisions.
         """
         # Extract real-space lattice vectors
         cell = structure.get_cell()  # 3x3 array
@@ -54,10 +52,8 @@ def qe_phx(
         n1 = max(1, ceil(b1_len / q_spacing)) if b1_len > dim_threshold else 1
         n2 = max(1, ceil(b2_len / q_spacing)) if b2_len > dim_threshold else 1
         n3 = max(1, ceil(b3_len / q_spacing)) if b3_len > dim_threshold else 1
-        # Unpack the shift
-        s1, s2, s3 = shift
-        
-        return (n1, n2, n3, s1, s2, s3)
+
+        return (n1, n2, n3)
 
     def write_phx_input(config, input_filename):
         """
@@ -104,8 +100,10 @@ def qe_phx(
     # Set q-points grid if ldisp is True
     if config['inputph'].get('ldisp', False):
         q_spacing = config.get('qpts_q_spacing', 0.25)
-        shift = config.get('qpts_shift', (1,1,1))
-        nq1, nq2, nq3, s1, s2, s3 = qpoints(structure, q_spacing, shift)
+        nq1, nq2, nq3 = qpoints(structure, q_spacing)
+        config['inputph']['nq1'] = nq1
+        config['inputph']['nq2'] = nq2
+        config['inputph']['nq3'] = nq3
     # Write QE ph.x input file
     write_phx_input(config, f"{run_name}.phi")
     # Subprocess run
@@ -134,11 +132,10 @@ phx_config = {
     'command': ['/usr/bin/mpirun', '--allow-run-as-root', '-x', 'OMP_NUM_THREADS=2', '-np', '4', '/content/bin/ph.x'],
     'xq': [0.0, 0.0, 0.0],         # q-point for non-ldisp calculations
     'qpts_q_spacing': 0.25,        # q-point spacing for automatic grid generation (coarser than k-points)
-    'qpts_shift': (1,1,1),         # q-point grid shift
     'inputph': {
         'tr2_ph': 1.0e-14,         # Convergence threshold for phonons
         'ldisp': True,             # Run phonons on a grid of q-points
-        'epsil': True,             # Calculate dielectric constant
+        'epsil': False,             # Calculate dielectric constant
         'trans': True,             # Calculate phonons
         'electron_phonon': '',     # electron-phonon coefficient method
         'fildyn': 'dynmat',        # Prefix for dynamical matrices
