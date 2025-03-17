@@ -19,7 +19,7 @@ def qe_lanczosx(
     config : dict
         Configuration dictionary containing required settings.
     """
-    def write_lanczos_input(config, input_filename):
+    def write_lanczosx_input(config, input_filename):
         """
         Write the QE turbo_lanczos.x input file from config settings.
         """
@@ -51,7 +51,7 @@ def qe_lanczosx(
     config['lr_input']['outdir'] = structure_name
     os.makedirs(structure_name, exist_ok=True)
     # Write QE turbo_lanczos.x input file
-    write_lanczos_input(config, f"{run_name}.tdfi")
+    write_lanczosx_input(config, f"{run_name}.tdfi")
     # Subprocess run
     try:
         with open(f"{run_name}.tdfo", 'w') as f_out:
