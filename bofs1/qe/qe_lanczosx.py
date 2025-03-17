@@ -1,4 +1,4 @@
-# Run QuantumESPRESSO turbo_lanczos.x for TDDFT-Lanczos calculations
+# Run QuantumESPRESSO turbo_lanczos.x
 
 import os
 import subprocess
