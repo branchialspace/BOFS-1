@@ -25,7 +25,7 @@ def qe_magnonx(
         Write the QE turbo_magnon.x input file from config settings.
         """
         with open(input_filename, 'w') as f:
-            # Write namelists: LR_INPUT and LR_CONTROL
+            # input, control
             for section in ['lr_input', 'lr_control']:
                 section_name = section.upper()
                 f.write(f'&{section_name}\n')
