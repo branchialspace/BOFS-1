@@ -96,7 +96,7 @@ lanczos_config = {
     'command': ['/usr/bin/mpirun', '--allow-run-as-root', '-x', 'OMP_NUM_THREADS=2', '-np', '4', '/content/bin/turbo_lanczos.x'],
     'lr_control': {
         'itermax': 500,          # Number of Lanczos iterations
-        'ipol': 4,               # 1=X, 2=Y, 3=Z, 4=all polarizations
+        'ipol': 4,               # Polarization: 1-3 for specific component, 4 for full tensor
         'n_ipol': 3,             # Number of zeta coefficients to calculate
         'ltammd': False,         # Tamm-Dancoff approximation
         'no_hxc': False,         # Independent electron approximation
