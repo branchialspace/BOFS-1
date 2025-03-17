@@ -205,7 +205,7 @@ def qe_pwx(
 
         return charge
 
-    def write_espresso_input(
+    def write_pwx_input(
         structure,
         config,
         pseudopotentials,
@@ -281,7 +281,7 @@ def qe_pwx(
     charge = charge(structure_path, structure_name)
     config['system']['tot_charge'] = charge
     # Write QE PWscf input file
-    write_espresso_input(structure, config, pseudopotentials, kpoints, f"{run_name}.pwi")
+    write_pwx_input(structure, config, pseudopotentials, kpoints, f"{run_name}.pwi")
     # Subprocess run
     try:
         with open(f"{run_name}.pwo", 'w') as f_out:
