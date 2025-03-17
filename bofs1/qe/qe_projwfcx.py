@@ -42,7 +42,6 @@ def qe_projwfcx(
     command = config['command']
     config['projwfc']['prefix'] = structure_name
     config['projwfc']['outdir'] = structure_name
-    os.makedirs(structure_name, exist_ok=True)
     config['projwfc']['filpdos'] = f"{structure_name}"
     # Write QE projwfc.x input file
     write_projwfcx_input(config, f"{run_name}.wfci")
