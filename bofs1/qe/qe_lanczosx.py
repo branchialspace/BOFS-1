@@ -19,37 +19,19 @@ def qe_lanczosx(
     config : dict
         Configuration dictionary containing required settings.
     """
-    def write_lr_input(config, input_filename):
+    def write_lanczos_input(config, input_filename):
         """
         Write the QE turbo_lanczos.x input file from config settings.
         """
         with open(input_filename, 'w') as f:
-            # LR_INPUT namelist (always required)
-            f.write('&LR_INPUT\n')
-            for key, value in config['lr_input'].items():
-                if isinstance(value, bool):
-                    val = '.true.' if value else '.false.'
-                elif isinstance(value, str):
-                    val = f"'{value}'"
-                else:
-                    val = value
-                f.write(f"  {key} = {val}\n")
-            f.write('/\n')    
-            # LR_CONTROL namelist
-            f.write('\n&LR_CONTROL\n')
-            for key, value in config['lr_control'].items():
-                if isinstance(value, bool):
-                    val = '.true.' if value else '.false.'
-                elif isinstance(value, str):
-                    val = f"'{value}'"
-                else:
-                    val = value
-                f.write(f"  {key} = {val}\n")
-            f.write('/\n')
-            # LR_POST namelist (optional, only if charge_response is set to 1)
+            # input, control, post
+            sections = ['lr_input', 'lr_control']
             if config['lr_control'].get('charge_response', 0) == 1:
-                f.write('\n&LR_POST\n')
-                for key, value in config['lr_post'].items():
+                sections.append('lr_post')
+            for section in sections:
+                qe_section = section.upper()
+                f.write(f'&{qe_section}\n')
+                for key, value in config[section].items():
                     if isinstance(value, bool):
                         val = '.true.' if value else '.false.'
                     elif isinstance(value, str):
@@ -69,7 +51,7 @@ def qe_lanczosx(
     config['lr_input']['outdir'] = structure_name
     os.makedirs(structure_name, exist_ok=True)
     # Write QE turbo_lanczos.x input file
-    write_lr_input(config, f"{run_name}.tdfi")
+    write_lanczos_input(config, f"{run_name}.tdfi")
     # Subprocess run
     try:
         with open(f"{run_name}.tdfo", 'w') as f_out:
