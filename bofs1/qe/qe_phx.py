@@ -96,7 +96,6 @@ def qe_phx(
     command = config['command']
     config['inputph']['prefix'] = structure_name
     config['inputph']['outdir'] = structure_name
-    os.makedirs(structure_name, exist_ok=True)
     # Set q-points grid if ldisp is True
     if config['inputph'].get('ldisp', False):
         q_spacing = config.get('qpts_q_spacing', 0.25)
