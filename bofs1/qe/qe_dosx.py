@@ -41,7 +41,6 @@ def qe_dosx(
     command = config['command']
     config['dos']['prefix'] = structure_name
     config['dos']['outdir'] = structure_name
-    os.makedirs(structure_name, exist_ok=True)
     config['dos']['fildos'] = f"{structure_name}.dos"
     # Write QE dos.x input file
     write_dosx_input(config, f"{run_name}.dosi")
