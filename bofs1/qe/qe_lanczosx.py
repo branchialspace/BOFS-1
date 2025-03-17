@@ -94,11 +94,6 @@ def qe_lanczosx(
 
 lanczos_config = {
     'command': ['/usr/bin/mpirun', '--allow-run-as-root', '-x', 'OMP_NUM_THREADS=2', '-np', '4', '/content/bin/turbo_lanczos.x'],
-    'lr_input': {
-        'wfcdir': './',
-        'restart_step': 500,     # Write restart files every restart_step iterations
-        'lr_verbosity': 1
-    },
     'lr_control': {
         'itermax': 500,          # Number of Lanczos iterations
         'ipol': 4,               # 1=X, 2=Y, 3=Z, 4=all polarizations
