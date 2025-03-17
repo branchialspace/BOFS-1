@@ -49,7 +49,6 @@ def qe_lanczosx(
     command = config['command']
     config['lr_input']['prefix'] = structure_name
     config['lr_input']['outdir'] = structure_name
-    os.makedirs(structure_name, exist_ok=True)
     # Write QE turbo_lanczos.x input file
     write_lanczosx_input(config, f"{run_name}.tdfi")
     # Subprocess run
