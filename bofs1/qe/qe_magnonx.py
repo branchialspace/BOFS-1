@@ -47,7 +47,6 @@ def qe_magnonx(
     command = config['command']
     config['lr_input']['prefix'] = structure_name
     config['lr_input']['outdir'] = structure_name
-    os.makedirs(structure_name, exist_ok=True)
     config['lr_control']['q1'] = config['q_vector'][0]
     config['lr_control']['q2'] = config['q_vector'][1]
     config['lr_control']['q3'] = config['q_vector'][2]
