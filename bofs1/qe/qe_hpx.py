@@ -162,7 +162,7 @@ hpx_config = {
     'qpts_q_spacing': 0.25,        # q-point spacing
     'inputhp': {
         'iverbosity': 2,           # Verbosity level
-        'find_atpert': 4,          # Method for determining which atoms to perturb (3=Perturb all Hubbard atoms)
+        'find_atpert': 4,          # Method for determining which atoms to perturb (4=Perturb all Hubbard atoms)
         'docc_thr': 5.0e-5,        # Threshold for comparing unperturbed occupations
         'skip_equivalence_q': True, # If True, use full q-point grid; if False, use symmetry to reduce q-points
         'conv_thr_chi': 1.0e-5,    # Convergence threshold for response function chi
