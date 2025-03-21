@@ -85,8 +85,7 @@ def qe_hpx(
             'skip_type': skip_type,
             'equiv_type': equiv_type,
             'perturb_only_atom': perturb_only_atom,
-            'hubbard_candidates': hubbard_candidates
-        }
+            'hubbard_candidates': hubbard_candidates}
 
         return hubbard_atoms
 
