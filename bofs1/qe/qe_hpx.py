@@ -102,12 +102,10 @@ def qe_hpx(
                     val = '.true.' if value else '.false.'
                 elif isinstance(value, str):
                     val = f"'{value}'"
-                elif isinstance(value, list) and key.startswith(('skip_type', 'equiv_type', 'perturb_only_atom')):
-                    continue
                 else:
                     val = value
                 f.write(f"  {key} = {val}\n")
-            # Hubbard parameters
+            # Hubbard atoms
             for i, (skip, equiv, perturb) in enumerate(zip(config['skip_type'], config['equiv_type'], config['perturb_only_atom']), 1):
                 f.write(f"  skip_type({i}) = {'.true.' if skip else '.false.'}\n")
                 f.write(f"  equiv_type({i}) = {equiv}\n")
