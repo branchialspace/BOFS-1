@@ -128,7 +128,7 @@ def qe_hpx(
     config['inputhp']['nq1'] = nq1
     config['inputhp']['nq2'] = nq2
     config['inputhp']['nq3'] = nq3
-    # Set Hubbard parameters
+    # Set Hubbard atoms
     hubbard_params = hubbard_atoms(structure)
     config['skip_type'] = hubbard_params['skip_type']
     config['equiv_type'] = hubbard_params['equiv_type']
