@@ -23,13 +23,13 @@ def qe_hpx(
     config : dict
         Configuration dictionary containing required settings.
     """
-    def qpoints(structure, q_spacing=0.25):
+    def qpoints(structure, q_spacing=0.065):
         """
         Given a desired q-point spacing q_spacing (in Å^-1),
         compute a suitable (nq1, nq2, nq3) Monkhorst–Pack grid for Hubbard parameters.
         q_spacing : float
             Target spacing in reciprocal space, in Å^-1.
-            For Hubbard parameters, typically coarser than k-points (0.2-0.3 is common).
+            For Hubbard parameters, typically denser than k-points.
         Returns
         (nq1, nq2, nq3) : tuple of ints
             The grid subdivisions.
@@ -158,7 +158,7 @@ def qe_hpx(
 
 hpx_config = {
     'command': ['/usr/bin/mpirun', '--allow-run-as-root', '-x', 'OMP_NUM_THREADS=2', '-np', '4', '/content/bin/hp.x'],
-    'qpts_q_spacing': 0.25,        # q-point spacing
+    'qpts_q_spacing': 0.065,        # q-point spacing
     'inputhp': {
         'iverbosity': 2,           # Verbosity level
         'find_atpert': 4,          # Method for determining which atoms to perturb (4=Perturb all Hubbard atoms)
