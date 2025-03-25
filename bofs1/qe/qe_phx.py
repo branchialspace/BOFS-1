@@ -27,7 +27,7 @@ def qe_phx(
         compute a suitable (nq1, nq2, nq3) Monkhorst–Pack grid for phonons.
         q_spacing : float
             Target spacing in reciprocal space, in Å^-1.
-            For phonons, typically coarser than k-points (0.2-0.3 is common).
+            For phonons, typically coarser than k-points.
         Returns
         (nq1, nq2, nq3) : tuple of ints
             The grid subdivisions.
