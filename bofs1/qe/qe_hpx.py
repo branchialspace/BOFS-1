@@ -122,7 +122,7 @@ def qe_hpx(
     config['inputhp']['outdir'] = structure_name
     os.makedirs(structure_name, exist_ok=True)
     # Set q-points
-    q_spacing = config.get('qpts_q_spacing', 0.25)
+    q_spacing = config['qpts_q_spacing']
     nq1, nq2, nq3 = qpoints(structure, q_spacing)
     config['inputhp']['nq1'] = nq1
     config['inputhp']['nq2'] = nq2
