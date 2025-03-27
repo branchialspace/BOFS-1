@@ -205,6 +205,58 @@ def qe_pwx(
 
         return charge
 
+    def hubbard_atoms(structure, pseudo_dict, pseudo_directory, initial_u_value=1.0):
+        """
+        Identify atoms needing Hubbard U+V corrections, and extract their valence orbitals
+        from pseudopotential files. U values and V pairs will be inferred by hp.x for subsequent runs.
+        structure : ASE Atoms object
+            The atomic structure
+        pseudo_dict : dict
+            Dictionary mapping atom symbols to pseudopotential filenames
+        pseudo_directory : str
+            Path to the directory containing pseudopotential files
+        initial_u_value : float
+            Initial U value to assign (will be refined by hp.x)
+        Returns
+        hubbard_data : dict
+            hubbard_manifolds : Dict mapping atom symbols to lists of orbital labels
+            hubbard_values : Dict mapping (atom, orbital) pairs to initial U values
+        """
+        # Species known to never require Hubbard corrections
+        non_correlated_species = {'H', 'He', 'B', 'C', 'N', 'O', 'F', 'Ne',
+                                 'Si', 'P', 'S', 'Cl', 'Ar', 'Ge', 'As', 'Se', 'Br', 'Kr',
+                                 'I', 'Xe', 'Rn'}
+        # Get unique atom types in structure
+        atom_types = sorted(set(structure.get_chemical_symbols()))
+        # Identify Hubbard candidates
+        hubbard_candidates = [symbol for symbol in atom_types if symbol not in non_correlated_species]
+        # Extract orbital labels from pseudopotentials for Hubbard candidates
+        hubbard_manifolds = {}
+        hubbard_values = {}
+        for symbol in hubbard_candidates:
+            pp_filename = pseudo_dict[symbol]
+            pp_path = Path(pseudo_directory) / pp_filename
+            # Extract orbital labels from pseudopotential file
+            with open(pp_path, 'r') as f:
+                content = f.read()
+            # Find all label entries in the pseudopotential
+            label_matches = re.findall(r'label\s*=\s*"([^"]+)"', content)
+            # Extract unique orbital labels and lowercase them
+            unique_labels = set()
+            for label in label_matches:
+                orbital = label.lower()
+                unique_labels.add(orbital)
+            hubbard_manifolds[symbol] = sorted(list(unique_labels))
+            # Assign the same initial U value to all orbitals
+            for orbital in unique_labels:
+                hubbard_values[(symbol, orbital)] = initial_u_value
+        hubbard_data = {
+            'hubbard_manifolds': hubbard_manifolds,
+            'hubbard_values': hubbard_values
+        }
+        
+        return hubbard_data
+
     def write_pwx_input(
         structure,
         config,
@@ -248,6 +300,13 @@ def qe_pwx(
             f.write('\nCELL_PARAMETERS angstrom\n')
             for vec in structure.cell:
                 f.write(f"  {vec[0]:.10f} {vec[1]:.10f} {vec[2]:.10f}\n")
+            # Hubbard U+V corrections
+            if hubbard_data and hubbard_data['hubbard_manifolds']:
+                f.write('\nHUBBARD ortho-atomic\n')
+                for symbol in hubbard_data['hubbard_manifolds']:
+                    for orbital in hubbard_data['hubbard_manifolds'][symbol]:
+                        u_value = hubbard_data['hubbard_values'][(symbol, orbital)]
+                        f.write(f"U {symbol}-{orbital} {u_value:.1f}\n")
 
     # Args
     structure = read(structure_path) # ASE Atoms object
@@ -280,6 +339,8 @@ def qe_pwx(
     # Set total charge
     charge = charge(structure_path, structure_name)
     config['system']['tot_charge'] = charge
+    # Set Hubbard corrections
+    hubbard_data = hubbard_atoms(structure, pseudopotentials, pseudo_dir)
     # Write QE PWscf input file
     write_pwx_input(structure, config, pseudopotentials, kpoints, f"{run_name}.pwi")
     # Subprocess run
