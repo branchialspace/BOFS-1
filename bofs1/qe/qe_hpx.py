@@ -175,10 +175,10 @@ hpx_config = {
         'determine_q_mesh_only': False,   # If True, determine only the q mesh and exit
         'sum_pertq': False,        # If True, collect response matrices for all q points
         'max_seconds': 86400,      # Maximum allowed run time in seconds
-        'num_neigh': 6,            # Number of nearest neighbors for Hubbard V parameters
-        'lmin': 2,                 # Minimum orbital quantum number for Hubbard V parameters
-        'rmax': 100.0,             # Maximum distance to search for neighbors
-        'dist_thr': 6.0e-4,        # Threshold for comparing inter-atomic distances
+        'num_neigh': 20,            # Number of nearest neighbors for Hubbard V parameters
+        'lmin': 1,                 # Minimum orbital quantum number for Hubbard V parameters
+        'rmax': 230.0,             # Maximum distance to search for neighbors
+        'dist_thr': 2.0e-3,        # Threshold for comparing inter-atomic distances
     }
 }
 
