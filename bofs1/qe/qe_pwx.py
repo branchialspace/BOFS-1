@@ -209,6 +209,7 @@ def qe_pwx(
         """
         Identify atoms needing Hubbard U+V corrections, extract valence orbitals
         from pseudopotential files, and prioritize manifolds based on physical properties.
+        For initial run only, U + V pairs and values will be inferred by hp.x for subsequent runs.
         structure : ASE Atoms object
             The atomic structure
         pseudo_dict : dict
