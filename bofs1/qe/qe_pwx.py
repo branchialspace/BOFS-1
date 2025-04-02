@@ -205,10 +205,10 @@ def qe_pwx(
 
         return charge
 
-    def hubbard_atoms(structure, pseudo_dict, pseudo_directory, initial_u_value=1.0):
+    def hubbard_atoms(structure, pseudo_dict, pseudo_directory, initial_u_value=0.1):
         """
-        Identify atoms needing Hubbard U+V corrections, and extract their valence orbitals
-        from pseudopotential files. U values and V pairs will be inferred by hp.x for subsequent runs.
+        Identify atoms needing Hubbard U+V corrections, extract valence orbitals
+        from pseudopotential files, and prioritize manifolds based on physical properties.
         structure : ASE Atoms object
             The atomic structure
         pseudo_dict : dict
@@ -219,41 +219,66 @@ def qe_pwx(
             Initial U value to assign (will be refined by hp.x)
         Returns
         hubbard_data : dict
-            hubbard_manifolds : Dict mapping atom symbols to lists of orbital labels
-            hubbard_values : Dict mapping (atom, orbital) pairs to initial U values
+            Dictionary with manifold information and formatted hubbard card
         """
         # Species known to never require Hubbard corrections
         non_correlated_species = {'H', 'He', 'B', 'C', 'N', 'O', 'F', 'Ne',
-                                 'Si', 'P', 'S', 'Cl', 'Ar', 'Ge', 'As', 'Se', 'Br', 'Kr',
-                                 'I', 'Xe', 'Rn'}
+                                'Si', 'P', 'S', 'Cl', 'Ar', 'Ge', 'As', 'Se', 'Br', 'Kr',
+                                'I', 'Xe', 'Rn'}
         # Get unique atom types in structure
         atom_types = sorted(set(structure.get_chemical_symbols()))
         # Identify Hubbard candidates
         hubbard_candidates = [symbol for symbol in atom_types if symbol not in non_correlated_species]
-        # Extract orbital labels from pseudopotentials for Hubbard candidates
+        # Store manifold information and formatted hubbard card
         hubbard_manifolds = {}
         hubbard_values = {}
+        hubbard_card = []
         for symbol in hubbard_candidates:
             pp_filename = pseudo_dict[symbol]
             pp_path = Path(pseudo_directory) / pp_filename
-            # Extract orbital labels from pseudopotential file
+            # Extract orbital information from pseudopotential file
+            orbital_info = []
             with open(pp_path, 'r') as f:
                 content = f.read()
-            # Find all label entries in the pseudopotential
-            label_matches = re.findall(r'label\s*=\s*"([^"]+)"', content)
-            # Extract unique orbital labels and lowercase them
-            unique_labels = set()
-            for label in label_matches:
-                orbital = label.lower()
-                unique_labels.add(orbital)
-            hubbard_manifolds[symbol] = sorted(list(unique_labels))
-            # Assign the same initial U value to all orbitals
-            for orbital in unique_labels:
-                hubbard_values[(symbol, orbital)] = initial_u_value
+            # Find all PP_CHI entries with label, l value, occupation, pseudo_energy
+            pattern = r'<PP_CHI\.\d+.*?label\s*=\s*"([^"]+)".*?l\s*=\s*"(\d+)".*?occupation\s*=\s*"([^"]+)"(?:.*?pseudo_energy\s*=\s*"([^"]+)")?'
+            matches = re.findall(pattern, content, re.DOTALL)
+            # Process matches
+            for match in matches:
+                label, l_value, occupation, energy = match  # energy is None in dalcorso paw pseudos
+                orbital_info.append({
+                    'label': label.lower(),
+                    'l_value': int(l_value),
+                    'occupation': float(occupation.strip()),
+                    'energy': float(energy) if energy is not None else 0.0
+                })
+            # Sort orbitals by priority: higher l value first, then partially filled, then lower energy
+            sorted_orbitals = sorted(
+                orbital_info, 
+                key=lambda x: (
+                    x['l_value'],                          # Higher l value first
+                    0.1 <= x['occupation'] <= 0.9,         # Prioritize partially filled shells
+                    -x.get('energy', 0)),                  # Lower energy (more bound)
+                reverse=True)
+            # Get top 3 manifolds
+            top_manifolds = sorted_orbitals[:min(3, len(sorted_orbitals))]
+            hubbard_manifolds[symbol] = [orbital['label'] for orbital in top_manifolds]
+            for orbital in top_manifolds:
+                hubbard_values[(symbol, orbital['label'])] = initial_u_value
+            # Format the Hubbard card entries
+            if top_manifolds:
+                # First manifold
+                first_orbital = top_manifolds[0]
+                hubbard_card.append(f"U {symbol}-{first_orbital['label']} {initial_u_value:.1f}")
+                # Combine second and third manifolds if they exist
+                if len(top_manifolds) > 1:
+                  
+                    combined_labels = '-'.join([orbital['label'] for orbital in top_manifolds[1:]])
+                    hubbard_card.append(f"U {symbol}-{combined_labels} {initial_u_value:.1f}")
         hubbard_data = {
             'hubbard_manifolds': hubbard_manifolds,
-            'hubbard_values': hubbard_values
-        }
+            'hubbard_values': hubbard_values,
+            'hubbard_card': hubbard_card}
         
         return hubbard_data
 
@@ -301,12 +326,10 @@ def qe_pwx(
             for vec in structure.cell:
                 f.write(f"  {vec[0]:.10f} {vec[1]:.10f} {vec[2]:.10f}\n")
             # Hubbard U+V corrections
-            if hubbard_data and hubbard_data['hubbard_manifolds']:
+            if hubbard_data and hubbard_data.get('hubbard_card'):
                 f.write('\nHUBBARD ortho-atomic\n')
-                for symbol in hubbard_data['hubbard_manifolds']:
-                    for orbital in hubbard_data['hubbard_manifolds'][symbol]:
-                        u_value = hubbard_data['hubbard_values'][(symbol, orbital)]
-                        f.write(f"U {symbol}-{orbital} {u_value:.1f}\n")
+                for line in hubbard_data['hubbard_card']:
+                    f.write(f"{line}\n")
 
     # Args
     structure = read(structure_path) # ASE Atoms object
