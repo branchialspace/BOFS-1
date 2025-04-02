@@ -251,7 +251,7 @@ def qe_pwx(
                     'label': label.lower(),
                     'l_value': int(l_value),
                     'occupation': float(occupation.strip()),
-                    'energy': float(energy) if energy is not None else 0.0
+                    'energy': float(energy) if energy and energy.strip() else 0.0
                 })
             # Sort orbitals by priority: higher l value first, then partially filled, then lower energy
             sorted_orbitals = sorted(
