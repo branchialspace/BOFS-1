@@ -395,12 +395,13 @@ config = {
     'rho_scalar': 1.15,
     'kpts_k_spacing': 0.13, # scf: 0.13    nscf: 0.09
     'kpts_shift': (1,1,1),
-    'nbnd_scalar': 2,
+    'nbnd_scalar': 2.5,
     'control': {
         'calculation': 'scf', # scf     nscf     bands
         'restart_mode': 'from_scratch',
-        'pseudo_dir': '/content/ONCVPseudoPack/Abinit_v0.4/UPF/PBEsol',
+        'pseudo_dir': '/content/pslibrary/rel-pbe/PSEUDOPOTENTIALS', # /content/ONCVPseudoPack/Abinit_v0.4/UPF/PBEsol   /content/pslibrary/rel-pbe/PSEUDOPOTENTIALS
         'disk_io': 'medium',
+        'verbosity': 'high',
         'wf_collect': True,
         'tprnfor': True,
         'tstress': True
