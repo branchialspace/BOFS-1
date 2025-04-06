@@ -38,7 +38,7 @@ os.environ['NBOBIN'] = '/content/nbo7/bin'
 !cp /content/bin/ld1.x /content/qe-7.4.1/bin/
 # Dalcorso PAW fully-relativistic pseudopotentials
 !gdown 1yJy8HWqBRgOyko1n3KWcPMuzdUZwNfO4
-!unzip /content/dalcorso_paw_fr.zip
+!unzip /content/dalcorso_paw_fr.zip -d ..
 # ONCV fully-relativistic pseudopotentials
 !git clone https://github.com/pipidog/ONCVPSP.git
 !git clone https://github.com/MarioAndWario/ONCVPseudoPack.git
