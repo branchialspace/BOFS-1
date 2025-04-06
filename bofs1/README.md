@@ -31,10 +31,11 @@ os.environ['NBOBIN'] = '/content/nbo7/bin'
 !wget ***url to QuantumESPRESSO qe-7.4.1***
 !tar -xf qe-7.4.1-ReleasePack.tar.gz
 !apt-get install -y liblapack-dev libblas-dev libopenmpi-dev libscalapack-openmpi-dev libfftw3-dev
-!mkdir -p build
-!cd build
 !cmake -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 -DQE_FFTW_VENDOR=Internal /content/qe-7.4.1 # -DQE_ENABLE_CUDA=ON  
 !make -j4
+!make ld1
+!mkdir -p /content/qe-7.4.1/bin
+!cp /content/bin/ld1.x /content/qe-7.4.1/bin/
 # Dalcorso PAW fully-relativistic pseudopotentials
 !gdown 12BcBoX8R8MSf8u0UO40UzdAfUJKpl8Qa
 !unzip /content/rel_pbe.zip -d /content/rel_pbe
