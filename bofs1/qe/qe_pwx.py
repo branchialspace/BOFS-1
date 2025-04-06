@@ -261,8 +261,8 @@ def qe_pwx(
                     0.1 <= x['occupation'] <= 0.9,         # Prioritize partially filled shells
                     -x.get('energy', 0)),                  # Lower energy (more bound)
                 reverse=True)
-            # Get top 3 manifolds
-            top_manifolds = sorted_orbitals[:min(3, len(sorted_orbitals))]
+            # Get top manifold (hubbard not working for more than 1 U manifold per species)
+            top_manifolds = sorted_orbitals[:min(1, len(sorted_orbitals))]
             hubbard_manifolds[symbol] = [orbital['label'] for orbital in top_manifolds]
             for orbital in top_manifolds:
                 hubbard_values[(symbol, orbital['label'])] = initial_u_value
