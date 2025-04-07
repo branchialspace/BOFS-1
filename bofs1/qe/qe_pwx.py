@@ -208,7 +208,7 @@ def qe_pwx(
     def hubbard_atoms(structure, pseudo_dict, pseudo_directory, initial_u_value=0.1):
         """
         Identify atoms needing Hubbard U+V corrections, extract valence orbitals
-        from pseudopotential files, and prioritize manifolds based on physical properties.
+        from pseudopotential files, and prioritize manifolds based on orbital energy proximity to fermi level.
         For initial run only, U + V pairs and values will be inferred by hp.x for subsequent runs.
         structure : ASE Atoms object
             The atomic structure
@@ -244,24 +244,48 @@ def qe_pwx(
             # Find all PP_CHI entries with label, l value, occupation, pseudo_energy
             pattern = r'<PP_CHI\.\d+.*?label\s*=\s*"([^"]+)".*?l\s*=\s*"(\d+)".*?occupation\s*=\s*"([^"]+)"(?:.*?pseudo_energy\s*=\s*"([^"]+)")?'
             matches = re.findall(pattern, content, re.DOTALL)
-            # Process matches
             for match in matches:
                 label, l_value, occupation, energy = match  # energy is None in dalcorso paw pseudos
+                # If energy is not available, get it from Mendeleev
+                if not (energy and energy.strip()):
+                    # Use l_value which is already in spectroscopic notation (0=s, 1=p, 2=d, 3=f)
+                    l = int(l_value)
+                    # Extract principal quantum number from label
+                    n = None
+                    if label and any(c.isdigit() for c in label):
+                        # Extract all digits from the beginning of the label
+                        digits = ""
+                        for c in label:
+                            if c.isdigit():
+                                digits += c
+                            else:
+                                break
+                        if digits:
+                            n = int(digits)
+                    # Get energy from Mendeleev
+                    elem = element(symbol)
+                    # Find the appropriate orbital energy
+                    for orbital in elem.orbitals:
+                        if orbital.l == l and (n is None or orbital.n == n):
+                            energy = orbital.energy
+                            break
+                    else:
+                        energy = 0.0  # Fallback if no matching orbital found
+                else:
+                    energy = float(energy.strip())
                 orbital_info.append({
                     'label': label.lower(),
                     'l_value': int(l_value),
                     'occupation': float(occupation.strip()),
-                    'energy': float(energy) if energy and energy.strip() else 0.0
-                })
-            # Sort orbitals by priority: higher l value first, then partially filled, then lower energy
+                    'energy': energy})
+            # For duplicate orbitals, select instance with energy closest to Fermi level (assumed to be at zero)
+            orbital_info = [sorted([o for o in orbital_info if o['label'] == label], key=lambda x: abs(x['energy']))[0] for label in {o['label'] for o in orbital_info}]
+            # Sort orbitals by priority: proximity to Fermi level (assumed to be at zero energy)
             sorted_orbitals = sorted(
-                orbital_info, 
-                key=lambda x: (
-                    x['l_value'],                          # Higher l value first
-                    0.1 <= x['occupation'] <= 0.9,         # Prioritize partially filled shells
-                    -x.get('energy', 0)),                  # Lower energy (more bound)
-                reverse=True)
-            # Get top manifold (hubbard not working for more than 1 U manifold per species)
+                orbital_info,
+                key=lambda x: abs(x['energy']),  # Proximity to Fermi level (assumed to be at zero)
+                reverse=False)  # Smaller absolute difference first
+            # Get top manifold
             top_manifolds = sorted_orbitals[:min(1, len(sorted_orbitals))]
             hubbard_manifolds[symbol] = [orbital['label'] for orbital in top_manifolds]
             for orbital in top_manifolds:
@@ -273,14 +297,13 @@ def qe_pwx(
                 hubbard_card.append(f"U {symbol}-{first_orbital['label']} {initial_u_value:.1f}")
                 # Combine second and third manifolds if they exist
                 if len(top_manifolds) > 1:
-                  
                     combined_labels = '-'.join([orbital['label'] for orbital in top_manifolds[1:]])
                     hubbard_card.append(f"U {symbol}-{combined_labels} {initial_u_value:.1f}")
         hubbard_data = {
             'hubbard_manifolds': hubbard_manifolds,
             'hubbard_values': hubbard_values,
             'hubbard_card': hubbard_card}
-        
+    
         return hubbard_data
 
     def write_pwx_input(
