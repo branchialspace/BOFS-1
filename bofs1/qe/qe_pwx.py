@@ -223,9 +223,11 @@ def qe_pwx(
             Dictionary with manifold information and formatted hubbard card
         """
         # Species known to never require Hubbard corrections
-        non_correlated_species = {'H', 'He', 'B', 'C', 'N', 'O', 'F', 'Ne',
-                                'Si', 'P', 'S', 'Cl', 'Ar', 'Ge', 'As', 'Se', 'Br', 'Kr',
-                                'I', 'Xe', 'Rn'}
+        non_correlated_species = {'H', 'He', 'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne',
+                                'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar',
+                                'K', 'Ca', 'Sc', 'Zn', 'Ga', 'Ge', 'As', 'Se', 'Br', 'Kr',
+                                'Rb', 'Sr', 'Y', 'Cd', 'In', 'Sn', 'Sb', 'Te', 'I', 'Xe',
+                                'Cs', 'Ba', 'La', 'Lu', 'Hg', 'Tl', 'Pb', 'Bi', 'Po', 'At', 'Rn'}
         # Get unique atom types in structure
         atom_types = sorted(set(structure.get_chemical_symbols()))
         # Identify Hubbard candidates
