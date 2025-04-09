@@ -223,8 +223,8 @@ def qe_pwx(
             Dictionary with manifold information and formatted hubbard card
         """
         # Species known to never require Hubbard corrections
-        non_correlated_species = {'H', 'He', 'Li', 'Be', 'B', 'C', 'F', 'Ne',
-                                'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar',
+        non_correlated_species = {'H', 'He', 'Li', 'Be', 'B', 'F', 'Ne',
+                                'Na', 'Mg', 'Al', 'Si', 'Cl', 'Ar',
                                 'K', 'Ca', 'Ga', 'Ge', 'As', 'Se', 'Br', 'Kr',
                                 'Rb', 'Sr', 'Cd', 'In', 'Sn', 'Sb', 'Te', 'I', 'Xe',
                                 'Cs', 'Ba', 'Hg', 'Tl', 'Po', 'At', 'Rn'}
