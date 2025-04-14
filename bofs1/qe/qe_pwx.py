@@ -205,10 +205,10 @@ def qe_pwx(
 
         return charge
 
-    def hubbard_atoms(structure, pseudo_dict, pseudo_directory, initial_u_value=0.1):
+    def hubbard_atoms(structure, pseudo_dict, pseudo_directory, initial_u_value=0.1, n_manifolds=1):
         """
         Identify atoms needing Hubbard U+V corrections, extract valence orbitals
-        from pseudopotential files, and prioritize manifolds based on orbital energy proximity to fermi level.
+        from pseudopotential files, and prioritize manifolds based on orbital blocks.
         For initial run only, U + V pairs and values will be inferred by hp.x for subsequent runs.
         structure : ASE Atoms object
             The atomic structure
@@ -218,7 +218,8 @@ def qe_pwx(
             Path to the directory containing pseudopotential files
         initial_u_value : float
             Initial U value to assign (will be refined by hp.x)
-        Returns
+        n_manifolds : int
+            Number of orbitals/ manifolds per species
         hubbard_data : dict
             Dictionary with manifold information and formatted hubbard card
         """
@@ -239,64 +240,96 @@ def qe_pwx(
         for symbol in hubbard_candidates:
             pp_filename = pseudo_dict[symbol]
             pp_path = Path(pseudo_directory) / pp_filename
-            # Extract orbital information from pseudopotential file
+            # Extract orbital labels from pseudopotential file
             orbital_info = []
             with open(pp_path, 'r') as f:
                 content = f.read()
-            # Find all PP_CHI entries with label, l value, occupation, pseudo_energy
-            pattern = r'<PP_CHI\.\d+.*?label\s*=\s*"([^"]+)".*?l\s*=\s*"(\d+)".*?occupation\s*=\s*"([^"]+)"(?:.*?pseudo_energy\s*=\s*"([^"]+)")?'
+            # Find all PP_CHI entries with label
+            pattern = r'<PP_CHI\.\d+.*?label\s*=\s*"([^"]+)"'
             matches = re.findall(pattern, content, re.DOTALL)
-            for match in matches:
-                label, l_value, occupation, energy = match  # energy is None in dalcorso paw pseudos
-                # If energy is not available, get it from Mendeleev
-                if not (energy and energy.strip()):
-                    # Use l_value which is already in spectroscopic notation (0=s, 1=p, 2=d, 3=f)
-                    l = int(l_value)
-                    # Extract principal quantum number from label
-                    n = None
-                    if label and any(c.isdigit() for c in label):
-                        # Extract all digits from the beginning of the label
-                        digits = ""
-                        for c in label:
-                            if c.isdigit():
-                                digits += c
-                            else:
-                                break
-                        if digits:
-                            n = int(digits)
-                    # Get energy from Mendeleev
-                    elem = element(symbol)
-                    # Find the appropriate orbital energy
-                    for orbital in elem.orbitals:
-                        if orbital.l == l and (n is None or orbital.n == n):
-                            energy = orbital.energy
-                            break
-                    else:
-                        energy = 0.0  # Fallback if no matching orbital found
+            # Parse orbital labels to extract n and l quantum numbers
+            for label in matches:
+                label = label.lower()
+                # Extract principal quantum number (n)
+                n = None
+                if any(c.isdigit() for c in label):
+                    n_str = ''.join(filter(str.isdigit, label))
+                    if n_str:
+                        n = int(n_str)
+                # Determine angular momentum (l)
+                l_type = None
+                for char in label:
+                    if char in 'spdf':
+                        l_type = char
+                        break
+                if n is not None and l_type is not None:
+                    orbital_info.append({
+                        'label': label,
+                        'n': n,
+                        'l_type': l_type})
+            # Use Mendeleev to determine element type and electronic structure
+            elem = element(symbol)
+            block = elem.block
+            # Group orbitals by type
+            s_orbitals = [o for o in orbital_info if o['l_type'] == 's']
+            p_orbitals = [o for o in orbital_info if o['l_type'] == 'p']
+            d_orbitals = [o for o in orbital_info if o['l_type'] == 'd']
+            f_orbitals = [o for o in orbital_info if o['l_type'] == 'f']
+            # Get valence shell information (not just the outermost shell)
+            valence_n = elem.nvalence()
+            # Determine the most correlated shells based on element type
+            prioritized_orbitals = []
+            # Transition metals (d-block)
+            if block == 'd':
+                # For 3d transition metals: 3d orbitals are more correlated than 4s
+                # For 4d transition metals: 4d orbitals are more correlated than 5s
+                # For 5d transition metals: 5d orbitals are more correlated than 6s
+                # Find d orbitals of the valence shell first
+                valence_d = [o for o in d_orbitals if o['n'] == valence_n-1]  # d shell is typically n-1 for d-block
+                other_d = [o for o in d_orbitals if o['n'] != valence_n-1]
+                # Then consider s orbitals
+                valence_s = [o for o in s_orbitals if o['n'] == valence_n]
+                other_s = [o for o in s_orbitals if o['n'] != valence_n]
+                # Then p orbitals (less commonly needed)
+                valence_p = [o for o in p_orbitals if o['n'] == valence_n-1]
+                other_p = [o for o in p_orbitals if o['n'] != valence_n-1]
+                prioritized_orbitals = valence_d + other_d + valence_p + valence_s + other_p + other_s + f_orbitals
+            # Lanthanides and Actinides (f-block)
+            elif block == 'f':
+                # For lanthanides: 4f orbitals are more correlated than 5d or 6s
+                # For actinides: 5f orbitals are more correlated than 6d or 7s
+                # Find f orbitals of the valence shell first
+                valence_f = [o for o in f_orbitals if o['n'] == valence_n-2]  # f shell is typically n-2 for f-block
+                other_f = [o for o in f_orbitals if o['n'] != valence_n-2]
+                # Then d orbitals
+                valence_d = [o for o in d_orbitals if o['n'] == valence_n-1]
+                other_d = [o for o in d_orbitals if o['n'] != valence_n-1]
+                prioritized_orbitals = valence_f + other_f + valence_d + other_d + p_orbitals + s_orbitals
+            # Main group elements (p-block)
+            elif block == 'p':
+                # For p-block: valence p orbitals are more correlated than s (especially O 2p)
+                valence_p = [o for o in p_orbitals if o['n'] == valence_n]
+                other_p = [o for o in p_orbitals if o['n'] != valence_n]
+                # Oxygen 2p is especially correlated when hybridized with transition metals
+                if symbol == 'O' and any(o['n'] == 2 and o['l_type'] == 'p' for o in orbital_info):
+                    o_2p = [o for o in p_orbitals if o['n'] == 2]
+                    other_o_p = [o for o in p_orbitals if o['n'] != 2]
+                    prioritized_orbitals = o_2p + other_o_p + s_orbitals + d_orbitals + f_orbitals
                 else:
-                    energy = float(energy.strip())
-                orbital_info.append({
-                    'label': label.lower(),
-                    'l_value': int(l_value),
-                    'occupation': float(occupation.strip()),
-                    'energy': energy})
-            # For duplicate orbitals, select instance with energy closest to Fermi level (assumed to be at zero)
-            orbital_info = [sorted([o for o in orbital_info if o['label'] == label], key=lambda x: abs(x['energy']))[0] for label in {o['label'] for o in orbital_info}]
-            # Sort orbitals by priority: proximity to Fermi level (assumed to be at zero energy)
-            sorted_orbitals = sorted(
-                orbital_info,
-                key=lambda x: abs(x['energy']),  # Proximity to Fermi level (assumed to be at zero)
-                reverse=False)  # Smaller absolute difference first
-            # Get top manifold
-            top_manifolds = sorted_orbitals[:min(1, len(sorted_orbitals))]
+                    prioritized_orbitals = valence_p + other_p + s_orbitals + d_orbitals + f_orbitals
+            # s-block elements (though most are in non_correlated_species)
+            elif block == 's':
+                valence_s = [o for o in s_orbitals if o['n'] == valence_n]
+                prioritized_orbitals = valence_s + p_orbitals + d_orbitals + f_orbitals
+            # Select top manifolds
+            top_manifolds = prioritized_orbitals[:min(n_manifolds, len(prioritized_orbitals))]
             hubbard_manifolds[symbol] = [orbital['label'] for orbital in top_manifolds]
             for orbital in top_manifolds:
                 hubbard_values[(symbol, orbital['label'])] = initial_u_value
             # Format the Hubbard card entries
             if top_manifolds:
                 # First manifold
-                first_orbital = top_manifolds[0]
-                hubbard_card.append(f"U {symbol}-{first_orbital['label']} {initial_u_value:.1f}")
+                hubbard_card.append(f"U {symbol}-{top_manifolds[0]['label']} {initial_u_value:.1f}")
                 # Combine second and third manifolds if they exist
                 if len(top_manifolds) > 1:
                     combined_labels = '-'.join([orbital['label'] for orbital in top_manifolds[1:]])
@@ -304,8 +337,9 @@ def qe_pwx(
         hubbard_data = {
             'hubbard_manifolds': hubbard_manifolds,
             'hubbard_values': hubbard_values,
-            'hubbard_card': hubbard_card}
-    
+            'hubbard_card': hubbard_card
+        }
+
         return hubbard_data
 
     def write_pwx_input(
@@ -355,7 +389,7 @@ def qe_pwx(
             if hubbard_data and hubbard_data.get('hubbard_card'):
                 f.write('\nHUBBARD ortho-atomic\n')
                 for line in hubbard_data['hubbard_card']:
-                    f.write(f"{line}\n")
+                   f.write(f"{line}\n")
 
     # Args
     structure = read(structure_path) # ASE Atoms object
@@ -389,7 +423,8 @@ def qe_pwx(
     charge = charge(structure_path, structure_name)
     config['system']['tot_charge'] = charge
     # Set Hubbard corrections
-    hubbard_data = hubbard_atoms(structure, pseudopotentials, pseudo_dir)
+    n_manifolds = config['n_manifolds']
+    hubbard_data = hubbard_atoms(structure, pseudopotentials, pseudo_dir, n_manifolds)
     # Write QE PWscf input file
     write_pwx_input(structure, config, pseudopotentials, kpoints, f"{run_name}.pwi")
     # Subprocess run
@@ -421,6 +456,7 @@ config = {
     'kpts_k_spacing': 0.13, # scf: 0.13    nscf: 0.09
     'kpts_shift': (1,1,1),
     'nbnd_scalar': 2.5,
+    'n_manifolds': 1,
     'control': {
         'calculation': 'scf', # scf     nscf     bands
         'restart_mode': 'from_scratch',
