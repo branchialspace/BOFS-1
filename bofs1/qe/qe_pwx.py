@@ -207,7 +207,7 @@ def qe_pwx(
 
     def hubbard_atoms(structure, pseudo_dict, pseudo_directory, initial_u_value=0.1, n_manifolds=1):
         """
-        Identify atoms needing Hubbard U+V corrections, extract valence orbitals
+        Identify atoms needing Hubbard U + V corrections, extract valence orbitals
         from pseudopotential files, and prioritize manifolds based on orbital blocks.
         For initial run only, U + V pairs and values will be inferred by hp.x for subsequent runs.
         structure : ASE Atoms object
@@ -220,127 +220,71 @@ def qe_pwx(
             Initial U value to assign (will be refined by hp.x)
         n_manifolds : int
             Number of orbitals/ manifolds per species
-        hubbard_data : dict
-            Dictionary with manifold information and formatted hubbard card
+        hubbard_card : list
+            List with manifold information formatted for the hubbard card
         """
         # Species known to never require Hubbard corrections
         non_correlated_species = {'H', 'He', 'Li', 'Be', 'B', 'F', 'Ne',
-                                'Na', 'Mg', 'Al', 'Si', 'Cl', 'Ar',
-                                'K', 'Ca', 'Ga', 'Ge', 'As', 'Se', 'Br', 'Kr',
-                                'Rb', 'Sr', 'Cd', 'In', 'Sn', 'Sb', 'Te', 'I', 'Xe',
-                                'Cs', 'Ba', 'Hg', 'Tl', 'Po', 'At', 'Rn'}
+                                  'Na', 'Mg', 'Al', 'Si', 'Cl', 'Ar',
+                                  'K', 'Ca', 'Ga', 'Ge', 'As', 'Se', 'Br', 'Kr',
+                                  'Rb', 'Sr', 'Cd', 'In', 'Sn', 'Sb', 'Te', 'I', 'Xe',
+                                  'Cs', 'Ba', 'Hg', 'Tl', 'Po', 'At', 'Rn'}
         # Get unique atom types in structure
         atom_types = sorted(set(structure.get_chemical_symbols()))
         # Identify Hubbard candidates
-        hubbard_candidates = [symbol for symbol in atom_types if symbol not in non_correlated_species]
-        # Store manifold information and formatted hubbard card
-        hubbard_manifolds = {}
-        hubbard_values = {}
+        hubbard_candidates = [sym for sym in atom_types if sym not in non_correlated_species]
+        # Write Hubbard card
         hubbard_card = []
+        # Extract orbital labels from pseudopotential file
         for symbol in hubbard_candidates:
             pp_filename = pseudo_dict[symbol]
             pp_path = Path(pseudo_directory) / pp_filename
-            # Extract orbital labels from pseudopotential file
-            orbital_info = []
             with open(pp_path, 'r') as f:
                 content = f.read()
             # Find all PP_CHI entries with label
             pattern = r'<PP_CHI\.\d+.*?label\s*=\s*"([^"]+)"'
             matches = re.findall(pattern, content, re.DOTALL)
-            # Parse orbital labels to extract n and l quantum numbers
+            orbital_info = []
+            # Parse orbital labels to extract (n) principal quantum number and (l) angular momentum 
             for label in matches:
                 label = label.lower()
-                # Extract principal quantum number (n)
-                n = None
-                if any(c.isdigit() for c in label):
-                    n_str = ''.join(filter(str.isdigit, label))
-                    if n_str:
-                        n = int(n_str)
-                # Determine angular momentum (l)
-                l_type = None
-                for char in label:
-                    if char in 'spdf':
-                        l_type = char
-                        break
+                n = int(''.join(filter(str.isdigit, label))) if any(c.isdigit() for c in label) else None
+                l_type = next((char for char in label if char in 'spdf'), None)
                 if n is not None and l_type is not None:
-                    orbital_info.append({
-                        'label': label,
-                        'n': n,
-                        'l_type': l_type})
-            # Use Mendeleev to determine element type and electronic structure
+                    orbital_info.append({'label': label, 'n': n, 'l_type': l_type})
+            orbital_info = list({orb['label']: orb for orb in orbital_info}.values())
+            # Use Mendeleev to determine element type and electron orbital block
             elem = element(symbol)
             block = elem.block
-            # Group orbitals by type
-            s_orbitals = [o for o in orbital_info if o['l_type'] == 's']
-            p_orbitals = [o for o in orbital_info if o['l_type'] == 'p']
-            d_orbitals = [o for o in orbital_info if o['l_type'] == 'd']
-            f_orbitals = [o for o in orbital_info if o['l_type'] == 'f']
-            # Get valence shell information (not just the outermost shell)
-            valence_n = elem.nvalence()
-            # Determine the most correlated shells based on element type
-            prioritized_orbitals = []
-            # Transition metals (d-block)
-            if block == 'd':
-                # For 3d transition metals: 3d orbitals are more correlated than 4s
-                # For 4d transition metals: 4d orbitals are more correlated than 5s
-                # For 5d transition metals: 5d orbitals are more correlated than 6s
-                # Find d orbitals of the valence shell first
-                valence_d = [o for o in d_orbitals if o['n'] == valence_n-1]  # d shell is typically n-1 for d-block
-                other_d = [o for o in d_orbitals if o['n'] != valence_n-1]
-                # Then consider s orbitals
-                valence_s = [o for o in s_orbitals if o['n'] == valence_n]
-                other_s = [o for o in s_orbitals if o['n'] != valence_n]
-                # Then p orbitals (less commonly needed)
-                valence_p = [o for o in p_orbitals if o['n'] == valence_n-1]
-                other_p = [o for o in p_orbitals if o['n'] != valence_n-1]
-                prioritized_orbitals = valence_d + other_d + valence_p + valence_s + other_p + other_s + f_orbitals
-            # Lanthanides and Actinides (f-block)
-            elif block == 'f':
-                # For lanthanides: 4f orbitals are more correlated than 5d or 6s
-                # For actinides: 5f orbitals are more correlated than 6d or 7s
-                # Find f orbitals of the valence shell first
-                valence_f = [o for o in f_orbitals if o['n'] == valence_n-2]  # f shell is typically n-2 for f-block
-                other_f = [o for o in f_orbitals if o['n'] != valence_n-2]
-                # Then d orbitals
-                valence_d = [o for o in d_orbitals if o['n'] == valence_n-1]
-                other_d = [o for o in d_orbitals if o['n'] != valence_n-1]
-                prioritized_orbitals = valence_f + other_f + valence_d + other_d + p_orbitals + s_orbitals
-            # Main group elements (p-block)
+            # Sort orbitals by type
+            s_orbitals = sorted([o for o in orbital_info if o['l_type'] == 's'], key=lambda o: -o['n'])
+            p_orbitals = sorted([o for o in orbital_info if o['l_type'] == 'p'], key=lambda o: -o['n'])
+            d_orbitals = sorted([o for o in orbital_info if o['l_type'] == 'd'], key=lambda o: -o['n'])
+            f_orbitals = sorted([o for o in orbital_info if o['l_type'] == 'f'], key=lambda o: -o['n'])
+            # Prioritize orbitals by block of species, special case for oxygen
+            if symbol == 'O':
+                o_2p = [o for o in p_orbitals if o['n'] == 2]
+                other_p = [o for o in p_orbitals if o['n'] != 2]
+                prioritized_orbitals = o_2p + other_p + s_orbitals + d_orbitals + f_orbitals
+            elif block == 'd':
+                prioritized_orbitals = d_orbitals + p_orbitals + s_orbitals + f_orbitals
             elif block == 'p':
-                # For p-block: valence p orbitals are more correlated than s (especially O 2p)
-                valence_p = [o for o in p_orbitals if o['n'] == valence_n]
-                other_p = [o for o in p_orbitals if o['n'] != valence_n]
-                # Oxygen 2p is especially correlated when hybridized with transition metals
-                if symbol == 'O' and any(o['n'] == 2 and o['l_type'] == 'p' for o in orbital_info):
-                    o_2p = [o for o in p_orbitals if o['n'] == 2]
-                    other_o_p = [o for o in p_orbitals if o['n'] != 2]
-                    prioritized_orbitals = o_2p + other_o_p + s_orbitals + d_orbitals + f_orbitals
-                else:
-                    prioritized_orbitals = valence_p + other_p + s_orbitals + d_orbitals + f_orbitals
-            # s-block elements (though most are in non_correlated_species)
+                prioritized_orbitals = p_orbitals + s_orbitals + d_orbitals + f_orbitals
+            elif block == 'f':
+                prioritized_orbitals = f_orbitals + d_orbitals + p_orbitals + s_orbitals
             elif block == 's':
-                valence_s = [o for o in s_orbitals if o['n'] == valence_n]
-                prioritized_orbitals = valence_s + p_orbitals + d_orbitals + f_orbitals
-            # Select top manifolds
+                prioritized_orbitals = s_orbitals + p_orbitals + d_orbitals + f_orbitals
             top_manifolds = prioritized_orbitals[:min(n_manifolds, len(prioritized_orbitals))]
-            hubbard_manifolds[symbol] = [orbital['label'] for orbital in top_manifolds]
-            for orbital in top_manifolds:
-                hubbard_values[(symbol, orbital['label'])] = initial_u_value
-            # Format the Hubbard card entries
+            # Format Hubbard card
             if top_manifolds:
                 # First manifold
                 hubbard_card.append(f"U {symbol}-{top_manifolds[0]['label']} {initial_u_value:.1f}")
                 # Combine second and third manifolds if they exist
                 if len(top_manifolds) > 1:
-                    combined_labels = '-'.join([orbital['label'] for orbital in top_manifolds[1:]])
+                    combined_labels = '-'.join(orb['label'] for orb in top_manifolds[1:])
                     hubbard_card.append(f"U {symbol}-{combined_labels} {initial_u_value:.1f}")
-        hubbard_data = {
-            'hubbard_manifolds': hubbard_manifolds,
-            'hubbard_values': hubbard_values,
-            'hubbard_card': hubbard_card
-        }
 
-        return hubbard_data
+        return hubbard_card
 
     def write_pwx_input(
         structure,
@@ -386,10 +330,11 @@ def qe_pwx(
             for vec in structure.cell:
                 f.write(f"  {vec[0]:.10f} {vec[1]:.10f} {vec[2]:.10f}\n")
             # Hubbard U+V corrections
-            if hubbard_data and hubbard_data.get('hubbard_card'):
+            if hubbard_data:
                 f.write('\nHUBBARD ortho-atomic\n')
-                for line in hubbard_data['hubbard_card']:
-                   f.write(f"{line}\n")
+                for line in hubbard_data:
+                    f.write(f"{line}\n")
+
 
     # Args
     structure = read(structure_path) # ASE Atoms object
@@ -423,8 +368,9 @@ def qe_pwx(
     charge = charge(structure_path, structure_name)
     config['system']['tot_charge'] = charge
     # Set Hubbard corrections
+    initial_u_value = config['initial_u_value']
     n_manifolds = config['n_manifolds']
-    hubbard_data = hubbard_atoms(structure, pseudopotentials, pseudo_dir, n_manifolds)
+    hubbard_data = hubbard_atoms(structure, pseudopotentials, pseudo_dir, initial_u_value, n_manifolds)
     # Write QE PWscf input file
     write_pwx_input(structure, config, pseudopotentials, kpoints, f"{run_name}.pwi")
     # Subprocess run
@@ -455,14 +401,14 @@ config = {
     'rho_scalar': 1.15,
     'kpts_k_spacing': 0.13, # scf: 0.13    nscf: 0.09
     'kpts_shift': (1,1,1),
-    'nbnd_scalar': 2.5,
+    'nbnd_scalar': 2,
+    'initial_u_value': 0.1,
     'n_manifolds': 1,
     'control': {
         'calculation': 'scf', # scf     nscf     bands
         'restart_mode': 'from_scratch',
         'pseudo_dir': '/content/pslibrary/rel-pbe/PSEUDOPOTENTIALS', # /content/ONCVPseudoPack/Abinit_v0.4/UPF/PBEsol   /content/pslibrary/rel-pbe/PSEUDOPOTENTIALS
         'disk_io': 'medium',
-        'verbosity': 'high',
         'wf_collect': True,
         'tprnfor': True,
         'tstress': True
