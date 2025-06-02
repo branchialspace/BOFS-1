@@ -4,7 +4,7 @@ set -e # Exit on error
 python3 -m venv bofs1_env
 source bofs1_env/bin/activate
 sudo apt-get update
-sudo apt-get install -y python3-pip unzip
+sudo apt-get install -y python3-pip unzip wget
 pip install numpy==1.26.4
 pip install torch_geometric
 pip install wandb
