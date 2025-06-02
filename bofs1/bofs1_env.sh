@@ -4,7 +4,7 @@ set -e # Exit on error
 python3 -m venv bofs1_env
 source bofs1_env/bin/activate
 sudo apt-get update
-sudo apt-get install -y python3-pip unzip wget
+sudo apt-get install -y python3-pip unzip wget cmake git
 pip install numpy==1.26.4
 pip install torch_geometric
 pip install wandb
@@ -32,4 +32,4 @@ unzip dalcorso_paw_fr.zip -d ..
 git clone https://github.com/pipidog/ONCVPSP.git
 git clone https://github.com/MarioAndWario/ONCVPseudoPack.git
 
-echo "Environment setup completed successfully!"
+echo "BOFS1 environment built successfully"
