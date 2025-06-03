@@ -27,7 +27,7 @@ mkdir -p qe-7.4.1/bin
 cp bin/ld1.x qe-7.4.1/bin/
 # Dalcorso fully-relativistic pseudopotentials
 gdown ...
-unzip dalcorso_paw_fr.zip -d ..
+unzip dalcorso_rel_pbe.zip
 # ONCV fully-relativistic pseudopotentials repositories
 git clone https://github.com/pipidog/ONCVPSP.git
 git clone https://github.com/MarioAndWario/ONCVPseudoPack.git
