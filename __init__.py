@@ -7,4 +7,5 @@ from .bofs1.tests.assemble.mof_nanoparticle import mof_nanoparticle
 from .bofs1.tests.assemble.ligand_metal_docking import ligand_metal_docking
 from .bofs1.tests.assemble.orca_docking import orca_docking
 from .bofs1.tests.assemble import utils
-from .bofs1.tests.models.matbench_discovery.soap import soap 
+from .bofs1.tests.models.matbench_discovery.soap import soap
+from .bofs1.qe.qe_pwx import qe_pwx  
