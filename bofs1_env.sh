@@ -2,7 +2,7 @@
 # BOFS1 build environment
 set -e # Exit on error
 python3 -m venv bofs1_env
-source bofs1_env/bin/activate
+source bofs1_env/bin/activate # activate bofs1_env
 sudo apt-get update
 sudo apt-get install -y python3-pip unzip wget cmake git
 pip install numpy==1.26.4
