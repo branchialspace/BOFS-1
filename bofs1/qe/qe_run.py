@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Runner for QuantumESPRESSO modules in BOFS-1.
+Run QuantumESPRESSO modules in BOFS-1.
 Activates environment, runs specified QE module with MOF and config.
 Must be run from the same directory where bofs1_env.sh was executed.
 Usage
@@ -37,10 +37,6 @@ def activate_environment():
         return
     # Virtual environment should be in current directory
     venv_path = Path.cwd() / 'bofs1_env'
-    if not venv_path.exists() or not (venv_path / 'bin' / 'activate').exists():
-        print(f"Error: Virtual environment not found at {venv_path}")
-        print("Please run bofs1_env.sh first to create the environment.")
-        sys.exit(1)
     # Re-execute this script with the activated environment
     python_exec = venv_path / 'bin' / 'python'
     # Build the command to re-run this script with activated environment
@@ -56,26 +52,9 @@ def activate_environment():
     result = subprocess.run(cmd, env=new_env)
     sys.exit(result.returncode)
 
-def get_qe_modules():
-    """Get list of available QE modules."""
-    modules = {
-        'pwx': 'BOFS-1/bofs1/qe/qe_pwx.py',
-        'dosx': 'BOFS-1/bofs1/qe/qe_dosx.py',
-        'eelsx': 'BOFS-1/bofs1/qe/qe_eelsx.py',
-        'hpx': 'BOFS-1/bofs1/qe/qe_hpx.py',
-        'lanczosx': 'BOFS-1/bofs1/qe/qe_lanczosx.py',
-        'magnonx': 'BOFS-1/bofs1/qe/qe_magnonx.py',
-        'phx': 'BOFS-1/bofs1/qe/qe_phx.py',
-        'projwfcx': 'BOFS-1/bofs1/qe/qe_projwfcx.py'
-    }
-    return modules
-
 def load_config(config_name=None):
     """Load configuration from configs.py."""
     config_path = Path.cwd() / 'BOFS-1' / 'bofs1' / 'qe' / 'configs.py'
-    if not config_path.exists():
-        print(f"Error: Config file not found at {config_path}")
-        sys.exit(1)
     # Load configs module
     spec = importlib.util.spec_from_file_location("configs", config_path)
     configs = importlib.util.module_from_spec(spec)
@@ -84,27 +63,22 @@ def load_config(config_name=None):
     if config_name is None:
         return None
     # Get the specified config
-    if hasattr(configs, config_name):
-        config = getattr(configs, config_name)
-        print(f"✓ Loaded config: {config_name}")
-        return config
-    else:
-        print(f"Error: Config '{config_name}' not found in configs.py")
-        available = [attr for attr in dir(configs) if not attr.startswith('_') and isinstance(getattr(configs, attr), dict)]
-        print(f"Available configs: {', '.join(available)}")
-        sys.exit(1)
+    config = getattr(configs, config_name)
+    print(f"✓ Loaded config: {config_name}")
+    return config
 
 def load_module(module_name):
     """Dynamically load the specified QE module."""
-    modules = get_qe_modules()
-    if module_name not in modules:
-        print(f"Error: Unknown module '{module_name}'")
-        print(f"Available modules: {', '.join(modules.keys())}")
-        sys.exit(1)
+    modules = {
+        'pwx': 'BOFS-1/bofs1/qe/qe_pwx.py',
+        'dosx': 'BOFS-1/bofs1/qe/qe_dosx.py',
+        'eelsx': 'BOFS-1/bofs1/qe/qe_eelsx.py',
+        'hpx': 'BOFS-1/bofs1/qe/qe_hpx.py',
+        'lanczosx': 'BOFS-1/bofs1/qe/qe_lanczosx.py',
+        'magnonx': 'BOFS-1/bofs1/qe/qe_magnonx.py',
+        'phx': 'BOFS-1/bofs1/qe/qe_phx.py',
+        'projwfcx': 'BOFS-1/bofs1/qe/qe_projwfcx.py'}
     module_path = Path.cwd() / modules[module_name]
-    if not module_path.exists():
-        print(f"Error: Module file not found at {module_path}")
-        sys.exit(1)
     # Load the module
     spec = importlib.util.spec_from_file_location(f"qe_{module_name}", module_path)
     module = importlib.util.module_from_spec(spec)
@@ -113,26 +87,12 @@ def load_module(module_name):
     spec.loader.exec_module(module)
     # Get the main function
     func_name = f"qe_{module_name}"
-    if hasattr(module, func_name):
-        return getattr(module, func_name)
-    else:
-        print(f"Error: Function '{func_name}' not found in module")
-        sys.exit(1)
-
-def validate_mof_file(mof_path):
-    """Validate that the MOF file exists."""
-    path = Path(mof_path)
-    if not path.exists():
-        print(f"Error: MOF file not found: {mof_path}")
-        sys.exit(1)
-    if not path.suffix.lower() == '.cif':
-        print(f"Warning: MOF file does not have .cif extension: {mof_path}")
-    return str(path.absolute())
+    return getattr(module, func_name)
 
 def main():
-    # First, ensure the script is executable
+    # ensure the script is executable
     ensure_executable()
-    # Then, ensure we're in the right environment, will re-execute the script if needed
+    # ensure we're in the right environment
     activate_environment()
     parser = argparse.ArgumentParser(
         description='Run QuantumESPRESSO modules with specified MOF and config',
@@ -154,23 +114,18 @@ Available modules:
   phx      - Phonon Properties
   projwfcx - Projected Wavefunctions
         """)
-    parser.add_argument('module', choices=get_qe_modules().keys(), help='QE module to run')
+    parser.add_argument('module', help='QE module to run')
     parser.add_argument('mof_file', help='Path to MOF CIF file')
     parser.add_argument('--config', '-c', help='Config name from configs.py')
     args = parser.parse_args()
-    # Validate MOF file
-    mof_path = validate_mof_file(args.mof_file)
+    # Use MOF file as provided
+    mof_path = str(Path(args.mof_file).absolute())
     print(f"✓ Using MOF file: {mof_path}")
     # Load the QE module
     print(f"✓ Loading module: qe_{args.module}")
     qe_function = load_module(args.module)
     # Load config
-    if args.config:
-        config = load_config(args.config)
-    else:
-        print(f"Error: No config specified for {args.module}")
-        print("Please specify a config with --config")
-        sys.exit(1)
+    config = load_config(args.config)
     # Run the QE function
     print(f"\n{'='*60}")
     print(f"Running {args.module} calculation...")
