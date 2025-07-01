@@ -129,26 +129,6 @@ def validate_mof_file(mof_path):
         print(f"Warning: MOF file does not have .cif extension: {mof_path}")
     return str(path.absolute())
 
-def get_default_config(module_name):
-    """Get default config for a module based on naming convention."""
-    config_path = Path.cwd() / 'BOFS-1' / 'bofs1' / 'qe' / 'configs.py'
-    if not config_path.exists():
-        return None
-    spec = importlib.util.spec_from_file_location("configs", config_path)
-    configs = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(configs)
-    # Look for configs that might match the module
-    possible_names = [
-        f"{module_name}_config",
-        f"{module_name}_scf",
-        module_name,
-        "pwx_scf" if module_name == "pwx" else None]
-    for name in possible_names:
-        if name and hasattr(configs, name):
-            print(f"✓ Using default config: {name}")
-            return getattr(configs, name)
-    return None
-
 def main():
     # First, ensure the script is executable
     ensure_executable()
@@ -176,7 +156,7 @@ Available modules:
         """)
     parser.add_argument('module', choices=get_qe_modules().keys(), help='QE module to run')
     parser.add_argument('mof_file', help='Path to MOF CIF file')
-    parser.add_argument('--config', '-c', help='Config name from configs.py (optional)')
+    parser.add_argument('--config', '-c', help='Config name from configs.py')
     args = parser.parse_args()
     # Validate MOF file
     mof_path = validate_mof_file(args.mof_file)
@@ -188,12 +168,9 @@ Available modules:
     if args.config:
         config = load_config(args.config)
     else:
-        # Try to get default config for the module
-        config = get_default_config(args.module)
-        if config is None:
-            print(f"Error: No config specified and no default config found for {args.module}")
-            print("Please specify a config with --config")
-            sys.exit(1)
+        print(f"Error: No config specified for {args.module}")
+        print("Please specify a config with --config")
+        sys.exit(1)
     # Run the QE function
     print(f"\n{'='*60}")
     print(f"Running {args.module} calculation...")
