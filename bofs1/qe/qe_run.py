@@ -99,10 +99,8 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  ./qe_run.py pwx mofs/SIWZOO_full_n2.cif
   ./qe_run.py pwx mofs/SIWZOO_full_n2.cif --config pwx_scf
   ./qe_run.py dosx mofs/SIWZOO_full_n2.cif --config dosx_config
-  ./qe_run.py hpx mofs/TIRDOO_full.cif
 
 Available modules:
   pwx      - Plane-Wave Self-Consistent Field
