@@ -33,5 +33,6 @@ git clone https://github.com/pipidog/ONCVPSP.git
 git clone https://github.com/MarioAndWario/ONCVPseudoPack.git
 # BOFS1
 git clone https://github.com/branchialspace/BOFS-1.git
+chmod +x qe_run.py
 
 echo "BOFS1 environment built successfully"
