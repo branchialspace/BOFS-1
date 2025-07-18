@@ -17,17 +17,6 @@ from pathlib import Path
 import stat
 
 
-def ensure_executable():
-    """Make this script executable if it isn't already."""
-    script_path = Path(__file__).resolve()
-    current_perms = script_path.stat().st_mode
-    # Check if already executable by owner
-    if not (current_perms & stat.S_IXUSR):
-        # Add execute permission for owner
-        new_perms = current_perms | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
-        script_path.chmod(new_perms)
-        print(f"✓ Made {script_path.name} executable")
-
 def activate_environment():
     """Activate the bofs1_env virtual environment if not already active."""
     # Check if we're already in the correct environment
@@ -52,16 +41,13 @@ def activate_environment():
     result = subprocess.run(cmd, env=new_env)
     sys.exit(result.returncode)
 
-def load_config(config_name=None):
+def load_config(config_name):
     """Load configuration from configs.py."""
     config_path = Path.cwd() / 'BOFS-1' / 'bofs1' / 'qe' / 'configs.py'
     # Load configs module
     spec = importlib.util.spec_from_file_location("configs", config_path)
     configs = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(configs)
-    # If no config specified, return None
-    if config_name is None:
-        return None
     # Get the specified config
     config = getattr(configs, config_name)
     print(f"✓ Loaded config: {config_name}")
@@ -90,8 +76,6 @@ def load_module(module_name):
     return getattr(module, func_name)
 
 def main():
-    # ensure the script is executable
-    ensure_executable()
     # ensure we're in the right environment
     activate_environment()
     parser = argparse.ArgumentParser(
