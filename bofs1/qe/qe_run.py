@@ -5,7 +5,7 @@ Run QuantumESPRESSO modules in BOFS-1.
 Activates environment, runs specified QE module with MOF and config.
 Must be run from the same directory where bofs1_env.sh was executed.
 Usage
-    ./qe_run <module> <mof_file> [--config <config_name>]
+    ./qe_run <module> <mof_file> <config_name>
 """
 
 import os
@@ -24,10 +24,7 @@ def load_config(config_name):
     spec = importlib.util.spec_from_file_location("configs", config_path)
     configs = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(configs)
-    # Get the specified config
-    config = getattr(configs, config_name)
-    print(f"✓ Loaded config: {config_name}")
-    return config
+    return getattr(configs, config_name)
 
 def load_module(module_name):
     """Dynamically load the specified QE module."""
@@ -71,17 +68,18 @@ Available modules:
   projwfcx - Projected Wavefunctions
         """)
     parser.add_argument('module', help='QE module to run')
+    parser.add_argument('config', help='Config name from configs.py')
     parser.add_argument('mof_file', help='Path to MOF CIF file')
-    parser.add_argument('--config', '-c', help='Config name from configs.py')
     args = parser.parse_args()
     # Use MOF file as provided
     mof_path = str(Path(args.mof_file).absolute())
     print(f"✓ Using MOF file: {mof_path}")
     # Load the QE module
-    print(f"✓ Loading module: qe_{args.module}")
     qe_function = load_module(args.module)
+    print(f"✓ Loaded module: qe_{args.module}")
     # Load config
     config = load_config(args.config)
+    print(f"✓ Loaded config: {args.config}")
     # Run the QE function
     print(f"\n{'='*60}")
     print(f"Running {args.module} calculation...")
