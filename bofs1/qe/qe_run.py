@@ -5,7 +5,7 @@ Run QuantumESPRESSO modules in BOFS-1.
 Activates environment, runs specified QE module with MOF and config.
 Must be run from the same directory where bofs1_env.sh was executed.
 Usage
-    ./qe_run.py <module> <mof_file> [--config <config_name>]
+    ./qe_run <module> <mof_file> [--config <config_name>]
 """
 
 import os
@@ -57,8 +57,8 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  ./qe_run.py pwx mofs/SIWZOO_full_n2.cif --config pwx_scf
-  ./qe_run.py dosx mofs/SIWZOO_full_n2.cif --config dosx_config
+  ./qe_run pwx mofs/SIWZOO_full_n2.cif --config pwx_scf
+  ./qe_run dosx mofs/SIWZOO_full_n2.cif --config dosx_config
 
 Available modules:
   pwx      - Plane-Wave Self-Consistent Field
