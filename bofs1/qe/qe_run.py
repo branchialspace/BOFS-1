@@ -15,7 +15,6 @@ def qe_run():
                     Run QuantumESPRESSO modules in BOFS-1 with specified MOF and config. 
                     Must be run from a terminal in the same directory where bofs1_env.sh was executed.
                     """,
-        formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
                 Usage:
                     ./qe_run.py <module> <config_name> <mof_file>
@@ -31,7 +30,8 @@ def qe_run():
                     magnonx  - Magnon Properties
                     phx      - Phonon Properties
                     projwfcx - Projected Wavefunctions
-                """)
+                """,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('module', help='QE module to run')
     parser.add_argument('config', help='Config name from configs.py')
     parser.add_argument('mof_file', help='Path to MOF CIF file')
