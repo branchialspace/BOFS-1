@@ -36,10 +36,7 @@ def qe_run():
     parser.add_argument('config', help='Config name from configs.py')
     parser.add_argument('mof_file', help='Path to MOF CIF file')
     args = parser.parse_args()
-    # Use MOF file as provided
-    mof_path = str(Path(args.mof_file).absolute())
-    print(f"✓ Using MOF file: {mof_path}")
-    # Load the QE module
+
     def load_module(module_name):
         """Dynamically load the specified QE module."""
         modules = {
@@ -60,10 +57,9 @@ def qe_run():
         spec.loader.exec_module(module)
         # Get the main function
         func_name = f"qe_{module_name}"
+        
         return getattr(module, func_name)
-    qe_function = load_module(args.module)
-    print(f"✓ Loaded module: qe_{args.module}")
-    # Load config
+
     def load_config(config_name):
         """Load configuration from configs.py."""
         config_path = Path.cwd() / 'BOFS-1' / 'bofs1' / 'qe' / 'configs.py'
@@ -71,7 +67,16 @@ def qe_run():
         spec = importlib.util.spec_from_file_location("configs", config_path)
         configs = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(configs)
+        
         return getattr(configs, config_name)
+
+    # Use MOF file as provided
+    mof_path = str(Path(args.mof_file).absolute())
+    print(f"✓ Using MOF file: {mof_path}")
+    # Load the QE module
+    qe_function = load_module(args.module)
+    print(f"✓ Loaded module: qe_{args.module}")
+    # Load config
     config = load_config(args.config)
     print(f"✓ Loaded config: {args.config}")
     # Run the QE function
