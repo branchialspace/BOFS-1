@@ -17,30 +17,6 @@ from pathlib import Path
 import stat
 
 
-def activate_environment():
-    """Activate the bofs1_env virtual environment if not already active."""
-    # Check if we're already in the correct environment
-    venv_path = os.environ.get('VIRTUAL_ENV')
-    if venv_path and 'bofs1_env' in venv_path:
-        print(f"✓ Already in virtual environment: {venv_path}")
-        return
-    # Virtual environment should be in current directory
-    venv_path = Path.cwd() / 'bofs1_env'
-    # Re-execute this script with the activated environment
-    python_exec = venv_path / 'bin' / 'python'
-    # Build the command to re-run this script with activated environment
-    cmd = [str(python_exec), __file__] + sys.argv[1:]
-    # Set up environment variables
-    new_env = os.environ.copy()
-    new_env['VIRTUAL_ENV'] = str(venv_path)
-    new_env['PATH'] = f"{venv_path / 'bin'}{os.pathsep}{new_env.get('PATH', '')}"
-    # Remove PYTHONHOME if set (can interfere with venv)
-    new_env.pop('PYTHONHOME', None)
-    print(f"✓ Activating environment: {venv_path}")
-    # Re-execute with the new environment
-    result = subprocess.run(cmd, env=new_env)
-    sys.exit(result.returncode)
-
 def load_config(config_name):
     """Load configuration from configs.py."""
     config_path = Path.cwd() / 'BOFS-1' / 'bofs1' / 'qe' / 'configs.py'
@@ -76,8 +52,6 @@ def load_module(module_name):
     return getattr(module, func_name)
 
 def main():
-    # ensure we're in the right environment
-    activate_environment()
     parser = argparse.ArgumentParser(
         description='Run QuantumESPRESSO modules with specified MOF and config',
         formatter_class=argparse.RawDescriptionHelpFormatter,
