@@ -20,6 +20,7 @@ from .qe.qe_magnonx import qe_magnonx
 from .qe.qe_phx import qe_phx
 from .qe.qe_projwfcx import qe_projwfcx
 from .qe.qe_run import qe_run
+from .qe.configs import pwx_scf
 
 __all__ = [
     # Assembly functions
@@ -42,4 +43,5 @@ __all__ = [
     'qe_phx',
     'qe_projwfcx',
     'qe_run',
+    'pwx_scf'
 ]
