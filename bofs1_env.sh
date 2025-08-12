@@ -3,6 +3,8 @@
 set -e # Exit on error
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$SCRIPT_DIR" # ensure installation to BOFS-1 root directory
+source .env
+export QE_URL MOF_DB_GDOWN DALCORSO_GDOWN # export installation .env variables
 python3 -m venv bofs1_env
 source bofs1_env/bin/activate # activate bofs1_env
 sudo apt-get update
