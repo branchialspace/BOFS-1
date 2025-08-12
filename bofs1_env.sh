@@ -35,12 +35,11 @@ unzip dalcorso_rel_pbe.zip
 # ONCV fully-relativistic pseudopotentials repositories
 git clone https://github.com/pipidog/ONCVPSP.git
 git clone https://github.com/MarioAndWario/ONCVPseudoPack.git
-# BOFS1 venv wrapper
+# BOFS1 QE runner venv wrapper
 cat > qe_run << 'EOF'
 #!/bin/bash
-# BOFS1 QE runner wrapper
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-exec "$SCRIPT_DIR/bofs1_env/bin/python" "$SCRIPT_DIR/BOFS-1/bofs1/qe/qe_run.py" "$@"
+exec "$SCRIPT_DIR/bofs1_env/bin/python" "$SCRIPT_DIR/bofs1/qe/qe_run.py" "$@"
 EOF
 chmod +x qe_run
 
