@@ -35,8 +35,6 @@ unzip dalcorso_rel_pbe.zip
 # ONCV fully-relativistic pseudopotentials repositories
 git clone https://github.com/pipidog/ONCVPSP.git
 git clone https://github.com/MarioAndWario/ONCVPseudoPack.git
-# BOFS1
-git clone https://github.com/branchialspace/BOFS-1.git
 # BOFS1 venv wrapper
 cat > qe_run << 'EOF'
 #!/bin/bash
