@@ -1,7 +1,7 @@
 ```bash
 # BOFS-1
 
-# Installation
+# Install
 git clone https://github.com/branchialspace/BOFS-1.git
 cd BOFS-1
 # Set installation environment variable values in .env file
