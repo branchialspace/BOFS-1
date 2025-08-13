@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+# Run QuantumESPRESSO modules
 
 import os
 import sys
