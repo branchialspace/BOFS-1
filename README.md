@@ -1,10 +1,14 @@
 ```bash
-# BOFS-1 Installation
+# BOFS-1
 
-# Clone
+# Installation
 git clone https://github.com/branchialspace/BOFS-1.git
+cd BOFS-1
+# Set installation environment variable values in .env file
+./bofs1_env.sh
 
-# Set installation environment variable values in .env
+# Use
+cd BOFS-1
+./qe_run <module> <config_name> <mof_file>
 
-# Run installation
-./BOFS-1/bofs1_env.sh
+./qe_run pwx pwx_scf mofs/SIWZOO_full_n2.cif
