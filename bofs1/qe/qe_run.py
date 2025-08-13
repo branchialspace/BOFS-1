@@ -1,4 +1,4 @@
-# Run QuantumESPRESSO modules
+# QuantumESPRESSO modules wrapper
 
 import os
 import sys
