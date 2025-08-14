@@ -9,6 +9,4 @@ cd BOFS-1
 
 # Use
 cd BOFS-1
-./qe_run <module> <config_name> <mof_file>
-
-./qe_run pwx pwx_scf mofs/SIWZOO_full_n2.cif
+./qe_run pwx pwx_scf mofs/SIWZOO_full_n2.cif  # ./qe_run <module> <config_name> <mof_file>
