@@ -1,5 +1,6 @@
 ```bash
 # BOFS-1
+# Ubuntu 22.04 LTS arm64
 
 # Install
 git clone https://github.com/branchialspace/BOFS-1.git
