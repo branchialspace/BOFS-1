@@ -62,7 +62,7 @@ def qe_run():
 
     def load_config(config_name):
         """Load configuration from configs.py."""
-        config_path = Path.cwd() / 'BOFS-1' / 'bofs1' / 'qe' / 'configs.py'
+        config_path = Path.cwd() / 'BOFS-1' / 'bofs1' / 'qe' / 'qe_configs' / f'{config_name}.py'
         # Load configs module
         spec = importlib.util.spec_from_file_location("configs", config_path)
         configs = importlib.util.module_from_spec(spec)
