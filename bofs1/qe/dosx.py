@@ -5,7 +5,7 @@ import subprocess
 from subprocess import CalledProcessError
 
 
-def qe_dosx(
+def dosx(
     structure_path,
     config
 ):
