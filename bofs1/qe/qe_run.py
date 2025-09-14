@@ -19,7 +19,7 @@ def qe_run():
                 Usage:
                     ./qe_run.py <module> <config_name> <mof_file>
                 Examples:
-                    ./qe_run pwx pwx_scf mofs/SIWZOO_full_n2.cif
+                    ./qe_run pwx pwx_scf_config mofs/SIWZOO_full_n2.cif
                     ./qe_run dosx dosx_config mofs/SIWZOO_full_n2.cif
                 Available modules:
                     pwx      - Plane-Wave Self-Consistent Field
@@ -33,7 +33,7 @@ def qe_run():
                 """,
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('module', help='QE module to run')
-    parser.add_argument('config', help='Config name from configs.py')
+    parser.add_argument('config', help='Config name from qe_configs')
     parser.add_argument('mof_file', help='Path to MOF CIF file')
     args = parser.parse_args()
 
