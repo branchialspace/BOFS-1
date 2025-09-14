@@ -7,7 +7,7 @@ from pathlib import Path
 from ase.io import read
 
 
-def qe_lanczosx(
+def lanczosx(
     structure_path,
     config
 ):
