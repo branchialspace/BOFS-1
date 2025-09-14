@@ -38,44 +38,29 @@ def qe_run():
     args = parser.parse_args()
 
     def load_module(module_name):
-        """Dynamically load the specified QE module."""
-        modules = {
-            'pwx': 'BOFS-1/bofs1/qe/qe_pwx.py',
-            'dosx': 'BOFS-1/bofs1/qe/qe_dosx.py',
-            'eelsx': 'BOFS-1/bofs1/qe/qe_eelsx.py',
-            'hpx': 'BOFS-1/bofs1/qe/qe_hpx.py',
-            'lanczosx': 'BOFS-1/bofs1/qe/qe_lanczosx.py',
-            'magnonx': 'BOFS-1/bofs1/qe/qe_magnonx.py',
-            'phx': 'BOFS-1/bofs1/qe/qe_phx.py',
-            'projwfcx': 'BOFS-1/bofs1/qe/qe_projwfcx.py'}
-        module_path = Path.cwd() / modules[module_name]
-        # Load the module
-        spec = importlib.util.spec_from_file_location(f"qe_{module_name}", module_path)
+        """Load the specified QE module."""
+        module_path = Path.cwd() / 'BOFS-1' / 'bofs1' / 'qe' / f'{module_name}.py'
+        spec = importlib.util.spec_from_file_location(f'{module_name}', module_path)
         module = importlib.util.module_from_spec(spec)
-        # Add the module directory to sys.path so imports work
-        sys.path.insert(0, str(module_path.parent))
         spec.loader.exec_module(module)
-        # Get the main function
-        func_name = f"qe_{module_name}"
         
-        return getattr(module, func_name)
+        return getattr(module, module_name)
 
     def load_config(config_name):
         """Load configuration from qe_configs."""
         config_path = Path.cwd() / 'BOFS-1' / 'bofs1' / 'qe' / 'qe_configs' / f'{config_name}.py'
-        # Load configs module
-        spec = importlib.util.spec_from_file_location("configs", config_path)
-        configs = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(configs)
+        spec = importlib.util.spec_from_file_location(f'{config_name}', config_path)
+        config = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(config)
         
-        return getattr(configs, config_name)
+        return getattr(config, config_name)
 
-    # Use MOF file as provided
+    # Use provided MOF cif file
     mof_path = str(Path(args.mof_file).absolute())
     print(f"✓ Using MOF file: {mof_path}")
     # Load the QE module
     qe_function = load_module(args.module)
-    print(f"✓ Loaded module: qe_{args.module}")
+    print(f"✓ Loaded module: {args.module}")
     # Load config
     config = load_config(args.config)
     print(f"✓ Loaded config: {args.config}")
