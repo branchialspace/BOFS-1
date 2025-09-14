@@ -72,6 +72,3 @@ def magnonx(
             print(f"Could not read output file: {e}")
     except Exception as e:
         print(f"Unexpected error: {e}")
-mof = "/content/mofs/SIWZOO_full_n2.cif"
-# Run turbo_magnon.x
-qe_magnonx(mof, magnonx_config)
