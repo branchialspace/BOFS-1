@@ -8,7 +8,7 @@ import numpy as np
 from ase.io import read
 
 
-def qe_eelsx(
+def eelsx(
     structure_path,
     config
 ):
