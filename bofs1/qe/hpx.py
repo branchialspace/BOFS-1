@@ -11,7 +11,7 @@ from ase.data import chemical_symbols
 from mendeleev import element
 
 
-def qe_hpx(
+def hpx(
     structure_path,
     config
 ):
