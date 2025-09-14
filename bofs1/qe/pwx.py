@@ -14,7 +14,7 @@ from ase.build import bulk
 from mendeleev import element
 
 
-def qe_pwx(
+def pwx(
     structure_path,
     config
 ):
