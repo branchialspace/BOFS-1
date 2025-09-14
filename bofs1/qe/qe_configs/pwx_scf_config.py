@@ -1,4 +1,4 @@
-pwx_scf = {
+pwx_scf_config = {
     'command': ['/usr/bin/mpirun', '--allow-run-as-root', '-x', 'OMP_NUM_THREADS=2', '-np', '4', '/content/bin/pw.x'],
     'wfn_scalar': 1.15,
     'rho_scalar': 1.15,
