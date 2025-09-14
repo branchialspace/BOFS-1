@@ -5,7 +5,7 @@ import subprocess
 from subprocess import CalledProcessError
 
 
-def qe_projwfcx(
+def projwfcx(
     structure_path,
     config
 ):
