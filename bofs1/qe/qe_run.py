@@ -13,7 +13,7 @@ def qe_run():
     parser = argparse.ArgumentParser(
         description="""
                     Run QuantumESPRESSO modules in BOFS-1 with specified MOF and config. 
-                    Must be run from the same directory where bofs1_env.sh was executed.
+                    Must be run from the BOFS-1 directory.
                     """,
         epilog="""
                 Usage:
