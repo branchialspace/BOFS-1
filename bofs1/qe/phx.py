@@ -9,7 +9,7 @@ import numpy as np
 from ase.io import read
 
 
-def qe_phx(
+def phx(
     structure_path,
     config
 ):
