@@ -5,9 +5,7 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$SCRIPT_DIR" # ensure installation to BOFS-1 root directory
 source <(sed 's/^\([^=]\)=\(.\)$/export \1=${\1:-\2}/' .env) # export installation .env variables. parameter expansion defaults to precedent
 # mambaforge
-wget -q https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Linux-aarch64.sh
-bash Mambaforge-Linux-aarch64.sh -b -p ./mambaforge
-rm Mambaforge-Linux-aarch64.sh
+curl -L https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Linux-aarch64.sh | bash -s -- -b -p ./mambaforge
 # Create mamba venv
 eval "$(./mambaforge/bin/conda shell.bash hook)"
 mamba create -y -p ./bofs1_env python=3.10
