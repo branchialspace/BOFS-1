@@ -3,7 +3,7 @@
 # Ubuntu 22.04 LTS arm64
 
 # Install
-curl -L https://github.com/branchialspace/BOFS-1/archive/main.tar.gz | tar xz
+curl -L https://github.com/branchialspace/BOFS-1/archive/main.tar.gz | tar xz && mv BOFS-1-main BOFS-1
 cd BOFS-1
 export QE_URL=<quantum_espresso_url>
 export MOF_DB_GDOWN=<mof_database_gdown_id>
