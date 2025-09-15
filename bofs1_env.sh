@@ -14,7 +14,7 @@ export MAMBA_ROOT_PREFIX="$SCRIPT_DIR/miniforge3"
 mamba create -y -p ./bofs1_env python=3.10
 conda activate ./bofs1_env
 # dependencies
-mamba install -y -c conda-forge cmake git wget unzip openmpi openmpi-mpicc fftw lapack blas scalapack
+mamba install -y -c conda-forge cmake ninja git wget unzip openmpi openmpi-mpicc fftw lapack blas scalapack
 pip install numpy==1.26.4
 pip install torch_geometric
 pip install wandb
@@ -29,9 +29,9 @@ unzip bimofs2.zip -d mofs
 # QuantumESPRESSO
 wget $QE_URL
 tar -xzf qe-7.4.1-ReleasePack.tar.gz
-cmake -DCMAKE_C_COMPILER=$CONDA_PREFIX/bin/mpicc -DCMAKE_Fortran_COMPILER=$CONDA_PREFIX/bin/mpif90 -DQE_FFTW_VENDOR=Internal -DQE_ENABLE_OPENMP=ON qe-7.4.1
-make -j4
-make ld1
+cmake -G Ninja -DCMAKE_C_COMPILER=$CONDA_PREFIX/bin/mpicc -DCMAKE_Fortran_COMPILER=$CONDA_PREFIX/bin/mpif90 -DQE_FFTW_VENDOR=Internal -DQE_ENABLE_OPENMP=ON qe-7.4.1
+ninja
+ninja ld1
 mkdir -p qe-7.4.1/bin
 cp bin/ld1.x qe-7.4.1/bin/
 # Dalcorso fully-relativistic pseudopotentials
