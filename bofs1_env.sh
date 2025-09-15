@@ -4,10 +4,10 @@ set -e # Exit on error
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$SCRIPT_DIR" # ensure installation to BOFS-1 root directory
 source <(sed -E 's/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/export \1=\${\1:-\2}/' .env) # export installation .env variables. parameter expansion defaults to precedent
-# mambaforge
-curl -L https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Linux-aarch64.sh | bash -s -- -b -p ./mambaforge
+# miniforge3
+curl -L -O "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-aarch64.sh" | bash -s -- -b -p ./miniforge3
 # Create mamba venv
-eval "$(./mambaforge/bin/conda shell.bash hook)"
+eval "$(./miniforge3/bin/conda shell.bash hook)"
 mamba create -y -p ./bofs1_env python=3.10
 conda activate ./bofs1_env
 # dependencies
@@ -41,7 +41,7 @@ git clone https://github.com/MarioAndWario/ONCVPseudoPack.git
 cat > qe_run << 'EOF'
 #!/bin/bash
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-eval "$($SCRIPT_DIR/mambaforge/bin/conda shell.bash hook)"
+eval "$($SCRIPT_DIR/miniforge3/bin/conda shell.bash hook)"
 conda activate "$SCRIPT_DIR/bofs1_env"
 exec python "$SCRIPT_DIR/bofs1/qe/qe_run.py" "$@"
 EOF
