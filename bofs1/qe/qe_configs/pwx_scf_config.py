@@ -10,7 +10,7 @@ pwx_scf_config = {
     'control': {
         'calculation': 'scf', # scf     nscf     bands
         'restart_mode': 'from_scratch',
-        'pseudo_dir': '/content/pslibrary/rel-pbe/PSEUDOPOTENTIALS', # /content/ONCVPseudoPack/Abinit_v0.4/UPF/PBEsol   /content/pslibrary/rel-pbe/PSEUDOPOTENTIALS
+        'pseudo_dir': '/home/georgetsatas/BOFS-1/dalcorso_rel_pbe', # /content/ONCVPseudoPack/Abinit_v0.4/UPF/PBEsol   /content/pslibrary/rel-pbe/PSEUDOPOTENTIALS
         'disk_io': 'medium',
         'wf_collect': True,
         'tprnfor': True,
@@ -19,7 +19,7 @@ pwx_scf_config = {
     'system': {
         'ibrav': 0,
         'occupations': 'smearing',
-        'smearing': 'fermi-dirac', # gaussian     marzari-vanderbilt     fermi-dirac
+        'smearing': 'marzari-vanderbilt', # gaussian     marzari-vanderbilt     fermi-dirac
         'degauss': 0.01,
         'noncolin': True,
         'lspinorb': True
