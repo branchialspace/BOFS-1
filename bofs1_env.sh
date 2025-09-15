@@ -5,9 +5,12 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$SCRIPT_DIR" # ensure installation to BOFS-1 root directory
 source <(sed -E 's/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/export \1=\${\1:-\2}/' .env) # export installation .env variables. parameter expansion defaults to precedent
 # miniforge3
-curl -L -O "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-aarch64.sh" | bash -s -- -b -p ./miniforge3
+curl -L -o Miniforge3.sh "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-aarch64.sh"
+bash Miniforge3.sh -b -p ./miniforge3
+rm -f Miniforge3.sh
+source ./miniforge3/etc/profile.d/conda.sh
+source ./miniforge3/etc/profile.d/mamba.sh
 # Create mamba venv
-eval "$(./miniforge3/bin/conda shell.bash hook)"
 mamba create -y -p ./bofs1_env python=3.10
 conda activate ./bofs1_env
 # dependencies
