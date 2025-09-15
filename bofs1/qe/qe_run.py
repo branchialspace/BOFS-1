@@ -39,7 +39,7 @@ def qe_run():
 
     def load_module(module_name):
         """Load the specified QE module."""
-        module_path = Path.cwd() / 'BOFS-1' / 'bofs1' / 'qe' / f'{module_name}.py'
+        module_path = Path.cwd() / 'bofs1' / 'qe' / f'{module_name}.py'
         spec = importlib.util.spec_from_file_location(f'{module_name}', module_path)
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
@@ -48,7 +48,7 @@ def qe_run():
 
     def load_config(config_name):
         """Load configuration from qe_configs."""
-        config_path = Path.cwd() / 'BOFS-1' / 'bofs1' / 'qe' / 'qe_configs' / f'{config_name}.py'
+        config_path = Path.cwd() / 'bofs1' / 'qe' / 'qe_configs' / f'{config_name}.py'
         spec = importlib.util.spec_from_file_location(f'{config_name}', config_path)
         config = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(config)
