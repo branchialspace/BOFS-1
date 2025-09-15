@@ -14,7 +14,7 @@ export MAMBA_ROOT_PREFIX="$SCRIPT_DIR/miniforge3"
 mamba create -y -p ./bofs1_env python=3.10
 conda activate ./bofs1_env
 # dependencies
-mamba install -y -c conda-forge cmake ninja git wget unzip openmpi openmpi-mpicc fftw lapack blas scalapack
+mamba install -y -c conda-forge cmake ninja git wget unzip openmpi openmpi-mpicc fftw lapack blas scalapack gfortran
 pip install numpy==1.26.4
 pip install torch_geometric
 pip install wandb
