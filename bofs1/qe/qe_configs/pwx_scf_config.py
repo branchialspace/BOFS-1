@@ -1,5 +1,5 @@
 pwx_scf_config = {
-    'command': ['/home/georgetsatas/BOFS-1/bofs1_env/bin/mpirun', '--allow-run-as-root', '-x', 'OMP_NUM_THREADS=2', '-np', '4', '/home/georgetsatas/BOFS-1/bin/pw.x'],
+    'command': ['./bofs1_env/bin/mpirun', '--allow-run-as-root', '-x', 'OMP_NUM_THREADS=2', '-np', '4', './bin/pw.x'],
     'wfn_scalar': 1.15,
     'rho_scalar': 1.15,
     'kpts_k_spacing': 0.13, # scf: 0.13    nscf: 0.09
@@ -10,7 +10,7 @@ pwx_scf_config = {
     'control': {
         'calculation': 'scf', # scf     nscf     bands
         'restart_mode': 'from_scratch',
-        'pseudo_dir': '/home/georgetsatas/BOFS-1/dalcorso_rel_pbe', # /content/ONCVPseudoPack/Abinit_v0.4/UPF/PBEsol   /content/pslibrary/rel-pbe/PSEUDOPOTENTIALS
+        'pseudo_dir': './dalcorso_rel_pbe', # /content/ONCVPseudoPack/Abinit_v0.4/UPF/PBEsol   /content/pslibrary/rel-pbe/PSEUDOPOTENTIALS
         'disk_io': 'medium',
         'wf_collect': True,
         'tprnfor': True,
