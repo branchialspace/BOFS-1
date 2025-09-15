@@ -44,7 +44,7 @@ git clone https://github.com/MarioAndWario/ONCVPseudoPack.git
 cat > qe_run << 'EOF'
 #!/bin/bash
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-eval "$($SCRIPT_DIR/miniforge3/bin/conda shell.bash hook)"
+source "$SCRIPT_DIR/miniforge3/etc/profile.d/conda.sh"
 conda activate "$SCRIPT_DIR/bofs1_env"
 exec python "$SCRIPT_DIR/bofs1/qe/qe_run.py" "$@"
 EOF
