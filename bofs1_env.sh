@@ -4,10 +4,16 @@ set -e # Exit on error
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$SCRIPT_DIR" # ensure installation to BOFS-1 root directory
 source <(sed 's/^\([^=]\)=\(.\)$/export \1=${\1:-\2}/' .env) # export installation .env variables. parameter expansion defaults to precedent
-python3 -m venv bofs1_env
-source bofs1_env/bin/activate # activate bofs1_env
-sudo apt-get update
-sudo apt-get install -y python3-pip unzip wget cmake git
+# mambaforge
+wget -q https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Linux-aarch64.sh
+bash Mambaforge-Linux-aarch64.sh -b -p ./mambaforge
+rm Mambaforge-Linux-aarch64.sh
+# Create mamba venv
+eval "$(./mambaforge/bin/conda shell.bash hook)"
+mamba create -y -p ./bofs1_env python=3.10
+conda activate ./bofs1_env
+# dependencies
+mamba install -y -c conda-forge cmake git wget unzip openmpi openmpi-mpicc fftw lapack blas scalapack
 pip install numpy==1.26.4
 pip install torch_geometric
 pip install wandb
@@ -22,8 +28,7 @@ unzip bimofs2.zip -d mofs
 # QuantumESPRESSO
 wget $QE_URL
 tar -xzf qe-7.4.1-ReleasePack.tar.gz
-sudo apt-get install -y liblapack-dev libblas-dev libopenmpi-dev libscalapack-openmpi-dev libfftw3-dev
-cmake -DCMAKE_C_COMPILER=mpicc -DQE_FFTW_VENDOR=Internal -DQE_ENABLE_OPENMP=ON qe-7.4.1
+cmake -DCMAKE_C_COMPILER=$CONDA_PREFIX/bin/mpicc -DCMAKE_Fortran_COMPILER=$CONDA_PREFIX/bin/mpif90 -DQE_FFTW_VENDOR=Internal -DQE_ENABLE_OPENMP=ON qe-7.4.1
 make -j4
 make ld1
 mkdir -p qe-7.4.1/bin
@@ -38,7 +43,9 @@ git clone https://github.com/MarioAndWario/ONCVPseudoPack.git
 cat > qe_run << 'EOF'
 #!/bin/bash
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-exec "$SCRIPT_DIR/bofs1_env/bin/python" "$SCRIPT_DIR/bofs1/qe/qe_run.py" "$@"
+eval "$($SCRIPT_DIR/mambaforge/bin/conda shell.bash hook)"
+conda activate "$SCRIPT_DIR/bofs1_env"
+exec python "$SCRIPT_DIR/bofs1/qe/qe_run.py" "$@"
 EOF
 chmod +x qe_run
 
