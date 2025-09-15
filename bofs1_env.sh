@@ -9,7 +9,7 @@ curl -L -o Miniforge3.sh "https://github.com/conda-forge/miniforge/releases/late
 bash Miniforge3.sh -b -p ./miniforge3
 rm -f Miniforge3.sh
 source ./miniforge3/etc/profile.d/conda.sh
-source ./miniforge3/etc/profile.d/mamba.sh
+export MAMBA_ROOT_PREFIX="$SCRIPT_DIR/miniforge3"
 # Create mamba venv
 mamba create -y -p ./bofs1_env python=3.10
 conda activate ./bofs1_env
