@@ -17,6 +17,7 @@ pwx_scf_config = {
         'tstress': True
     },
     'system': {
+        'input_dft': 'pbe',
         'ibrav': 0,
         'occupations': 'smearing',
         'smearing': 'marzari-vanderbilt', # gaussian     marzari-vanderbilt     fermi-dirac
