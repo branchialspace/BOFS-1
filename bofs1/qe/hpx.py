@@ -70,7 +70,7 @@ def hpx(
         """
         # Species known to never require Hubbard corrections
         non_correlated_species = {'H', 'He', 'B', 'C', 'N', 'O', 'F', 'Ne',
-                                  'Si', 'P', 'S', 'Cl', 'Ar', 'Ge', 'As', 'Se', 'Br', 'Kr',
+                                  'Si', 'P', 'S', 'Ar', 'Ge', 'As', 'Se', 'Br', 'Kr',
                                   'I', 'Xe', 'Rn'}
         # Get unique atom types in structure
         atom_types = sorted(set(structure.get_chemical_symbols()))
