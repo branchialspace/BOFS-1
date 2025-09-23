@@ -1,5 +1,6 @@
 #!/bin/bash
 # BOFS1 build environment
+# Ubuntu 22.04 LTS arm64
 set -e # Exit on error
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$SCRIPT_DIR" # ensure installation to BOFS-1 root directory
