@@ -212,13 +212,13 @@ def pwx(
         mag_config : dict
           {
             "mode": "on" | "off",
-            "overrides": { "Fe": 0.8, "d": 0.6, "p_metal_adjacent": 0.25 },
+            "overrides": { "Fe": 0.8, "d_3d": 0.6, "p_metal_adjacent": 0.25 },
             "fallback": 0.1
           }
         Override priority (highest → lowest):
           1. Explicit element (e.g. "O": 0.2, "Fe": 0.7)
           2. Special category: "p_metal_adjacent"
-          3. Block-level: "d", "f", "p", "s"
+          3. Block-level: "d", "d_3d", "d_4d5d", "f", "p", "s"
           4. default values
           5. Fallback: apply fallback value to all unspecified atoms
         """
@@ -244,13 +244,13 @@ def pwx(
                     start_mag[sym] = 0.6 if elem.period <= 4 else 0.3
                 elif elem.block == 'f':
                     start_mag[sym] = 0.8
-            # Default O/N/C atoms bound to metals
+            # Default p-block atoms bound to metals
             metal_bound = set()
             for mi in metal_indices:
                 indices, _ = nl.get_neighbors(mi)
                 for j in indices:
                     neigh_sym = structure[j].symbol
-                    if neigh_sym in ('O', 'N', 'C'):
+                    if element(neigh_sym).block == 'p':
                         start_mag.setdefault(neigh_sym, 0.15)
                         metal_bound.add(neigh_sym)
         # Apply overrides
@@ -268,8 +268,8 @@ def pwx(
                     start_mag[sym] = overrides["d"]
             elif block == 'f' and "f" in overrides:
                 start_mag[sym] = overrides["f"]
-            elif sym in ('O', 'N', 'C'):
-                if sym in metal_bound and "p_metal_adjacent" in overrides:
+            elif block == 'p' and sym in metal_bound:
+                if "p_metal_adjacent" in overrides:
                     start_mag[sym] = overrides["p_metal_adjacent"]
             elif block in overrides:  # generic block-level override (p, s, etc.)
                 start_mag[sym] = overrides[block]
