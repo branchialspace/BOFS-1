@@ -7,6 +7,14 @@ pwx_scf_config = {
     'nbnd_scalar': 2,
     'initial_u_value': 0.1,
     'n_manifolds': 1,
+    "magnetization": {
+        "mode": "on",
+        "overrides": {
+            "p_metal_adjacent": 0.15,
+            "f": 0.8
+        },
+        "fallback": 0
+    },
     'control': {
         'calculation': 'scf', # scf     nscf     bands
         'restart_mode': 'from_scratch',
