@@ -8,13 +8,10 @@ pwx_scf_config = {
     'initial_u_value': 0.1,
     'n_manifolds': 1,
     "magnetization": {
-        "mode": "on",
-        "overrides": {
-            "d_3d": 0.6,
-            "d_4d5d": 0.3,
-            "f": 0.8,
-            "p_metal_adjacent": 0.15,
-        },
+        "d_3d": 0.6,
+        "d_4d5d": 0.3,
+        "f": 0.8,
+        "p_metal_adjacent": 0.15,
         "fallback": 0.0
     },
     'control': {
