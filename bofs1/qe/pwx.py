@@ -10,6 +10,7 @@ from subprocess import CalledProcessError
 from ase import Atoms
 from ase.io import read
 from ase.data import atomic_masses, atomic_numbers
+from ase.neighborlist import NeighborList, natural_cutoffs
 from ase.build import bulk
 from mendeleev import element
 
@@ -205,6 +206,72 @@ def pwx(
 
         return charge
 
+    def starting_magnetizations(structure, mag_config):
+        """
+        Determine starting magnetizations per atomic species.
+        mag_config : dict
+          {
+            "mode": "on" | "off",
+            "overrides": { "Fe": 0.8, "d": 0.6, "p_metal_adjacent": 0.25 },
+            "fallback": 0.1
+          }
+        Override priority (highest → lowest):
+          1. Explicit element (e.g. "O": 0.2, "Fe": 0.7)
+          2. Special category: "p_metal_adjacent"
+          3. Block-level: "d", "f", "p", "s"
+          4. default values
+          5. Fallback: apply fallback value to all unspecified atoms
+        """
+        mode = mag_config.get("mode", "off").lower()
+        overrides = mag_config.get("overrides", {})
+        fallback_val = mag_config.get("fallback", None)
+        species = set(structure.get_chemical_symbols())
+        if mode == 'off':
+            return {}
+        elif mode == 'on':
+            start_mag = {}
+            cutoffs = natural_cutoffs(structure, mult=1.1)
+            nl = NeighborList(cutoffs, self_interaction=False, bothways=True)
+            nl.update(structure)
+            # Identify d/f block metal centers
+            metal_indices = [
+                i for i, atom in enumerate(structure)
+                if element(atom.symbol).block in ('d', 'f')]
+            # Heuristic defaults for d/f metals
+            for sym in species:
+                elem = element(sym)
+                if elem.block == 'd':
+                    start_mag[sym] = 0.6 if elem.period <= 4 else 0.3
+                elif elem.block == 'f':
+                    start_mag[sym] = 0.8
+            # Default O/N/C atoms bound to metals
+            metal_bound = set()
+            for mi in metal_indices:
+                indices, _ = nl.get_neighbors(mi)
+                for j in indices:
+                    neigh_sym = structure[j].symbol
+                    if neigh_sym in ('O', 'N', 'C'):
+                        start_mag.setdefault(neigh_sym, 0.15)
+                        metal_bound.add(neigh_sym)
+            # Apply overrides
+            for sym in species:
+                elem = element(sym)
+                block = elem.block
+                if sym in overrides:  # element-level override
+                    start_mag[sym] = overrides[sym]
+                elif sym in ('O', 'N', 'C'):
+                    if sym in metal_bound and "p_metal_adjacent" in overrides:
+                        start_mag[sym] = overrides["p_metal_adjacent"]
+                elif block in overrides:  # block-level override
+                    start_mag[sym] = overrides[block]
+            # Apply fallback to any species not yet assigned
+            if fallback_val is not None:
+                for sym in species:
+                    if sym not in start_mag:
+                        start_mag[sym] = fallback_val
+    
+            return start_mag
+
     def hubbard_atoms(structure, pseudo_dict, pseudo_directory, initial_u_value=0.1, n_manifolds=1):
         """
         Identify atoms needing Hubbard U + V corrections, extract valence orbitals
@@ -290,11 +357,12 @@ def pwx(
         config,
         pseudopotentials,
         kpoints,
+        start_mags,
         input_filename
     ):
         """
-        Write the QE PWscf input file from an ASE structure, config,
-        and selected pseudopotentials.
+        Write the QE PWscf input file from an ASE structure, config, pseudopotentials, k-points, 
+        starting magnetizations, hubbard corrections.
         """
         with open(input_filename, 'w') as f:
             # Control, System, Electrons
@@ -308,6 +376,12 @@ def pwx(
                     else:
                         val = value
                     f.write(f"  {key} = {val}\n")
+                # Add starting_magnetization inside SYSTEM
+                if section == 'system' and start_mags:
+                    unique_symbols = sorted(set(structure.get_chemical_symbols()))
+                    for i, sym in enumerate(unique_symbols, start=1):
+                        if sym in start_mags:
+                            f.write(f"  starting_magnetization({i}) = {start_mags[sym]}\n")
                 f.write('/\n')
             # Atomic species
             f.write('\nATOMIC_SPECIES\n')
@@ -333,7 +407,6 @@ def pwx(
                 f.write('\nHUBBARD ortho-atomic\n')
                 for line in hubbard_data:
                     f.write(f"{line}\n")
-
 
     # Args
     structure = read(structure_path) # ASE Atoms object
@@ -366,12 +439,15 @@ def pwx(
     # Set total charge
     charge = charge(structure_path, structure_name)
     config['system']['tot_charge'] = charge
+    # Set starting magnetization
+    magnetization_config = config["magnetization"]
+    start_mags = starting_magnetizations(structure, magnetization_config)
     # Set Hubbard corrections
     initial_u_value = config['initial_u_value']
     n_manifolds = config['n_manifolds']
     hubbard_data = hubbard_atoms(structure, pseudopotentials, pseudo_dir, initial_u_value, n_manifolds)
     # Write QE PWscf input file
-    write_pwx_input(structure, config, pseudopotentials, kpoints, f"{run_name}.pwi")
+    write_pwx_input(structure, config, pseudopotentials, kpoints, start_mags, f"{run_name}.pwi")
     # Subprocess run
     try:
         with open(f"{run_name}.pwo", 'w') as f_out:
