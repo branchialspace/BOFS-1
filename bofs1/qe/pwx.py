@@ -253,17 +253,26 @@ def pwx(
                     if neigh_sym in ('O', 'N', 'C'):
                         start_mag.setdefault(neigh_sym, 0.15)
                         metal_bound.add(neigh_sym)
-            # Apply overrides
-            for sym in species:
-                elem = element(sym)
-                block = elem.block
-                if sym in overrides:  # element-level override
-                    start_mag[sym] = overrides[sym]
-                elif sym in ('O', 'N', 'C'):
-                    if sym in metal_bound and "p_metal_adjacent" in overrides:
-                        start_mag[sym] = overrides["p_metal_adjacent"]
-                elif block in overrides:  # block-level override
-                    start_mag[sym] = overrides[block]
+        # Apply overrides
+        for sym in species:
+            elem = element(sym)
+            block = elem.block
+            if sym in overrides:  # element-level override
+                start_mag[sym] = overrides[sym]
+            elif block == 'd': # d block split level overrides
+                if elem.period <= 4 and "d_3d" in overrides:
+                    start_mag[sym] = overrides["d_3d"]
+                elif elem.period > 4 and "d_4d5d" in overrides:
+                    start_mag[sym] = overrides["d_4d5d"]
+                elif "d" in overrides:  # generic d override
+                    start_mag[sym] = overrides["d"]
+            elif block == 'f' and "f" in overrides:
+                start_mag[sym] = overrides["f"]
+            elif sym in ('O', 'N', 'C'):
+                if sym in metal_bound and "p_metal_adjacent" in overrides:
+                    start_mag[sym] = overrides["p_metal_adjacent"]
+            elif block in overrides:  # generic block-level override (p, s, etc.)
+                start_mag[sym] = overrides[block]
             # Apply fallback to any species not yet assigned
             if fallback_val is not None:
                 for sym in species:
