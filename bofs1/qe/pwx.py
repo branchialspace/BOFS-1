@@ -210,76 +210,56 @@ def pwx(
         """
         Determine starting magnetizations per atomic species.
         mag_config : dict
-          {
-            "mode": "on" | "off",
-            "overrides": { "Fe": 0.8, "d_3d": 0.6, "p_metal_adjacent": 0.25 },
-            "fallback": 0.1
-          }
-        Override priority (highest → lowest):
-          1. Explicit element (e.g. "O": 0.2, "Fe": 0.7)
-          2. Special category: "p_metal_adjacent"
+        Priority (highest → lowest):
+          1. Explicit element: e.g. "Fe": 0.8
+          2. Special category: : "p_metal_adjacent": 0.25
           3. Block-level: "d", "d_3d", "d_4d5d", "f", "p", "s"
-          4. default values
-          5. Fallback: apply fallback value to all unspecified atoms
+          4. "fallback": value applied to all unspecified atoms
         """
-        mode = mag_config.get("mode", "off").lower()
-        overrides = mag_config.get("overrides", {})
-        fallback_val = mag_config.get("fallback", None)
-        species = set(structure.get_chemical_symbols())
-        if mode == 'off':
-            return {}
-        elif mode == 'on':
-            start_mag = {}
-            cutoffs = natural_cutoffs(structure, mult=1.1)
-            nl = NeighborList(cutoffs, self_interaction=False, bothways=True)
-            nl.update(structure)
-            # Identify d/f block metal centers
-            metal_indices = [
-                i for i, atom in enumerate(structure)
-                if element(atom.symbol).block in ('d', 'f')]
-            # Heuristic defaults for d/f metals
-            for sym in species:
-                elem = element(sym)
-                if elem.block == 'd':
-                    start_mag[sym] = 0.6 if elem.period <= 4 else 0.3
-                elif elem.block == 'f':
-                    start_mag[sym] = 0.8
-            # Default p-block atoms bound to metals
-            metal_bound = set()
-            for mi in metal_indices:
-                indices, _ = nl.get_neighbors(mi)
-                for j in indices:
-                    neigh_sym = structure[j].symbol
-                    if element(neigh_sym).block == 'p':
-                        start_mag.setdefault(neigh_sym, 0.15)
-                        metal_bound.add(neigh_sym)
-        # Apply overrides
-        for sym in species:
-            elem = element(sym)
-            block = elem.block
-            if sym in overrides:  # element-level override
-                start_mag[sym] = overrides[sym]
-            elif block == 'd': # d block split level overrides
-                if elem.period <= 4 and "d_3d" in overrides:
-                    start_mag[sym] = overrides["d_3d"]
-                elif elem.period > 4 and "d_4d5d" in overrides:
-                    start_mag[sym] = overrides["d_4d5d"]
-                elif "d" in overrides:  # generic d override
-                    start_mag[sym] = overrides["d"]
-            elif block == 'f' and "f" in overrides:
-                start_mag[sym] = overrides["f"]
-            elif block == 'p' and sym in metal_bound:
-                if "p_metal_adjacent" in overrides:
-                    start_mag[sym] = overrides["p_metal_adjacent"]
-            elif block in overrides:  # generic block-level override (p, s, etc.)
-                start_mag[sym] = overrides[block]
-            # Apply fallback to any species not yet assigned
-            if fallback_val is not None:
-                for sym in species:
-                    if sym not in start_mag:
-                        start_mag[sym] = fallback_val
-    
-            return start_mag
+         if not mag_config:  # QE default: no starting_magnetization lines
+        return {}
+    species = set(structure.get_chemical_symbols())
+    start_mag = {}
+    # Neighbor list for adjacency detection
+    cutoffs = natural_cutoffs(structure, mult=1.1)
+    nl = NeighborList(cutoffs, self_interaction=False, bothways=True)
+    nl.update(structure)
+    # Identify d/f metals
+    metal_indices = [
+        i for i, atom in enumerate(structure)
+        if element(atom.symbol).block in ('d', 'f')]
+    # Track which p-block atoms are adjacent to metals
+    metal_bound = set()
+    for mi in metal_indices:
+        indices, _ = nl.get_neighbors(mi)
+        for j in indices:
+            neigh_sym = structure[j].symbol
+            if element(neigh_sym).block == 'p':
+                metal_bound.add(neigh_sym)
+    # Assign magnetizations
+    for sym in species:
+        elem = element(sym)
+        block = elem.block
+        if sym in mag_config: # explicit element
+            start_mag[sym] = mag_config[sym]
+        elif block == 'd': # d block split level
+            if elem.period <= 4 and "d_3d" in mag_config:
+                start_mag[sym] = mag_config["d_3d"]
+            elif elem.period > 4 and "d_4d5d" in mag_config:
+                start_mag[sym] = mag_config["d_4d5d"]
+            elif "d" in mag_config:
+                start_mag[sym] = mag_config["d"]
+        elif block == 'f' and "f" in mag_config:
+            start_mag[sym] = mag_config["f"]
+        elif block == 'p' and sym in metal_bound:
+            if "p_metal_adjacent" in mag_config:
+                start_mag[sym] = mag_config["p_metal_adjacent"]
+        elif block in mag_config:  # generic block (p, s, etc.)
+            start_mag[sym] = mag_config[block]
+        elif "fallback" in mag_config:
+            start_mag[sym] = mag_config["fallback"]
+
+    return start_mag
 
     def hubbard_atoms(structure, pseudo_dict, pseudo_directory, initial_u_value=0.1, n_manifolds=1):
         """
