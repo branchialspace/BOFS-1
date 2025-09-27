@@ -285,7 +285,7 @@ def pwx(
                     else:
                         val = value
                     f.write(f"  {key} = {val}\n")
-                # Add starting_magnetization inside SYSTEM
+                # System starting_magnetization
                 if section == 'system' and start_mags:
                     unique_symbols = sorted(set(structure.get_chemical_symbols()))
                     for i, sym in enumerate(unique_symbols, start=1):
