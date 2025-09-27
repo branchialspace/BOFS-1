@@ -10,10 +10,12 @@ pwx_scf_config = {
     "magnetization": {
         "mode": "on",
         "overrides": {
+            "d_3d": 0.6,
+            "d_4d5d": 0.3,
+            "f": 0.8,
             "p_metal_adjacent": 0.15,
-            "f": 0.8
         },
-        "fallback": 0
+        "fallback": 0.0
     },
     'control': {
         'calculation': 'scf', # scf     nscf     bands
