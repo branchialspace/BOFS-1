@@ -11,7 +11,7 @@ pwx_scf_config = {
         "d_3d": 0.6,
         "d_4d5d": 0.3,
         "f": 0.8,
-        "p_metal_adjacent": 0.15,
+        "p_metal_adjacent": 0.0,
         "fallback": 0.0
     },
     'control': {
