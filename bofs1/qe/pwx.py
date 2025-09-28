@@ -216,8 +216,8 @@ def pwx(
           3. Block-level: "d", "d_3d", "d_4d5d", "f", "p", "s"
           4. "fallback": value applied to all unspecified atoms
         """
-         if not mag_config:  # QE default: no starting_magnetization lines
-        return {}
+        if not mag_config:  # QE default: no starting_magnetization lines
+            return {}
         species = set(structure.get_chemical_symbols())
         start_mag = {}
         # identify d/f block adjacent p block atoms
