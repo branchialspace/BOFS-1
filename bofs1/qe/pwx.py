@@ -308,10 +308,12 @@ def pwx(
             for vec in structure.cell:
                 f.write(f"  {vec[0]:.10f} {vec[1]:.10f} {vec[2]:.10f}\n")
             # Hubbard U+V corrections
+            '''
             if hubbard_data:
                 f.write('\nHUBBARD ortho-atomic\n')
                 for line in hubbard_data:
                     f.write(f"{line}\n")
+            '''
 
     # Args
     structure = read(structure_path) # ASE Atoms object
