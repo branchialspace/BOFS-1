@@ -220,15 +220,13 @@ def pwx(
         return {}
         species = set(structure.get_chemical_symbols())
         start_mag = {}
-        # Neighbor list for adjacency detection
-        cutoffs = natural_cutoffs(structure, mult=1.1)
+        # identify d/f block adjacent p block atoms
+        cutoffs = natural_cutoffs(structure, mult=1.3)
         nl = NeighborList(cutoffs, self_interaction=False, bothways=True)
         nl.update(structure)
-        # Identify d/f metals
         metal_indices = [
             i for i, atom in enumerate(structure)
             if element(atom.symbol).block in ('d', 'f')]
-        # Track which p-block atoms are adjacent to metals
         metal_bound = set()
         for mi in metal_indices:
             indices, _ = nl.get_neighbors(mi)
@@ -249,14 +247,12 @@ def pwx(
                     start_mag[sym] = mag_config["d_4d5d"]
                 elif "d" in mag_config:
                     start_mag[sym] = mag_config["d"]
-            elif block == 'f' and "f" in mag_config:
-                start_mag[sym] = mag_config["f"]
-            elif block == 'p' and sym in metal_bound:
+            elif block == 'p' and sym in metal_bound: # d/f adjacent p block
                 if "p_metal_adjacent" in mag_config:
                     start_mag[sym] = mag_config["p_metal_adjacent"]
-            elif block in mag_config:  # generic block (p, s, etc.)
+            elif block in mag_config:  # block level (f, p, s, etc.)
                 start_mag[sym] = mag_config[block]
-            elif "fallback" in mag_config:
+            elif "fallback" in mag_config: # all else unspecified
                 start_mag[sym] = mag_config["fallback"]
     
         return start_mag
