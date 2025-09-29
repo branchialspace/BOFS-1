@@ -1,3 +1,5 @@
+DFT environment for computing the optical response of Bi-MOFs
+
 ```bash
 # BOFS-1
 # Ubuntu 22.04 LTS arm64
