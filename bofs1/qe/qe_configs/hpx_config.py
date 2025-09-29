@@ -1,5 +1,5 @@
 hpx_config = {
-    'command': ['/usr/bin/mpirun', '--allow-run-as-root', '-x', 'OMP_NUM_THREADS=2', '-np', '4', '/content/bin/hp.x'],
+    'command': ['./bofs1_env/bin/mpirun', '--allow-run-as-root', '-x', 'OMP_NUM_THREADS=2', '-np', '4', './bin/hp.x'],
     'qpts_q_spacing': 0.065,        # q-point spacing
     'inputhp': {
         'iverbosity': 2,           # Verbosity level
