@@ -64,8 +64,6 @@ def hpx(
         Returns
         hubbard_atoms : dict
             skip_type : List of booleans for each atom type
-            equiv_type : List of equivalence indices for each atom type
-            perturb_only_atom : List of booleans for each atom type
             hubbard_candidates : List of (index, symbol) tuples for atoms needing correction
         """
         # Species known to never require Hubbard corrections
@@ -78,14 +76,10 @@ def hpx(
         n_types = len(atom_types)
         # Initialize parameters
         skip_type = [symbol in non_correlated_species for symbol in atom_types]
-        equiv_type = [0] * n_types
-        perturb_only_atom = [False] * n_types
         # Only atoms not skipped are considered Hubbard candidates
         hubbard_candidates = [(i, symbol) for i, symbol in enumerate(atom_types) if not skip_type[i]]
         hubbard_atoms = {
             'skip_type': skip_type,
-            'equiv_type': equiv_type,
-            'perturb_only_atom': perturb_only_atom,
             'hubbard_candidates': hubbard_candidates}
 
         return hubbard_atoms
@@ -106,11 +100,8 @@ def hpx(
                     val = value
                 f.write(f"  {key} = {val}\n")
             # Hubbard atoms
-            for i, (skip, equiv, perturb) in enumerate(zip(config['skip_type'], config['equiv_type'], config['perturb_only_atom']), 1):
+            for i, skip in enumerate(config['skip_type'], 1):
                 f.write(f"  skip_type({i}) = {'.true.' if skip else '.false.'}\n")
-                f.write(f"  equiv_type({i}) = {equiv}\n")
-                f.write(f"  perturb_only_atom({i}) = {'.true.' if perturb else '.false.'}\n")
-
             f.write('/\n')
         
     # Args
@@ -131,8 +122,6 @@ def hpx(
     # Set Hubbard atoms
     hubbard_params = hubbard_atoms(structure)
     config['skip_type'] = hubbard_params['skip_type']
-    config['equiv_type'] = hubbard_params['equiv_type']
-    config['perturb_only_atom'] = hubbard_params['perturb_only_atom']
     # Write QE hp.x input file
     write_hpx_input(config, f"{run_name}.hpi")
     # Subprocess run
