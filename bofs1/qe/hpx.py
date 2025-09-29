@@ -69,9 +69,10 @@ def hpx(
             hubbard_candidates : List of (index, symbol) tuples for atoms needing correction
         """
         # Species known to never require Hubbard corrections
-        non_correlated_species = {'H', 'He', 'B', 'C', 'N', 'O', 'F', 'Ne',
-                                  'Si', 'P', 'S', 'Ar', 'Ge', 'As', 'Se', 'Br', 'Kr',
-                                  'I', 'Xe', 'Rn'}
+        non_correlated_species = {
+            'H', 'He', 'Li', 'Be', 'B', 'Ne', 'Na', 'Mg', 'Al', 'Si', 'Ar',
+            'K', 'Ca', 'Ga', 'Ge', 'Kr', 'Rb', 'Sr', 'Cd', 'In', 'Xe',
+            'Cs', 'Ba', 'Hg', 'Tl', 'Po', 'Rn'}
         # Get unique atom types in structure
         atom_types = sorted(set(structure.get_chemical_symbols()))
         n_types = len(atom_types)
