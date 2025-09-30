@@ -257,7 +257,7 @@ def pwx(
     
         return start_mag
 
-    def hubbard_atoms(structure, pseudo_dict, pseudo_directory, initial_u_value=0.0, n_manifolds=1):
+    def hubbard_atoms(structure, pseudo_dict, pseudo_directory, initial_u_value=0.1, n_manifolds=1):
         """
         Identify atoms needing Hubbard U + V corrections, extract valence orbitals
         from pseudopotential files, and prioritize manifolds based on orbital blocks.
@@ -301,7 +301,7 @@ def pwx(
                 n = int(''.join(filter(str.isdigit, label))) if any(c.isdigit() for c in label) else None
                 l_type = next((char.lower() for char in label if char.lower() in 'spdf'), None)
                 if n is not None and l_type is not None:
-                    orbital_info.append({'label': label, 'n': n, 'l_type': l_type})
+                    orbital_info.append({'label': f"{n}{l_type}", 'n': n, 'l_type': l_type})
             orbital_info = list({orb['label']: orb for orb in orbital_info}.values())
             # Use Mendeleev to determine element type and electron orbital block
             elem = element(symbol)
