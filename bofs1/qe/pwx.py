@@ -299,7 +299,7 @@ def pwx(
             # Parse orbital labels to extract (n) principal quantum number and (l) angular momentum 
             for label in matches:
                 n = int(''.join(filter(str.isdigit, label))) if any(c.isdigit() for c in label) else None
-                l_type = next((char for char in label if char in 'spdf'), None)
+                l_type = next((char.lower() for char in label if char.lower() in 'spdf'), None)
                 if n is not None and l_type is not None:
                     orbital_info.append({'label': label, 'n': n, 'l_type': l_type})
             orbital_info = list({orb['label']: orb for orb in orbital_info}.values())
