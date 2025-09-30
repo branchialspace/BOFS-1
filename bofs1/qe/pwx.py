@@ -342,6 +342,7 @@ def pwx(
         pseudopotentials,
         kpoints,
         start_mags,
+        hubbard_data,
         input_filename
     ):
         """
