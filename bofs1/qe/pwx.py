@@ -29,8 +29,8 @@ def pwx(
     def pseudopotentials(structure, pseudo_directory):
         """
         Determine the appropriate pseudopotential file for each atomic species of the structure
-        from a given directory. Tries to pick up 'fr' (fully relativistic) files
-        if they are present; otherwise, picks the first found.
+        from a given directory. Tries to pick up ‘rel’ or ‘fr’ (fully relativistic) as well as ‘paw’
+        if they are present, and tries to not pick up ‘nl’.
         Returns
         pseudo_dict : dict
             Dictionary of atomic species and associated pseudopotential files.
@@ -46,9 +46,14 @@ def pwx(
                     candidates.append(pp_file)
             if not candidates:
                 raise FileNotFoundError(f"No pseudopotential found for {symbol}")
-            # Prefer 'fr' if available
-            fr_files = [c for c in candidates if 'fr' in c.stem.lower()]
-            selected = max(fr_files, key=lambda x: len(x.stem)) if fr_files else candidates[0]
+            selected = max(
+                candidates,
+                key=lambda c: (
+                    ("fr" in c.stem.lower() or "rel" in c.stem.lower()) and "paw" in c.stem.lower() and "nl" not in c.stem.lower(),
+                    ("fr" in c.stem.lower() or "rel" in c.stem.lower()) and "paw" in c.stem.lower(),
+                    ("fr" in c.stem.lower() or "rel" in c.stem.lower())
+                )
+            )
             pseudo_dict[symbol] = selected.name
 
         return pseudo_dict
