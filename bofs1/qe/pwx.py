@@ -51,9 +51,7 @@ def pwx(
                 key=lambda c: (
                     ("fr" in c.stem.lower() or "rel" in c.stem.lower()) and "paw" in c.stem.lower() and "nl" not in c.stem.lower(),
                     ("fr" in c.stem.lower() or "rel" in c.stem.lower()) and "paw" in c.stem.lower(),
-                    ("fr" in c.stem.lower() or "rel" in c.stem.lower())
-                )
-            )
+                    ("fr" in c.stem.lower() or "rel" in c.stem.lower())))
             pseudo_dict[symbol] = selected.name
 
         return pseudo_dict
