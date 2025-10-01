@@ -4,9 +4,12 @@
 !sed -i "s|PWDIR='/path_to_quantum_espresso/'|PWDIR='/content/qe-7.4.1'|" /content/pslibrary/QE_path
 !cd /content/pslibrary/rel-pbe && . ../make_ps
 # env
-git clone https://github.com/dalcorso/pslibrary.git
-sed -i "s|PWDIR='/path_to_quantum_espresso/'|PWDIR=‘/BOFS-1/qe-7.4.1'|" /pslibrary/QE_path
-cd /BOFS-1/pslibrary/rel-pbe && . ../make_ps
+cd BOFS-1        
+source ./miniforge3/etc/profile.d/conda.sh
+conda activate ./bofs1_env        
+bash git clone https://github.com/dalcorso/pslibrary.git
+sed -i "s|PWDIR=‘/path_to_quantum_espresso/’|PWDIR=‘../../qe-7.4.1’|” /georgetsatas/BOFS-1/pslibrary/QE_path
+cd pslibrary/rel-pbe && . ../make_ps
 
 # ONCV fr
 !git clone https://github.com/pipidog/ONCVPSP.git
