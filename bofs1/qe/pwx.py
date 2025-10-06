@@ -29,8 +29,8 @@ def pwx(
     def pseudopotentials(structure, pseudo_directory):
         """
         Determine the appropriate pseudopotential file for each atomic species of the structure
-        from a given directory. Tries to pick up ‘rel’ or ‘fr’ (fully relativistic) as well as ‘paw’, 'nl'
-        if they are present.
+        from a given directory. Tries to pick up ‘rel’ or ‘fr’ (fully relativistic) as well as 
+        ‘paw’, 'nl', if they are present.
         Returns
         pseudo_dict : dict
             Dictionary of atomic species and associated pseudopotential files.
