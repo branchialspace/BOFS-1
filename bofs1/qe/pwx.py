@@ -259,7 +259,7 @@ def pwx(
 
         return start_mag
 
-    def hubbard_atoms(structure, pseudo_dict, pseudo_directory, initial_u_value=0.1, n_manifolds=2):
+    def hubbard_atoms(structure, pseudo_dict, pseudo_directory, initial_u_value=0.1, n_manifolds=1):
         """
         Identify atoms needing Hubbard U + V corrections, extract valence orbitals
         from pseudopotential files, and prioritize manifolds based on orbital blocks.
@@ -320,19 +320,20 @@ def pwx(
             f_orbitals = sorted([o for o in orbital_info if o['l_type'] == 'f'], key=lambda o: -o['n'])
             # Prioritize orbitals by block of species, special case for oxygen
             if symbol == 'O':
-                prioritized = [*p_orbitals, *s_orbitals, *d_orbitals, *f_orbitals]
-                prioritized.sort(key=lambda o: (o['n'] != 2, o['n']))  # prioritize 2p
+                o_2p = [o for o in p_orbitals if o['n'] == 2]
+                other_p = [o for o in p_orbitals if o['n'] != 2]
+                prioritized_orbitals = o_2p + other_p + s_orbitals + d_orbitals + f_orbitals
             elif block == 'd':
-                prioritized = d_orbitals + p_orbitals + s_orbitals + f_orbitals
+                prioritized_orbitals = d_orbitals + p_orbitals + s_orbitals + f_orbitals
             elif block == 'p':
-                prioritized = p_orbitals + s_orbitals + d_orbitals + f_orbitals
+                prioritized_orbitals = p_orbitals + s_orbitals + d_orbitals + f_orbitals
             elif block == 'f':
-                prioritized = f_orbitals + d_orbitals + p_orbitals + s_orbitals
+                prioritized_orbitals = f_orbitals + d_orbitals + p_orbitals + s_orbitals
             elif block == 's':
-                prioritized = s_orbitals + p_orbitals + d_orbitals + f_orbitals
+                prioritized_orbitals = s_orbitals + p_orbitals + d_orbitals + f_orbitals
             seen_labels = set()
             top_manifolds = []
-            for orb in prioritized:
+            for orb in prioritized_orbitals:
                 if orb['label'] not in seen_labels:
                     seen_labels.add(orb['label'])
                     top_manifolds.append(orb)
