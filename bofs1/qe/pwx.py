@@ -259,7 +259,7 @@ def pwx(
 
         return start_mag
 
-    def hubbard_atoms(structure, pseudo_dict, pseudo_directory, initial_u_value=0.1, n_manifolds=1):
+    def hubbard_atoms(structure, pseudo_dict, pseudo_directory, initial_u_value=0.1, n_manifolds=2):
         """
         Identify atoms needing Hubbard U + V corrections, extract valence orbitals
         from pseudopotential files, and prioritize manifolds based on orbital blocks.
@@ -290,7 +290,10 @@ def pwx(
         hubbard_card = []
         hubbard_occ_lines = []
         # Extract orbital labels from pseudopotential file
-        for ityp, symbol in enumerate(hubbard_candidates, start=1):
+        unique_symbols = sorted(set(structure.get_chemical_symbols()))
+        for ityp, symbol in enumerate(unique_symbols, start=1):
+            if symbol not in hubbard_candidates:
+                continue
             pp_filename = pseudo_dict[symbol]
             pp_path = Path(pseudo_directory) / pp_filename
             with open(pp_path, 'r') as f:
@@ -317,18 +320,24 @@ def pwx(
             f_orbitals = sorted([o for o in orbital_info if o['l_type'] == 'f'], key=lambda o: -o['n'])
             # Prioritize orbitals by block of species, special case for oxygen
             if symbol == 'O':
-                o_2p = [o for o in p_orbitals if o['n'] == 2]
-                other_p = [o for o in p_orbitals if o['n'] != 2]
-                prioritized_orbitals = o_2p + other_p + s_orbitals + d_orbitals + f_orbitals
+                prioritized = [*p_orbitals, *s_orbitals, *d_orbitals, *f_orbitals]
+                prioritized.sort(key=lambda o: (o['n'] != 2, o['n']))  # prioritize 2p
             elif block == 'd':
-                prioritized_orbitals = d_orbitals + p_orbitals + s_orbitals + f_orbitals
+                prioritized = d_orbitals + p_orbitals + s_orbitals + f_orbitals
             elif block == 'p':
-                prioritized_orbitals = p_orbitals + s_orbitals + d_orbitals + f_orbitals
+                prioritized = p_orbitals + s_orbitals + d_orbitals + f_orbitals
             elif block == 'f':
-                prioritized_orbitals = f_orbitals + d_orbitals + p_orbitals + s_orbitals
+                prioritized = f_orbitals + d_orbitals + p_orbitals + s_orbitals
             elif block == 's':
-                prioritized_orbitals = s_orbitals + p_orbitals + d_orbitals + f_orbitals
-            top_manifolds = prioritized_orbitals[:min(n_manifolds, len(prioritized_orbitals))]
+                prioritized = s_orbitals + p_orbitals + d_orbitals + f_orbitals
+            seen_labels = set()
+            top_manifolds = []
+            for orb in prioritized:
+                if orb['label'] not in seen_labels:
+                    seen_labels.add(orb['label'])
+                    top_manifolds.append(orb)
+                if len(top_manifolds) >= n_manifolds:
+                    break
             # Format Hubbard card
             if top_manifolds:
                 # First manifold
@@ -339,10 +348,8 @@ def pwx(
                     hubbard_card.append(f"U {symbol}-{combined_labels} {initial_u_value:.1f}")
             # format hubbard_occ lines
             top_labels = {orb['label'] for orb in top_manifolds}
-            matching_orbs = [orb for orb in orbital_info if orb['label'] in top_labels]
-            for j, orb in enumerate(matching_orbs, start=1):
-                occ_line = f"({ityp},{j}) = {orb['occupation']:.2f}"
-                hubbard_occ_lines.append(occ_line)
+            for j, orb in enumerate([o for o in orbital_info if o['label'] in top_labels], start=1):
+                hubbard_occ_lines.append(f"({ityp},{j}) = {orb['occupation']:.2f}")
 
         return hubbard_card, hubbard_occ_lines
 
@@ -405,7 +412,8 @@ def pwx(
             # Hubbard U+V corrections
             if hubbard_data:
                 f.write('\nHUBBARD ortho-atomic\n')
-                f.write("\n".join(hubbard_data))
+                for line in hubbard_data:
+                    f.write(f"  {line}\n")
 
     # Args
     structure = read(structure_path)  # ASE Atoms object
