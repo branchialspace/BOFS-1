@@ -16,8 +16,8 @@ from mendeleev import element
 
 
 def pwx(
-    structure_path,
-    config
+        structure_path,
+        config
 ):
     """
     Run QE pw.x PWscf calculation.
@@ -29,7 +29,7 @@ def pwx(
     def pseudopotentials(structure, pseudo_directory):
         """
         Determine the appropriate pseudopotential file for each atomic species of the structure
-        from a given directory. Tries to pick up ‘rel’ or ‘fr’ (fully relativistic) as well as 
+        from a given directory. Tries to pick up ‘rel’ or ‘fr’ (fully relativistic) as well as
         ‘paw’, 'nl', if they are present.
         Returns
         pseudo_dict : dict
@@ -48,10 +48,9 @@ def pwx(
                 raise FileNotFoundError(f"No pseudopotential found for {symbol}")
             selected = max(
                 candidates,
-                key=lambda c: (
-                    ("fr" in c.stem.lower() or "rel" in c.stem.lower()) and "paw" in c.stem.lower() and "nl" in c.stem.lower(),
-                    ("fr" in c.stem.lower() or "rel" in c.stem.lower()) and "paw" in c.stem.lower(),
-                    ("fr" in c.stem.lower() or "rel" in c.stem.lower())))
+                key=lambda c: (("fr" in c.stem.lower() or "rel" in c.stem.lower()) and "paw" in c.stem.lower() and "nl" in c.stem.lower(),
+                               ("fr" in c.stem.lower() or "rel" in c.stem.lower()) and "paw" in c.stem.lower(),
+                               ("fr" in c.stem.lower() or "rel" in c.stem.lower())))
             pseudo_dict[symbol] = selected.name
 
         return pseudo_dict
@@ -111,7 +110,7 @@ def pwx(
 
         return ecutwfc, ecutrho
 
-    def kpoints(structure, k_spacing=0.13, shift=(1,1,1)):
+    def kpoints(structure, k_spacing=0.13, shift=(1, 1, 1)):
         """
         Given a desired k-point spacing k_spacing (in Å^-1),
         compute a suitable (n1, n2, n3) Monkhorst–Pack grid for the structure.
@@ -146,7 +145,7 @@ def pwx(
 
         return (n1, n2, n3, s1, s2, s3)
 
-    def nbnd(structure, nbnd_scalar = 2):
+    def nbnd(structure, nbnd_scalar=2):
         """
         Number of electronic states (bands) to be calculated,
         scaled total valence count from Mendeleev.
@@ -241,23 +240,23 @@ def pwx(
         for sym in species:
             elem = element(sym)
             block = elem.block
-            if sym in mag_config: # explicit element
+            if sym in mag_config:  # explicit element
                 start_mag[sym] = mag_config[sym]
-            elif block == 'd': # d block split level
+            elif block == 'd':  # d block split level
                 if elem.period <= 4 and "d_3d" in mag_config:
                     start_mag[sym] = mag_config["d_3d"]
                 elif elem.period > 4 and "d_4d5d" in mag_config:
                     start_mag[sym] = mag_config["d_4d5d"]
                 elif "d" in mag_config:
                     start_mag[sym] = mag_config["d"]
-            elif block == 'p' and sym in metal_bound: # d/f adjacent p block
+            elif block == 'p' and sym in metal_bound:  # d/f adjacent p block
                 if "p_metal_adjacent" in mag_config:
                     start_mag[sym] = mag_config["p_metal_adjacent"]
             elif block in mag_config:  # block level (f, p, s, etc.)
                 start_mag[sym] = mag_config[block]
-            elif "fallback" in mag_config: # all else unspecified
+            elif "fallback" in mag_config:  # all else unspecified
                 start_mag[sym] = mag_config["fallback"]
-    
+
         return start_mag
 
     def hubbard_atoms(structure, pseudo_dict, pseudo_directory, initial_u_value=0.1, n_manifolds=1):
@@ -277,7 +276,7 @@ def pwx(
             Number of orbitals/ manifolds per species
         hubbard_card : list
             List with manifold information formatted for the hubbard card
-        """
+            """
         # Species known to never require Hubbard corrections
         non_correlated_species = {
             'H', 'He', 'Li', 'Be', 'B', 'Ne', 'Na', 'Mg', 'Al', 'Si', 'Ar',
@@ -287,25 +286,27 @@ def pwx(
         atom_types = sorted(set(structure.get_chemical_symbols()))
         # Identify Hubbard candidates
         hubbard_candidates = [sym for sym in atom_types if sym not in non_correlated_species]
-        # Write Hubbard card
+        # Write Hubbard card and occupation lines
         hubbard_card = []
+        hubbard_occ_lines = []
         # Extract orbital labels from pseudopotential file
-        for symbol in hubbard_candidates:
+        for ityp, symbol in enumerate(hubbard_candidates, start=1):
             pp_filename = pseudo_dict[symbol]
             pp_path = Path(pseudo_directory) / pp_filename
             with open(pp_path, 'r') as f:
                 content = f.read()
             # Find all PP_CHI entries with label
-            pattern = r'<PP_CHI\.\d+.*?label\s*=\s*"([^"]+)"'
+            pattern = (r'<PP_CHI\.(\d+).*?label\s*=\s*"([^"]+)"'
+                       r'.*?occupation\s*=\s*"([\d\.E\+\-]+)"')
             matches = re.findall(pattern, content, re.DOTALL)
             orbital_info = []
-            # Parse orbital labels to extract (n) principal quantum number and (l) angular momentum 
-            for label in matches:
+            # Parse orbital labels to extract (n) principal quantum number and (l) angular momentum
+            for idx, label, occ in matches:
                 n = int(''.join(filter(str.isdigit, label))) if any(c.isdigit() for c in label) else None
                 l_type = next((char.lower() for char in label if char.lower() in 'spdf'), None)
                 if n is not None and l_type is not None:
-                    orbital_info.append({'label': f"{n}{l_type}", 'n': n, 'l_type': l_type})
-            orbital_info = list({orb['label']: orb for orb in orbital_info}.values())
+                    orbital_info.append({'label': label, 'n': n, 'l_type': l_type,
+                                         'occupation': float(occ), 'index': int(idx)})
             # Use Mendeleev to determine element type and electron orbital block
             elem = element(symbol)
             block = elem.block
@@ -336,20 +337,27 @@ def pwx(
                 if len(top_manifolds) > 1:
                     combined_labels = '-'.join(orb['label'] for orb in top_manifolds[1:])
                     hubbard_card.append(f"U {symbol}-{combined_labels} {initial_u_value:.1f}")
-    
-        return hubbard_card
-    
+            # format hubbard_occ lines
+            top_labels = {orb['label'] for orb in top_manifolds}
+            matching_orbs = [orb for orb in orbital_info if orb['label'] in top_labels]
+            for j, orb in enumerate(matching_orbs, start=1):
+                occ_line = f"({ityp},{j}) = {orb['occupation']:.2f}"
+                hubbard_occ_lines.append(occ_line)
+
+        return hubbard_card, hubbard_occ_lines
+
     def write_pwx_input(
-        structure,
-        config,
-        pseudopotentials,
-        kpoints,
-        start_mags,
-        hubbard_data,
-        input_filename
+            structure,
+            config,
+            pseudopotentials,
+            kpoints,
+            start_mags,
+            hubbard_data,
+            hubbard_occ_lines,
+            input_filename
     ):
         """
-        Write the QE PWscf input file from an ASE structure, config, pseudopotentials, k-points, 
+        Write the QE PWscf input file from an ASE structure, config, pseudopotentials, k-points,
         starting magnetizations, hubbard corrections.
         """
         with open(input_filename, 'w') as f:
@@ -370,6 +378,10 @@ def pwx(
                     for i, sym in enumerate(unique_symbols, start=1):
                         if sym in start_mags:
                             f.write(f"  starting_magnetization({i}) = {start_mags[sym]}\n")
+                # System Hubbard_occ
+                if section == 'system' and hubbard_occ_lines:
+                    for occ_line in hubbard_occ_lines:
+                        f.write(f"  Hubbard_occ{occ_line}\n")
                 f.write('/\n')
             # Atomic species
             f.write('\nATOMIC_SPECIES\n')
@@ -393,11 +405,10 @@ def pwx(
             # Hubbard U+V corrections
             if hubbard_data:
                 f.write('\nHUBBARD ortho-atomic\n')
-                for line in hubbard_data:
-                    f.write(f"{line}\n")
+                f.write("\n".join(hubbard_data))
 
     # Args
-    structure = read(structure_path) # ASE Atoms object
+    structure = read(structure_path)  # ASE Atoms object
     structure_name = os.path.splitext(os.path.basename(structure_path))[0]
     calculation = config['control']['calculation']
     run_name = f"{structure_name}_{calculation}"
@@ -432,9 +443,9 @@ def pwx(
     start_mags = starting_magnetizations(structure, magnetization_config)
     # Set Hubbard corrections
     initial_u_value = config['initial_u_value']
-    hubbard_data = hubbard_atoms(structure, pseudopotentials, pseudo_dir, initial_u_value)
+    hubbard_data, hubbard_occ_lines = hubbard_atoms(structure, pseudopotentials, pseudo_dir, initial_u_value)
     # Write QE PWscf input file
-    write_pwx_input(structure, config, pseudopotentials, kpoints, start_mags, hubbard_data, f"{run_name}.pwi")
+    write_pwx_input(structure, config, pseudopotentials, kpoints, start_mags, hubbard_data, hubbard_occ_lines, f"{run_name}.pwi")
     # Subprocess run
     try:
         with open(f"{run_name}.pwo", 'w') as f_out:
