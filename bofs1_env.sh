@@ -38,6 +38,8 @@ cp bin/ld1.x qe-7.4.1/bin/
 # Dalcorso fully-relativistic pseudopotentials
 gdown $DALCORSO_GDOWN
 unzip dalcorso_rel_pbe.zip
+git clone https://github.com/dalcorso/pslibrary.git
+sed -i "s|PWDIR='/path_to_quantum_espresso/'|PWDIR='../../qe-7.4.1'|" ./pslibrary/QE_path
 # ONCV fully-relativistic pseudopotentials repositories
 git clone https://github.com/pipidog/ONCVPSP.git
 git clone https://github.com/MarioAndWario/ONCVPseudoPack.git
