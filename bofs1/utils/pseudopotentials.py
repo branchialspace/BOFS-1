@@ -8,7 +8,7 @@ cd BOFS-1
 source ./miniforge3/etc/profile.d/conda.sh
 conda activate ./bofs1_env        
 bash git clone https://github.com/dalcorso/pslibrary.git
-sed -i "s|PWDIR=‘/path_to_quantum_espresso/’|PWDIR=‘../../qe-7.4.1’|” /georgetsatas/BOFS-1/pslibrary/QE_path
+sed -i "s|PWDIR='/path_to_quantum_espresso/'|PWDIR='../../qe-7.4.1'|" ./pslibrary/QE_path
 cd pslibrary/rel-pbe && . ../make_ps
 
 # ONCV fr
