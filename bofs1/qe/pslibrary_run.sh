@@ -1,6 +1,11 @@
 #!/bin/bash
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BOFS1_DIR="$SCRIPT_DIR/../.."
+PSLIBRARY_DIR="$BOFS1_DIR/pslibrary"
+FUNCTIONAL="rel-pbe"
+
 # ============================================================================
 # GLOBAL LD1.X PARAMETERS - Edit these to inject into all pseudopotentials
 # ============================================================================
@@ -43,12 +48,12 @@ inject_params() {
 }
 
 # Inject parameters
-cd pslibrary/rel-pbe
+cd "$PSLIBRARY_DIR/$FUNCTIONAL"
 for f in paw_ps_*.job us_ps_*.job; do
     inject_params "$f"
 done
 
 # Run PSLibrary
-source ../../miniforge3/etc/profile.d/conda.sh
-conda activate ../../bofs1_env
+source "$BOFS1_DIR/miniforge3/etc/profile.d/conda.sh"
+conda activate "$BOFS1_DIR/bofs1_env"
 . ../make_ps
