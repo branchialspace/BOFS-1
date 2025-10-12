@@ -11,6 +11,7 @@ FUNCTIONAL="rel-pbesol"
 # ============================================================================
 
 INPUTP_PARAMS=(
+    "lsave_wfc=.true."
     "lgipaw_reconstruction=.true."
     "use_paw_as_gipaw=.true."
 )
