@@ -18,4 +18,4 @@ cd BOFS-1
 
 # Run PSLibrary
 cd BOFS-1
-./bofs1/qe/run_pslibrary.sh
+./bofs1/qe/pslibrary_run.sh
