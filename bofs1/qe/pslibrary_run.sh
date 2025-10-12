@@ -4,7 +4,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BOFS1_DIR="$SCRIPT_DIR/../.."
 PSLIBRARY_DIR="$BOFS1_DIR/pslibrary"
-FUNCTIONAL="rel-pbe"
+FUNCTIONAL="rel-pbesol"
 
 # ============================================================================
 # GLOBAL LD1.X PARAMETERS - Edit these to inject into all pseudopotentials
