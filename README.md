@@ -1,4 +1,4 @@
-DFT environment for computing the optical response of Bi-MOFs
+DFT environment for computing the electronic structure and optical response of MOFs
 
 ```bash
 # BOFS-1
