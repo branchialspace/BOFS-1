@@ -5,7 +5,7 @@ pwx_scf_config = {
     'kpts_k_spacing': 0.13, # scf: 0.13    nscf: 0.09
     'kpts_shift': (1,1,1),
     'nbnd_scalar': 2,
-    'initial_u_value': 0.0,
+    'initial_u_value': 0.1,
     "magnetization": {
         "d_3d": 0.6,
         "d_4d5d": 0.3,
