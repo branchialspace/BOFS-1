@@ -27,20 +27,31 @@ pip install gdown
 gdown $MOF_DB_GDOWN # 369 Bi MOFs from ARCMOF, CSDMOF, QMOF, MOSAEC-DB
 mkdir -p mofs
 unzip bimofs2.zip -d mofs
-# QuantumESPRESSO
-wget $QE_URL
-tar -xzf qe-7.4.1-ReleasePack.tar.gz
-cmake -G Ninja -DCMAKE_C_COMPILER=$CONDA_PREFIX/bin/mpicc -DCMAKE_Fortran_COMPILER=$CONDA_PREFIX/bin/mpif90 -DQE_FFTW_VENDOR=Internal -DQE_ENABLE_OPENMP=ON qe-7.4.1
+# ARM Performance Libraries
+wget https://developer.arm.com/-/cdn-downloads/permalink/Arm-Performance-Libraries/Version_25.07.1/arm-performance-libraries_25.07.1_deb_gcc.tar
+tar -xvf arm-performance-libraries_25.07.1_deb_gcc.tar
+sudo bash ./arm-performance-libraries_25.07.1_deb/arm-performance-libraries_25.07.1_deb.sh --accept
+export ARMPL_DIR=/opt/arm/armpl_25.07.1_gcc
+# Quantum ESPRESSO
+git clone https://gitlab.com/QEF/q-e.git qe-7.5 && (cd qe-7.5 && git checkout -b qe-7.5-pinned 770a0b2d12928a67048e2f3da8d10d057e52179e)
+cmake -G Ninja \
+  -DCMAKE_C_COMPILER=$CONDA_PREFIX/bin/mpicc \
+  -DCMAKE_Fortran_COMPILER=$CONDA_PREFIX/bin/mpif90 \
+  -DQE_FFTW_VENDOR=Internal \
+  -DQE_ENABLE_OPENMP=ON \
+  -DBLAS_LIBRARIES="$ARMPL_DIR/lib/libarmpl_lp64_mp.so;-lgfortran;-lm;-lpthread" \
+  -DLAPACK_LIBRARIES="$ARMPL_DIR/lib/libarmpl_lp64_mp.so;-lgfortran;-lm;-lpthread" \
+  qe-7.5
 ninja
 ninja ld1
-mkdir -p qe-7.4.1/bin
-cp bin/ld1.x qe-7.4.1/bin/
+mkdir -p qe-7.5/bin
+cp bin/ld1.x qe-7.5/bin/
 # Dalcorso fully-relativistic pseudopotentials
 gdown $DALCORSO_GDOWN
 unzip dalcorso_rel_pbe.zip
 git clone https://github.com/dalcorso/pslibrary.git
-sed -i "s|PWDIR='/path_to_quantum_espresso/'|PWDIR='../../qe-7.4.1'|" ./pslibrary/QE_path
-chmod +x ./bofs1/qe/pslibrary_run.sh
+sed -i "s|PWDIR='/path_to_quantum_espresso/'|PWDIR='../../qe-7.5'|" ./pslibrary/QE_path
+bash ./bofs1/qe/pslibrary_run.sh
 # ONCV fully-relativistic pseudopotentials repositories
 git clone https://github.com/pipidog/ONCVPSP.git
 git clone https://github.com/MarioAndWario/ONCVPseudoPack.git
@@ -54,4 +65,4 @@ exec python "$SCRIPT_DIR/bofs1/qe/qe_run.py" "$@"
 EOF
 chmod +x qe_run
 
-echo "BOFS1 environment built successfully"
+echo "built BOFS1 environment"
