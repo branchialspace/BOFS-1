@@ -1,10 +1,10 @@
 pwx_scf_config = {
-    'command': ['./bofs1_env/bin/mpirun', '--allow-run-as-root', '-x', 'OMP_NUM_THREADS=1', '-np', '11', './bin/pw.x'],
-    'wfn_scalar': 1.15,
-    'rho_scalar': 1.15,
+    'command': ['./bofs1_env/bin/mpirun', '--allow-run-as-root', '-x', 'OMP_NUM_THREADS=4', '-np', '3', './bin/pw.x', '-ndiag 3'],
+    'wfn_scalar': 1.1,
+    'rho_scalar': 1.1,
     'kpts_k_spacing': 0.13, # scf: 0.13    nscf: 0.09
     'kpts_shift': (1,1,1),
-    'nbnd_scalar': 2,
+    'nbnd_scalar': 1.8,
     'initial_u_value': 0.1,
     "magnetization": {
         "d_3d": 0.6,
