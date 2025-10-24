@@ -24,7 +24,7 @@ pip install ase
 pip install rdkit
 pip install mendeleev
 pip install gdown
-gdown $MOF_DB_GDOWN # 369 Bi MOFs from ARCMOF, CSDMOF, QMOF, MOSAEC-DB
+gdown 1p4Pjl8_nrV4lYY_vIZ6dn4tseQ7iTY1v # 369 Bi MOFs from ARCMOF, CSDMOF, QMOF, MOSAEC-DB
 mkdir -p mofs
 unzip bimofs2.zip -d mofs
 # ARM Performance Libraries
@@ -47,8 +47,6 @@ ninja ld1
 mkdir -p qe-7.5/bin
 cp bin/ld1.x qe-7.5/bin/
 # Dalcorso fully-relativistic pseudopotentials
-gdown $DALCORSO_GDOWN
-unzip dalcorso_rel_pbe.zip
 git clone https://github.com/dalcorso/pslibrary.git
 sed -i "s|PWDIR='/path_to_quantum_espresso/'|PWDIR='../../qe-7.5'|" ./pslibrary/QE_path
 bash ./bofs1/qe/pslibrary_run.sh
