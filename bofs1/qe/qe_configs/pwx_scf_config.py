@@ -1,5 +1,5 @@
 pwx_scf_config = {
-    'command': ['./bofs1_env/bin/mpirun', '--allow-run-as-root', '-x', 'OMP_NUM_THREADS=4', '-np', '3', './bin/pw.x', '-ndiag 3'],
+    'command': ['./bofs1_env/bin/mpirun', '--allow-run-as-root', './bin/pw.x'], # 'command': ['./bofs1_env/bin/mpirun', '--allow-run-as-root', '-x', 'OMP_NUM_THREADS=4', '-np', '3', './bin/pw.x', '-ndiag 3'],
     'wfn_scalar': 1.1,
     'rho_scalar': 1.1,
     'kpts_k_spacing': 0.13, # scf: 0.13    nscf: 0.09
