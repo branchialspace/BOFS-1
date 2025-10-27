@@ -15,7 +15,7 @@ pwx_scf_config = {
         'calculation': 'scf', # scf     nscf     bands
         'restart_mode': 'from_scratch',
         'pseudo_dir': './pslibrary/rel-pbe/PSEUDOPOTENTIALS', # /content/ONCVPseudoPack/Abinit_v0.4/UPF/PBEsol   /content/pslibrary/rel-pbe/PSEUDOPOTENTIALS
-        'disk_io': 'medium',
+        'disk_io': 'high',
         'wf_collect': True,
         'tprnfor': True,
         'tstress': True
