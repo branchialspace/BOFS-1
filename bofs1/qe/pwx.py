@@ -277,6 +277,9 @@ def pwx(
         hubbard_card : list
             List with manifold information formatted for the hubbard card
             """
+        # Early return if Hubbard corrections are disabled
+        if initial_u_value == "off":
+            return [], []
         # Species known to never require Hubbard corrections
         non_correlated_species = {
             'H', 'He', 'Li', 'Be', 'B', 'Ne', 'Na', 'Mg', 'Al', 'Si', 'Ar',
