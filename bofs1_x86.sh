@@ -52,6 +52,7 @@ cmake -G Ninja \
   -DSCALAPACK_LIBRARIES="$AOCL_LIB/libscalapack.a"
 ninja -C build_qe
 ninja -C build_qe install
+echo "export PATH=$SCRIPT_DIR/qe-7.5/install/bin:\$PATH" >> "$CONDA_PREFIX/etc/conda/activate.d/qe_path.sh"
 # Dalcorso fully-relativistic pseudopotentials
 git clone https://github.com/dalcorso/pslibrary.git
 sed -i "s|PWDIR='/path_to_quantum_espresso/'|PWDIR='../../qe-7.5'|" ./pslibrary/QE_path
