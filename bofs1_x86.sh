@@ -1,7 +1,7 @@
 #!/bin/bash
 # BOFS1 build environment
 # Ubuntu 22.04 LTS x86 AMD
-set -euxo pipefail # Exit on error
+set -exo pipefail # Exit on error
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$SCRIPT_DIR" # ensure installation to BOFS-1 root directory
 source <(sed -E 's/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/export \1=\${\1:-\2}/' .env) # export installation .env variables. parameter expansion defaults to precedent
