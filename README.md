@@ -2,12 +2,14 @@ DFT environment for computing the electronic structure and optical response of M
 
 ```bash
 # BOFS-1
-# Ubuntu 22.04 LTS arm64
 
 # Install
 curl -L https://github.com/branchialspace/BOFS-1/archive/main.tar.gz | tar xz && mv BOFS-1-main BOFS-1
 cd BOFS-1
-bash bofs1_env.sh
+# Ubuntu 22.04 LTS x86 AMD
+bash bofs1_x86.sh
+# Ubuntu 22.04 LTS arm64
+bash bofs1_arm64.sh
 
 # Run QE modules
 cd BOFS-1
