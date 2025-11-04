@@ -52,6 +52,7 @@ cmake -G Ninja \
   -DSCALAPACK_LIBRARIES="$AOCL_LIB/libscalapack.a"
 ninja -C build_qe
 ninja -C build_qe install
+rm -rf "$SCRIPT_DIR/build_qe"
 chmod +x "$SCRIPT_DIR/qe-7.5/bin"/*
 echo "export PATH=$SCRIPT_DIR/qe-7.5/bin:\$PATH" >> "$CONDA_PREFIX/etc/conda/activate.d/qe_path.sh"
 # Dalcorso fully-relativistic pseudopotentials
