@@ -54,6 +54,7 @@ ninja -C build_qe
 ninja -C build_qe install
 rm -rf "$SCRIPT_DIR/build_qe"
 echo "export PATH=$SCRIPT_DIR/qe-7.5/bin:\$PATH" >> "$CONDA_PREFIX/etc/conda/activate.d/qe_path.sh"
+echo "export LD_LIBRARY_PATH=$SCRIPT_DIR/qe-7.5/lib:/opt/AMD/aocl/aocl-linux-gcc-5.1.0/gcc/lib_LP64:\$LD_LIBRARY_PATH" >> "$CONDA_PREFIX/etc/conda/activate.d/qe_path.sh"
 # Dalcorso fully-relativistic pseudopotentials
 git clone https://github.com/dalcorso/pslibrary.git
 sed -i "s|PWDIR='/path_to_quantum_espresso/'|PWDIR='../../qe-7.5'|" ./pslibrary/QE_path
