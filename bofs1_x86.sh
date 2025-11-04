@@ -1,7 +1,7 @@
 #!/bin/bash
 # BOFS1 build environment
 # Ubuntu 22.04 LTS x86 AMD
-set -e # Exit on error
+set -euxo pipefail # Exit on error
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$SCRIPT_DIR" # ensure installation to BOFS-1 root directory
 source <(sed -E 's/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/export \1=\${\1:-\2}/' .env) # export installation .env variables. parameter expansion defaults to precedent
@@ -36,19 +36,21 @@ export LD_LIBRARY_PATH=$AOCL_LIB:$LD_LIBRARY_PATH
 # Quantum ESPRESSO
 git clone https://gitlab.com/QEF/q-e.git qe-7.5 && (cd qe-7.5 && git checkout -b qe-7.5-pinned 770a0b2d12928a67048e2f3da8d10d057e52179e)
 cmake -G Ninja \
+  -S qe-7.5 \
+  -B build_qe \
   -DCMAKE_C_COMPILER=$CONDA_PREFIX/bin/mpicc \
   -DCMAKE_Fortran_COMPILER=$CONDA_PREFIX/bin/mpif90 \
+  -DCMAKE_C_FLAGS="-O3 -march=znver3 -mtune=znver3" \
+  -DCMAKE_Fortran_FLAGS="-O3 -march=znver3 -mtune=znver3 -fallow-argument-mismatch" \
   -DQE_ENABLE_OPENMP=ON \
+  -DQE_ENABLE_SCALAPACK=ON \
   -DQE_FFTW_VENDOR=AOCL \
   -DBLAS_LIBRARIES="$AOCL_LIB/libblis-mt.a;-lm;-lpthread;-lgfortran" \
   -DLAPACK_LIBRARIES="$AOCL_LIB/libflame.so;-lm;-lpthread;-lgfortran" \
-  -DFFTW_LIBRARIES="$AOCL_LIB/libfftw3.a" \
-  -DSCALAPACK_LIBRARIES="$AOCL_LIB/libscalapack.so" \
-  qe-7.5
-ninja
-ninja ld1
-mkdir -p qe-7.5/bin
-cp bin/ld1.x qe-7.5/bin/
+  -DFFTW_LIBRARIES="$AOCL_LIB/libfftw3.a;$AOCL_LIB/libfftmpi.a" \
+  -DSCALAPACK_LIBRARIES="$AOCL_LIB/libscalapack.a"
+ninja -C build_qe
+ninja -C build_qe install
 # Dalcorso fully-relativistic pseudopotentials
 git clone https://github.com/dalcorso/pslibrary.git
 sed -i "s|PWDIR='/path_to_quantum_espresso/'|PWDIR='../../qe-7.5'|" ./pslibrary/QE_path
