@@ -5,7 +5,7 @@ pwx_scf_config = {
                 '-x', 'BLIS_NUM_THREADS=1',
                 '-x', 'FLAME_NUM_THREADS=1',
                 '-np', '1',
-                './bin/pw.x'],
+                './qe-7.5/bin/pw.x'],
     'wfn_scalar': 1.1,
     'rho_scalar': 1.1,
     'kpts_k_spacing': 0.13, # scf: 0.13    nscf: 0.09
