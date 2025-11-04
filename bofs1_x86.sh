@@ -6,7 +6,7 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$SCRIPT_DIR" # ensure installation to BOFS-1 root directory
 source <(sed -E 's/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/export \1=\${\1:-\2}/' .env) # export installation .env variables. parameter expansion defaults to precedent
 # miniforge3
-curl -L -o Miniforge3.sh "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-aarch64.sh"
+curl -L -o Miniforge3.sh "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh"
 bash Miniforge3.sh -b -p ./miniforge3
 rm -f Miniforge3.sh
 source ./miniforge3/etc/profile.d/conda.sh
@@ -27,20 +27,23 @@ pip install gdown
 gdown 1p4Pjl8_nrV4lYY_vIZ6dn4tseQ7iTY1v # 369 Bi MOFs from ARCMOF, CSDMOF, QMOF, MOSAEC-DB
 mkdir -p mofs
 unzip bimofs2.zip -d mofs
-# ARM Performance Libraries
-wget https://developer.arm.com/-/cdn-downloads/permalink/Arm-Performance-Libraries/Version_25.07.1/arm-performance-libraries_25.07.1_deb_gcc.tar
-tar -xvf arm-performance-libraries_25.07.1_deb_gcc.tar
-sudo bash ./arm-performance-libraries_25.07.1_deb/arm-performance-libraries_25.07.1_deb.sh --accept
-export ARMPL_DIR=/opt/arm/armpl_25.07.1_gcc
+# AMD Optimizing CPU Libraries
+wget https://download.amd.com/developer/eula/aocl/aocl-5-1/aocl-linux-gcc-5.1.0_1_amd64.deb
+sudo dpkg -i aocl-linux-gcc-5.1.0_1_amd64.deb
+export AOCL_DIR=/opt/AMD/aocl/aocl-linux-gcc-5.1.0/gcc
+export AOCL_LIB=$AOCL_DIR/lib_LP64
+export LD_LIBRARY_PATH=$AOCL_LIB:$LD_LIBRARY_PATH
 # Quantum ESPRESSO
 git clone https://gitlab.com/QEF/q-e.git qe-7.5 && (cd qe-7.5 && git checkout -b qe-7.5-pinned 770a0b2d12928a67048e2f3da8d10d057e52179e)
 cmake -G Ninja \
   -DCMAKE_C_COMPILER=$CONDA_PREFIX/bin/mpicc \
   -DCMAKE_Fortran_COMPILER=$CONDA_PREFIX/bin/mpif90 \
-  -DQE_FFTW_VENDOR=Internal \
   -DQE_ENABLE_OPENMP=ON \
-  -DBLAS_LIBRARIES="$ARMPL_DIR/lib/libarmpl_lp64_mp.so;-lgfortran;-lm;-lpthread" \
-  -DLAPACK_LIBRARIES="$ARMPL_DIR/lib/libarmpl_lp64_mp.so;-lgfortran;-lm;-lpthread" \
+  -DQE_FFTW_VENDOR=AOCL \
+  -DBLAS_LIBRARIES="$AOCL_LIB/libblis-mt.a;-lm;-lpthread;-lgfortran" \
+  -DLAPACK_LIBRARIES="$AOCL_LIB/libflame.so;-lm;-lpthread;-lgfortran" \
+  -DFFTW_LIBRARIES="$AOCL_LIB/libfftw3.a" \
+  -DSCALAPACK_LIBRARIES="$AOCL_LIB/libscalapack.so" \
   qe-7.5
 ninja
 ninja ld1
