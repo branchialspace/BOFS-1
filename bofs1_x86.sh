@@ -43,7 +43,7 @@ cmake -G Ninja \
   -DCMAKE_Fortran_FLAGS="-O3 -march=znver3 -mtune=znver3 -fallow-argument-mismatch" \
   -DQE_ENABLE_OPENMP=ON \
   -DQE_ENABLE_SCALAPACK=ON \
-  -DQE_FFTW_VENDOR=AOCL \
+  -DQE_FFTW_VENDOR=SYSTEM \
   -DBLAS_LIBRARIES="$AOCL_LIB/libblis-mt.a;-lm;-lpthread;-lgfortran" \
   -DLAPACK_LIBRARIES="$AOCL_LIB/libflame.so;-lm;-lpthread;-lgfortran" \
   -DFFTW_LIBRARIES="$AOCL_LIB/libfftw3.a;$AOCL_LIB/libfftmpi.a" \
