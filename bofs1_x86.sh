@@ -37,6 +37,7 @@ git clone https://gitlab.com/QEF/q-e.git qe-7.5 && (cd qe-7.5 && git checkout -b
 cmake -G Ninja \
   -S qe-7.5 \
   -B build_qe \
+  -DCMAKE_INSTALL_PREFIX=$SCRIPT_DIR/qe-7.5/install \
   -DCMAKE_C_COMPILER=$CONDA_PREFIX/bin/mpicc \
   -DCMAKE_Fortran_COMPILER=$CONDA_PREFIX/bin/mpif90 \
   -DCMAKE_C_FLAGS="-O3 -march=znver3 -mtune=znver3" \
