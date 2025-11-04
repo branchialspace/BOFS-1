@@ -41,6 +41,7 @@ cmake -G Ninja \
   -DCMAKE_Fortran_COMPILER=$CONDA_PREFIX/bin/mpif90 \
   -DCMAKE_C_FLAGS="-O3 -march=znver3 -mtune=znver3" \
   -DCMAKE_Fortran_FLAGS="-O3 -march=znver3 -mtune=znver3 -fallow-argument-mismatch" \
+  -DCMAKE_EXE_LINKER_FLAGS="-no-pie" \
   -DQE_ENABLE_OPENMP=ON \
   -DQE_ENABLE_SCALAPACK=ON \
   -DQE_FFTW_VENDOR=FFTW3 \
