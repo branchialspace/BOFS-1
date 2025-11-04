@@ -37,7 +37,7 @@ git clone https://gitlab.com/QEF/q-e.git qe-7.5 && (cd qe-7.5 && git checkout -b
 cmake -G Ninja \
   -S qe-7.5 \
   -B build_qe \
-  -DCMAKE_INSTALL_PREFIX=$SCRIPT_DIR/qe-7.5/install \
+  -DCMAKE_INSTALL_PREFIX=$SCRIPT_DIR/qe-7.5 \
   -DCMAKE_C_COMPILER=$CONDA_PREFIX/bin/mpicc \
   -DCMAKE_Fortran_COMPILER=$CONDA_PREFIX/bin/mpif90 \
   -DCMAKE_C_FLAGS="-O3 -march=znver3 -mtune=znver3" \
@@ -52,7 +52,7 @@ cmake -G Ninja \
   -DSCALAPACK_LIBRARIES="$AOCL_LIB/libscalapack.a"
 ninja -C build_qe
 ninja -C build_qe install
-echo "export PATH=$SCRIPT_DIR/qe-7.5/install/bin:\$PATH" >> "$CONDA_PREFIX/etc/conda/activate.d/qe_path.sh"
+echo "export PATH=$SCRIPT_DIR/qe-7.5/bin:\$PATH" >> "$CONDA_PREFIX/etc/conda/activate.d/qe_path.sh"
 # Dalcorso fully-relativistic pseudopotentials
 git clone https://github.com/dalcorso/pslibrary.git
 sed -i "s|PWDIR='/path_to_quantum_espresso/'|PWDIR='../../qe-7.5'|" ./pslibrary/QE_path
