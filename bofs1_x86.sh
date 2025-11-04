@@ -4,7 +4,6 @@
 set -exo pipefail # Exit on error
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$SCRIPT_DIR" # ensure installation to BOFS-1 root directory
-source <(sed -E 's/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/export \1=\${\1:-\2}/' .env) # export installation .env variables. parameter expansion defaults to precedent
 # miniforge3
 curl -L -o Miniforge3.sh "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh"
 bash Miniforge3.sh -b -p ./miniforge3
