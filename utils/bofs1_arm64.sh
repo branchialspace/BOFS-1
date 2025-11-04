@@ -37,7 +37,7 @@ git clone https://gitlab.com/QEF/q-e.git qe-7.5 && (cd qe-7.5 && git checkout -b
 cmake -G Ninja \
   -DCMAKE_C_COMPILER=$CONDA_PREFIX/bin/mpicc \
   -DCMAKE_Fortran_COMPILER=$CONDA_PREFIX/bin/mpif90 \
-  -DQE_FFTW_VENDOR=Internal \
+  -DQE_FFTW_VENDOR=FFTW3 \
   -DQE_ENABLE_OPENMP=ON \
   -DBLAS_LIBRARIES="$ARMPL_DIR/lib/libarmpl_lp64_mp.so;-lgfortran;-lm;-lpthread" \
   -DLAPACK_LIBRARIES="$ARMPL_DIR/lib/libarmpl_lp64_mp.so;-lgfortran;-lm;-lpthread" \
