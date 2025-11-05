@@ -1,16 +1,17 @@
 pwx_scf_config = {
     'command': ['./bofs1_env/bin/mpirun',
                 '--allow-run-as-root',
+                '--use-hwthread-cpus',
                 '-x', 'OMP_NUM_THREADS=1',
                 '-x', 'BLIS_NUM_THREADS=1',
                 '-x', 'FLAME_NUM_THREADS=1',
-                '-np', '1',
+                '-np', '32',
                 './qe-7.5/bin/pw.x'],
-    'wfn_scalar': 1.1,
-    'rho_scalar': 1.1,
+    'wfn_scalar': 1.15,
+    'rho_scalar': 1.15,
     'kpts_k_spacing': 0.13, # scf: 0.13    nscf: 0.09
     'kpts_shift': (1,1,1),
-    'nbnd_scalar': 1.8,
+    'nbnd_scalar': 2,
     'initial_u_value': 0.1,
     "magnetization": {
         "d_3d": 0.6,
