@@ -30,7 +30,7 @@ pwx_scf_config = {
         'input_dft': 'pbe',
         'ibrav': 0,
         'occupations': 'smearing',
-        'smearing': 'marzari-vanderbilt', # gaussian     marzari-vanderbilt     fermi-dirac
+        'smearing': 'fermi-dirac', # gaussian     marzari-vanderbilt     fermi-dirac
         'degauss': 0.01,
         'noncolin': True,
         'lspinorb': True
