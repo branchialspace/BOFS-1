@@ -71,5 +71,7 @@ conda activate "$SCRIPT_DIR/bofs1_env"
 exec python "$SCRIPT_DIR/bofs1/qe/qe_run.py" "$@"
 EOF
 chmod +x qe_run
+# Project-level permissions
+chmod -R u+rwX,go+rwX "$SCRIPT_DIR"
 
 echo "built BOFS1 environment"
