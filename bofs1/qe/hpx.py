@@ -56,33 +56,6 @@ def hpx(
         n3 = max(1, ceil(b3_len / q_spacing)) if b3_len > dim_threshold else 1
 
         return (n1, n2, n3)
-    
-    def hubbard_atoms(structure):
-        """
-        Identify atoms needing Hubbard U/V corrections, excluding species
-        that are definitively non-correlated.
-        Returns
-        hubbard_atoms : dict
-            skip_type : List of booleans for each atom type
-            hubbard_candidates : List of (index, symbol) tuples for atoms needing correction
-        """
-        # Species known to never require Hubbard corrections
-        non_correlated_species = {
-            'H', 'He', 'Li', 'Be', 'B', 'Ne', 'Na', 'Mg', 'Al', 'Si', 'Ar',
-            'K', 'Ca', 'Ga', 'Ge', 'Kr', 'Rb', 'Sr', 'Cd', 'In', 'Xe',
-            'Cs', 'Ba', 'Hg', 'Tl', 'Po', 'Rn'}
-        # Get unique atom types in structure
-        atom_types = sorted(set(structure.get_chemical_symbols()))
-        n_types = len(atom_types)
-        # Initialize parameters
-        skip_type = [symbol in non_correlated_species for symbol in atom_types]
-        # Only atoms not skipped are considered Hubbard candidates
-        hubbard_candidates = [(i, symbol) for i, symbol in enumerate(atom_types) if not skip_type[i]]
-        hubbard_atoms = {
-            'skip_type': skip_type,
-            'hubbard_candidates': hubbard_candidates}
-
-        return hubbard_atoms
 
     def write_hpx_input(config, input_filename):
         """
@@ -99,10 +72,6 @@ def hpx(
                 else:
                     val = value
                 f.write(f"  {key} = {val}\n")
-            # Hubbard atoms
-            for i, skip in enumerate(config['skip_type'], 1):
-                f.write(f"  skip_type({i}) = {'.true.' if skip else '.false.'}\n")
-            f.write('/\n')
         
     # Args
     structure = read(structure_path)  # ASE Atoms object
@@ -112,16 +81,12 @@ def hpx(
     command = config['command']
     config['inputhp']['prefix'] = structure_name
     config['inputhp']['outdir'] = structure_name
-    os.makedirs(structure_name, exist_ok=True)
     # Set q-points
     q_spacing = config['qpts_q_spacing']
     nq1, nq2, nq3 = qpoints(structure, q_spacing)
     config['inputhp']['nq1'] = nq1
     config['inputhp']['nq2'] = nq2
     config['inputhp']['nq3'] = nq3
-    # Set Hubbard atoms
-    hubbard_params = hubbard_atoms(structure)
-    config['skip_type'] = hubbard_params['skip_type']
     # Write QE hp.x input file
     write_hpx_input(config, f"{run_name}.hpi")
     # Subprocess run
