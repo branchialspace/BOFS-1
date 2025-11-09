@@ -72,7 +72,7 @@ def hpx(
                 else:
                     val = value
                 f.write(f"  {key} = {val}\n")
-        
+            f.write('/')
     # Args
     structure = read(structure_path)  # ASE Atoms object
     structure_name = os.path.splitext(os.path.basename(structure_path))[0]
