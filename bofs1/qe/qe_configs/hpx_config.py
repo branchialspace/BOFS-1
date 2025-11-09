@@ -5,7 +5,8 @@ hpx_config = {
                 '-x', 'OMP_NUM_THREADS=1',
                 '-x', 'BLIS_NUM_THREADS=1',
                 '-x', 'FLAME_NUM_THREADS=1',
-                '-np', '32', './bin/hp.x'],
+                '-np', '32',
+                './bin/hp.x'],
     'qpts_q_spacing': 0.065,        # q-point spacing
     'inputhp': {
         'iverbosity': 2,           # Verbosity level
