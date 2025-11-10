@@ -357,6 +357,31 @@ def pwx(
 
         return hubbard_card, hubbard_occ_lines
 
+    def ordered_species(structure, hubbard_data):
+        """
+        Determine consistent species ordering.
+        U term Hubbard species come first, internally alphabetically ordered by hubbard_atoms.
+        All remaining species follow alphabetically.
+        """
+        symbols = sorted(set(structure.get_chemical_symbols()))
+        if not hubbard_data:
+            return symbols
+        hubbard_species = []
+        for line in hubbard_data:
+            parts = line.split()
+            if not parts:
+                continue
+            # Only consider on-site U terms, not inter-site V terms
+            if parts[0].upper() == 'U':
+                token = parts[1]  # e.g. 'Co-3D' or 'Mn-3P-3S'
+                candidate = token.split('-')[0]
+                if candidate.isalpha() and candidate[0].isupper():
+                    if candidate not in hubbard_species:
+                        hubbard_species.append(candidate)
+        remaining = [s for s in symbols if s not in hubbard_species]
+    
+        return hubbard_species + remaining
+        
     def write_pwx_input(
             structure,
             config,
@@ -365,6 +390,7 @@ def pwx(
             start_mags,
             hubbard_data,
             hubbard_occ_lines,
+            species_order,
             input_filename
     ):
         """
@@ -396,16 +422,16 @@ def pwx(
                 f.write('/\n')
             # Atomic species
             f.write('\nATOMIC_SPECIES\n')
-            unique_symbols = set(structure.get_chemical_symbols())
-            for symbol in unique_symbols:
+            for symbol in species_order:
                 mass = atomic_masses[atomic_numbers[symbol]]
                 f.write(f"  {symbol.title()} {mass:.4f} {pseudopotentials[symbol]}\n")
             # Atomic positions
             f.write('\nATOMIC_POSITIONS angstrom\n')
             abs_pos = structure.get_positions()
-            for atom, pos in zip(structure, abs_pos):
-                f.write(f"  {atom.symbol.title()} "
-                        f"{pos[0]:.10f} {pos[1]:.10f} {pos[2]:.10f}\n")
+            for symbol in species_order:
+                for atom, pos in zip(structure, abs_pos):
+                    if atom.symbol == symbol:
+                        f.write(f"  {symbol.title()} {pos[0]:.10f} {pos[1]:.10f} {pos[2]:.10f}\n")
             # K-points grid
             f.write('\nK_POINTS automatic\n')
             f.write(f"  {kpoints[0]} {kpoints[1]} {kpoints[2]} {kpoints[3]} {kpoints[4]} {kpoints[5]}\n")
@@ -456,8 +482,10 @@ def pwx(
     # Set Hubbard corrections
     initial_u_value = config['initial_u_value']
     hubbard_data, hubbard_occ_lines = hubbard_atoms(structure, pseudopotentials, pseudo_dir, initial_u_value)
+    # Determine consistent species ordering
+    species_order = ordered_species(structure, hubbard_data)
     # Write QE PWscf input file
-    write_pwx_input(structure, config, pseudopotentials, kpoints, start_mags, hubbard_data, hubbard_occ_lines, f"{run_name}.pwi")
+    write_pwx_input(structure, config, pseudopotentials, kpoints, start_mags, hubbard_data, hubbard_occ_lines, species_order, f"{run_name}.pwi")
     # Subprocess run
     try:
         with open(f"{run_name}.pwo", 'w') as f_out:
