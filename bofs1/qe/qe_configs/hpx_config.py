@@ -7,7 +7,6 @@ hpx_config = {
                 '-x', 'FLAME_NUM_THREADS=1',
                 '-np', '32',
                 './qe-7.5/bin/hp.x'],
-    'qpts_q_spacing': 0.065,        # q-point spacing
     'inputhp': {
         'iverbosity': 2,           # Verbosity level
         'find_atpert': 1,          # Method for determining which atoms to perturb (4=Perturb all Hubbard atoms)
