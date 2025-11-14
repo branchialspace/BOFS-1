@@ -23,39 +23,24 @@ def hpx(
     config : dict
         Configuration dictionary containing required settings.
     """
-    def qpoints(structure, q_spacing=0.065):
+    def qpoints(prefix):
         """
-        Given a desired q-point spacing q_spacing (in Å^-1),
-        compute a suitable (nq1, nq2, nq3) Monkhorst–Pack grid for Hubbard parameters.
-        q_spacing : float
-            Target spacing in reciprocal space, in Å^-1.
-            For Hubbard parameters, typically denser than k-points.
-        Returns
-        (nq1, nq2, nq3) : tuple of ints
-            The grid subdivisions.
+        Read the SCF k-point mesh from PREFIX.pwi.
+        Expects block:
+        K_POINTS
+          nk1 nk2 nk3 1 1 1
         """
-        # Extract real-space lattice vectors
-        cell = structure.get_cell()  # 3x3 array
-        a1, a2, a3 = [np.array(vec) for vec in cell]
-        # Compute real-space volume
-        volume = np.dot(a1, np.cross(a2, a3))
-        # Compute reciprocal lattice vectors b1, b2, b3
-        # b1 = 2π * (a2 × a3) / (a1 · (a2 × a3)), etc.
-        b1 = 2 * pi * np.cross(a2, a3) / volume
-        b2 = 2 * pi * np.cross(a3, a1) / volume
-        b3 = 2 * pi * np.cross(a1, a2) / volume
-        # Compute magnitudes of reciprocal vectors
-        b1_len = np.linalg.norm(b1)
-        b2_len = np.linalg.norm(b2)
-        b3_len = np.linalg.norm(b3)
-        # Determine the number of divisions along each direction
-        # Small reciprocal lattice vectors (in Å⁻¹) indicate large unit cell dims
-        dim_threshold = 0.05  # threshold in Å⁻¹, corresponds to ~125Å real-space dimension
-        n1 = max(1, ceil(b1_len / q_spacing)) if b1_len > dim_threshold else 1
-        n2 = max(1, ceil(b2_len / q_spacing)) if b2_len > dim_threshold else 1
-        n3 = max(1, ceil(b3_len / q_spacing)) if b3_len > dim_threshold else 1
-
-        return (n1, n2, n3)
+        pwi_file = f"{prefix}.pwi"
+        n1 = n2 = n3 = None
+        with open(pwi_file, "r") as f:
+            lines = f.readlines()
+        for i, line in enumerate(lines):
+            if line.strip().lower().startswith("k_points"):
+                parts = lines[i+1].split()
+                n1, n2, n3 = map(int, parts[:3])
+                break
+    
+        return n1, n2, n3
 
     def write_hpx_input(config, input_filename):
         """
@@ -82,8 +67,8 @@ def hpx(
     config['inputhp']['prefix'] = structure_name
     config['inputhp']['outdir'] = structure_name
     # Set q-points
-    q_spacing = config['qpts_q_spacing']
-    nq1, nq2, nq3 = qpoints(structure, q_spacing)
+    prefix = config['inputhp']['prefix']
+    nq1, nq2, nq3 = qpoints(prefix)
     config['inputhp']['nq1'] = nq1
     config['inputhp']['nq2'] = nq2
     config['inputhp']['nq3'] = nq3
