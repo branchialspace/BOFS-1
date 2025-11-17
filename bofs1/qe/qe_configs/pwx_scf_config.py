@@ -9,7 +9,7 @@ pwx_scf_config = {
                 './qe-7.5/bin/pw.x'],
     'wfn_scalar': 1.15,
     'rho_scalar': 1.15,
-    'kpts_k_spacing': 0.13, # scf: 0.13    nscf: 0.09
+    'kpts_k_spacing': 0.05,
     'kpts_shift': (1,1,1),
     'nbnd_scalar': 2,
     'initial_u_value': 0.1,
