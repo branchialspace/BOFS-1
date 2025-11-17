@@ -110,10 +110,12 @@ def pwx(
 
         return ecutwfc, ecutrho
 
-    def kpoints(structure, k_spacing=0.05, shift=(1, 1, 1)):
+    def kpoints(structure, k_minimum=6, k_spacing=0.05, shift=(1, 1, 1)):
         """
         Given a desired k-point spacing k_spacing (in Å^-1),
         compute a suitable (n1, n2, n3) Monkhorst–Pack grid for the structure.
+        k_minimum : int
+            Minimum number of k points along any direction.
         k_spacing : float
             Target spacing in reciprocal space, in Å^-1.
         shift : tuple of int
@@ -137,9 +139,9 @@ def pwx(
         b2_len = np.linalg.norm(b2)
         b3_len = np.linalg.norm(b3)
         # Determine the number of divisions along each direction
-        n1 = max(6, ceil(b1_len / k_spacing))
-        n2 = max(6, ceil(b2_len / k_spacing))
-        n3 = max(6, ceil(b3_len / k_spacing))
+        n1 = max(k_minimum, ceil(b1_len / k_spacing))
+        n2 = max(k_minimum, ceil(b2_len / k_spacing))
+        n3 = max(k_minimum, ceil(b3_len / k_spacing))
         # Unpack the shift
         s1, s2, s3 = shift
 
@@ -467,9 +469,10 @@ def pwx(
     config['system']['ecutwfc'] = ecutwfc
     config['system']['ecutrho'] = ecutrho
     # Set k-points
+    k_minimum = config['kpts_k_minimum']
     k_spacing = config['kpts_k_spacing']
     shift = config['kpts_shift']
-    kpoints = kpoints(structure, k_spacing, shift)
+    kpoints = kpoints(structure, k_minimum, k_spacing, shift)
     # Set nbnd
     nbnd_scalar = config['nbnd_scalar']
     config['system']['nbnd'] = nbnd(structure, nbnd_scalar)
