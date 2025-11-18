@@ -7,7 +7,7 @@ source "$ROOT_DIR/miniforge3/etc/profile.d/conda.sh"
 # Run RESPACK
 respack_run () {
     local calc_dir="$1"
-    local qe_save_dir="$2"
+    local qe_save_path="$2"
     local omp_stacksize="${3:-16}"
     local omp_num_threads="${4:-16}"
     local mpi_np="${5:-1}"
@@ -18,7 +18,7 @@ respack_run () {
     # From Quantum ESPRESSO to RESPACK
     cp "$ROOT_DIR/RESPACK/util/qe2respack/qe2respack.py" "$calc_dir/"
     cd "$calc_dir" || return 1
-    python ./qe2respack.py "$qe_save_dir"
+    python ./qe2respack.py "$qe_save_path"
     # Run RESPACK calculations
     mpirun -np "$mpi_np" ./calc_wannier < input.in > log.wannier
     mpirun -np "$mpi_np" ./calc_chiqw < input.in > log.chiqw
