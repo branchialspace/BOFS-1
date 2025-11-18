@@ -11,7 +11,6 @@ respack_run () {
     local omp_stacksize="${3:-16}"
     local omp_num_threads="${4:-16}"
     local mpi_np="${5:-1}"
-    # Create calc directory if it doesn't exist (relative to current directory)
     mkdir -p "$calc_dir"
     conda activate "$ROOT_DIR/bofs1_env_py27"
     export OMP_STACKSIZE="$omp_stacksize"
