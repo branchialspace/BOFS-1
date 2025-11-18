@@ -39,3 +39,5 @@ wan2respack_run () {
     conda activate "$ROOT_DIR/bofs1_env"
     exec "$ROOT_DIR/wan2respack_install/bin/wan2respack.py" "$@"
 }
+
+respack_run "$@"
