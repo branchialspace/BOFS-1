@@ -16,3 +16,7 @@ cd BOFS-1
 # Run PSLibrary
 cd BOFS-1
 bash ./bofs1/qe/pslibrary_run.sh
+
+# Run RESPACK
+cd BOFS-1
+bash ./bofs1/respack/respack_run.sh <new_calc_dir> <qe_bands_out_dir> <omp_stacksize> <omp_num_threads> <mpi_np>
