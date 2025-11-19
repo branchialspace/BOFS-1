@@ -17,6 +17,6 @@ cd BOFS-1
 cd BOFS-1
 bash ./bofs1/qe/pslibrary_run.sh
 
-# Run RESPACK
+# Run wan2respack + RESPACK
 cd BOFS-1
-bash ./bofs1/respack/respack_run.sh <new_calc_dir> <qe_bands_out_dir> <omp_stacksize> <omp_num_threads> <mpi_np>
+bash ./bofs1/respack/respack_run.sh <qe_outdir> <seedname> <nscf_ref> <win_ref> <pw2wan_input> <respack_input> <work_dir> <omp_stacksize> <omp_num_threads> <mpi_np>
