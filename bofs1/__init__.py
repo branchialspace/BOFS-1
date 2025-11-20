@@ -1,14 +1,14 @@
 # bofs1/__init__.py
 
 # Assembly modules
-from .tests.assemble.ligand import generate_ligand
-from .tests.assemble.ligand_bonding_sites import ligand_bonding_sites
-from .tests.assemble.ligand_electron_analysis import ligand_electron_analysis
-from .tests.assemble.metal_polyhedron import generate_metal_center
-from .tests.assemble.mof_cubic_cell import mof_cell
-from .tests.assemble.mof_nanoparticle import mof_nanoparticle
-from .tests.assemble.ligand_metal_docking import ligand_metal_docking
-from .tests.assemble.orca_docking import orca_docking
+from bofs1.utils.tests.assemble.ligand import generate_ligand
+from bofs1.utils.tests.assemble.ligand_bonding_sites import ligand_bonding_sites
+from bofs1.utils.tests.assemble.ligand_electron_analysis import ligand_electron_analysis
+from bofs1.utils.tests.assemble.metal_polyhedron import generate_metal_center
+from bofs1.utils.tests.assemble.mof_cubic_cell import mof_cell
+from bofs1.utils.tests.assemble.mof_nanoparticle import mof_nanoparticle
+from bofs1.utils.tests.assemble.ligand_metal_docking import ligand_metal_docking
+from bofs1.utils.tests.assemble.orca_docking import orca_docking
 from .tests.assemble import utils
 # QE modules
 from .qe.qe_pwx import qe_pwx
