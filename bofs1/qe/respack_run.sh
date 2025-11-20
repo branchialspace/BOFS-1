@@ -31,7 +31,7 @@ EOF
     cd - > /dev/null
 }
 
-# Run wan2respack Wannier90 translation for RESPACK
+# Run wan2respack Wannier90 postprocessing for RESPACK
 wan2respack_post () {
     local work_dir="$1"
     local calc_dir="$2"
