@@ -27,7 +27,7 @@ win = "$win_ref"
 nscf = "${seedname}.nscf_wannier.in"
 win = "${seedname}.win"
 EOF
-    python "$ROOT_DIR/wan2respack_install/bin/wan2respack.py" -pp conf.toml
+    python "$ROOT_DIR/wan2respack/bin/wan2respack.py" -pp conf.toml
     cd - > /dev/null
 }
 
@@ -37,7 +37,7 @@ wan2respack_post () {
     local calc_dir="$2"
     conda activate "$ROOT_DIR/bofs1_env"
     cd "$work_dir" || return 1
-    python "$ROOT_DIR/wan2respack_install/bin/wan2respack.py" conf.toml
+    python "$ROOT_DIR/wan2respack/bin/wan2respack.py" conf.toml
     cp -r dir-wfn dir-wan "$calc_dir/"
     cd - > /dev/null
 }
