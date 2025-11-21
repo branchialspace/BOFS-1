@@ -14,7 +14,7 @@ export MAMBA_ROOT_PREFIX="$SCRIPT_DIR/miniforge3"
 mamba create -y -p ./bofs1_env python=3.10
 conda activate ./bofs1_env
 # dependencies
-mamba install -y -c conda-forge cmake ninja git wget unzip openmpi openmpi-mpicc gfortran binutils
+mamba install -y -c conda-forge cmake ninja make git wget unzip openmpi openmpi-mpicc gfortran binutils
 pip install numpy==1.26.4
 pip install torch_geometric
 pip install wandb
@@ -55,13 +55,6 @@ ninja -C build_qe install
 rm -rf "$SCRIPT_DIR/build_qe"
 echo "export PATH=$SCRIPT_DIR/qe-7.5/bin:\$PATH" >> "$CONDA_PREFIX/etc/conda/activate.d/qe_path.sh"
 echo "export LD_LIBRARY_PATH=$SCRIPT_DIR/qe-7.5/lib:/opt/AMD/aocl/aocl-linux-gcc-5.1.0/gcc/lib_LP64:\$LD_LIBRARY_PATH" >> "$CONDA_PREFIX/etc/conda/activate.d/qe_path.sh"
-# Dalcorso fully-relativistic pseudopotentials
-git clone https://github.com/dalcorso/pslibrary.git
-sed -i "s|PWDIR='/path_to_quantum_espresso/'|PWDIR='../../qe-7.5'|" ./pslibrary/QE_path
-bash ./bofs1/qe/pslibrary_run.sh
-# ONCV fully-relativistic pseudopotentials repositories
-git clone https://github.com/pipidog/ONCVPSP.git
-git clone https://github.com/MarioAndWario/ONCVPseudoPack.git
 # BOFS1 QE runner venv wrapper
 cat > qe_run << 'EOF'
 #!/bin/bash
@@ -71,6 +64,65 @@ conda activate "$SCRIPT_DIR/bofs1_env"
 exec python "$SCRIPT_DIR/bofs1/qe/qe_run.py" "$@"
 EOF
 chmod +x qe_run
+# RESPACK (python 2.7 venv)
+mamba create -y -p ./bofs1_env_py27 python=2.7
+wget -O RESPACK.tar.gz "https://www.mns.kyutech.ac.jp/~kazuma/downloads/RESPACK-20240804.tar.gz"
+tar -xvf RESPACK.tar.gz
+mv RESPACK-20240804-dist RESPACK
+rm RESPACK.tar.gz
+find RESPACK/src -name Makefile -exec \
+  sed -i \
+  -e 's/-qopenmp/-fopenmp/g' \
+  -e 's/-xHost/-march=znver3 -mtune=znver3/g' \
+  -e 's/-traceback//g' \
+  -e 's/-shared-intel//g' \
+  -e 's/-lmkl_intel_lp64//g' \
+  -e 's/-lmkl_intel_thread//g' \
+  -e 's/-lmkl_core//g' \
+  -e 's/-liomp5//g' \
+  {} \;
+find RESPACK/src -name Makefile -exec \
+  sed -i \
+  -e 's/FFLAGS[[:space:]]*=.*/FFLAGS = -O3 -fopenmp -march=znver3 -mtune=znver3/' \
+  {} \;
+find RESPACK/src -name Makefile -exec \
+  sed -i \
+  -e 's/^LDFLAGS *=.*/LDFLAGS = -fopenmp/' \
+  -e 's/^LIBBLAS *=.*/LIBBLAS = $(LAPACKLIB) $(BLASLIB) -lgomp/' \
+  {} \;
+sed -i 's/^OBJECTS = /OBJECTS = libtetrabz_dos.o /' RESPACK/src/transfer_analysis/Makefile
+RESPACK_BLAS="$AOCL_LIB/libblis-mt.a -lm -lpthread -lgfortran"
+RESPACK_LAPACK="$AOCL_LIB/libflame.so -lm -lpthread -lgfortran"
+RESPACK_FC="$CONDA_PREFIX/bin/mpif90"
+make -C RESPACK/src/wannier            FC="$RESPACK_FC" BLASLIB="$RESPACK_BLAS" LAPACKLIB="$RESPACK_LAPACK"
+make -C RESPACK/src/chiqw              FC="$RESPACK_FC" BLASLIB="$RESPACK_BLAS" LAPACKLIB="$RESPACK_LAPACK"
+make -C RESPACK/src/calc_int           FC="$RESPACK_FC" BLASLIB="$RESPACK_BLAS" LAPACKLIB="$RESPACK_LAPACK"
+make -C RESPACK/src/transfer_analysis  FC="$RESPACK_FC" BLASLIB="$RESPACK_BLAS" LAPACKLIB="$RESPACK_LAPACK"
+echo "export PATH=$SCRIPT_DIR/RESPACK/src/wannier:\$PATH" >> "$CONDA_PREFIX/etc/conda/activate.d/respack_path.sh"
+echo "export PATH=$SCRIPT_DIR/RESPACK/src/chiqw:\$PATH"   >> "$CONDA_PREFIX/etc/conda/activate.d/respack_path.sh"
+echo "export PATH=$SCRIPT_DIR/RESPACK/src/calc_int:\$PATH" >> "$CONDA_PREFIX/etc/conda/activate.d/respack_path.sh"
+echo "export PATH=$SCRIPT_DIR/RESPACK/src/transfer_analysis:\$PATH" >> "$CONDA_PREFIX/etc/conda/activate.d/respack_path.sh"
+# wan2respack
+git clone https://github.com/respack-dev/wan2respack.git wan2respack_src
+mkdir -p wan2respack_src/build
+cmake -S wan2respack_src -B wan2respack_src/build \
+  -DCONFIG=gcc \
+  -DCMAKE_INSTALL_PREFIX="$SCRIPT_DIR/wan2respack" \
+  -DCMAKE_C_COMPILER="$CONDA_PREFIX/bin/gcc" \
+  -DCMAKE_CXX_COMPILER="$CONDA_PREFIX/bin/g++"\
+  -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+cmake --build wan2respack_src/build --parallel "$(nproc)"
+cmake --install wan2respack_src/build
+rm -rf wan2respack_src
+echo "export PATH=$SCRIPT_DIR/wan2respack/bin:\$PATH" >> "$CONDA_PREFIX/etc/conda/activate.d/wan2respack_path.sh"
+pip install tomli
+# Dalcorso fully-relativistic pseudopotentials
+git clone https://github.com/dalcorso/pslibrary.git
+sed -i "s|PWDIR='/path_to_quantum_espresso/'|PWDIR='../../qe-7.5'|" ./pslibrary/QE_path
+bash ./bofs1/qe/pslibrary_run.sh
+# ONCV fully-relativistic pseudopotentials repositories
+git clone https://github.com/pipidog/ONCVPSP.git
+git clone https://github.com/MarioAndWario/ONCVPseudoPack.git
 # Project-level permissions
 chmod -R u+rwX,go+rwX "$SCRIPT_DIR"
 
