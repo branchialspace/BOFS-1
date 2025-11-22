@@ -64,6 +64,21 @@ conda activate "$SCRIPT_DIR/bofs1_env"
 exec python "$SCRIPT_DIR/bofs1/qe/qe_run.py" "$@"
 EOF
 chmod +x qe_run
+# Wannier90
+git clone https://github.com/wannier-developers/wannier90.git wannier90_src
+cat > wannier90_src/make.inc << EOF
+F90 = $CONDA_PREFIX/bin/gfortran
+MPIF90 = $CONDA_PREFIX/bin/mpif90
+FCOPTS = -O3 -march=znver3 -mtune=znver3 -fallow-argument-mismatch -fPIC -fopenmp
+LDOPTS = -O3 -march=znver3 -mtune=znver3 -fPIC -fopenmp
+LIBS = $AOCL_LIB/libflame.so $AOCL_LIB/libblis-mt.a -lm -lpthread -lgfortran
+COMMS = mpi
+EOF
+make -j$(nproc) -C wannier90_src default lib w90chk2chk w90vdw w90pov
+make -C wannier90_src install PREFIX="$SCRIPT_DIR/wannier90"
+rm -rf wannier90_src
+echo "export PATH=$SCRIPT_DIR/wannier90/bin:\$PATH" >> "$CONDA_PREFIX/etc/conda/activate.d/wannier90_path.sh"
+echo "export LD_LIBRARY_PATH=$SCRIPT_DIR/wannier90/lib:\$LD_LIBRARY_PATH" >> "$CONDA_PREFIX/etc/conda/activate.d/wannier90_path.sh"
 # RESPACK (python 2.7 venv)
 mamba create -y -p ./bofs1_env_py27 python=2.7
 wget -O RESPACK.tar.gz "https://www.mns.kyutech.ac.jp/~kazuma/downloads/RESPACK-20240804.tar.gz"
