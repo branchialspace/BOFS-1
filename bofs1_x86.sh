@@ -3,6 +3,7 @@
 # Ubuntu 22.04 LTS x86 AMD
 set -exo pipefail # Exit on error
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+AMD_ARCH="-march=znver3 -mtune=znver3" # -march=znver5 -mtune=znver5
 cd "$SCRIPT_DIR" # ensure installation to BOFS-1 root directory
 # miniforge3
 curl -L -o Miniforge3.sh "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh"
