@@ -104,7 +104,7 @@ find RESPACK/src -name Makefile -exec \
 find RESPACK/src -name Makefile -exec \
   sed -i \
   -e "s/^LDFLAGS *=.*/LDFLAGS = -fopenmp/" \
-  -e "s/^LIBBLAS *=.*/LIBBLAS = $(LAPACKLIB) $(BLASLIB) -lgomp/" \
+  -e "s/^LIBBLAS *=.*/LIBBLAS = \$(LAPACKLIB) \$(BLASLIB) -lgomp/" \
   {} \;
 sed -i "s/^OBJECTS = /OBJECTS = libtetrabz_dos.o /" RESPACK/src/transfer_analysis/Makefile
 RESPACK_BLAS="$AOCL_LIB/libblis-mt.a -lm -lpthread -lgfortran"
