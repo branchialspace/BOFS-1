@@ -41,8 +41,8 @@ cmake -G Ninja \
   -DCMAKE_INSTALL_PREFIX=$SCRIPT_DIR/qe-7.5 \
   -DCMAKE_C_COMPILER=$CONDA_PREFIX/bin/mpicc \
   -DCMAKE_Fortran_COMPILER=$CONDA_PREFIX/bin/mpif90 \
-  -DCMAKE_C_FLAGS="-O3 -march=znver3 -mtune=znver3" \
-  -DCMAKE_Fortran_FLAGS="-O3 -march=znver3 -mtune=znver3 -fallow-argument-mismatch" \
+  -DCMAKE_C_FLAGS="-O3 $AMD_ARCH" \
+  -DCMAKE_Fortran_FLAGS="-O3 $AMD_ARCH -fallow-argument-mismatch" \
   -DCMAKE_EXE_LINKER_FLAGS="-no-pie" \
   -DQE_ENABLE_OPENMP=ON \
   -DQE_ENABLE_SCALAPACK=ON \
@@ -70,8 +70,8 @@ git clone https://github.com/wannier-developers/wannier90.git wannier90_src
 cat > wannier90_src/make.inc << EOF
 F90 = $CONDA_PREFIX/bin/gfortran
 MPIF90 = $CONDA_PREFIX/bin/mpif90
-FCOPTS = -O3 -march=znver3 -mtune=znver3 -fallow-argument-mismatch -fPIC -fopenmp
-LDOPTS = -O3 -march=znver3 -mtune=znver3 -fPIC -fopenmp
+FCOPTS = -O3 $AMD_ARCH -fallow-argument-mismatch -fPIC -fopenmp
+LDOPTS = -O3 $AMD_ARCH -fPIC -fopenmp
 LIBS = $AOCL_LIB/libflame.so $AOCL_LIB/libblis-mt.a -lm -lpthread -lgfortran
 COMMS = mpi
 EOF
@@ -88,25 +88,25 @@ mv RESPACK-20240804-dist RESPACK
 rm RESPACK.tar.gz
 find RESPACK/src -name Makefile -exec \
   sed -i \
-  -e 's/-qopenmp/-fopenmp/g' \
-  -e 's/-xHost/-march=znver3 -mtune=znver3/g' \
-  -e 's/-traceback//g' \
-  -e 's/-shared-intel//g' \
-  -e 's/-lmkl_intel_lp64//g' \
-  -e 's/-lmkl_intel_thread//g' \
-  -e 's/-lmkl_core//g' \
-  -e 's/-liomp5//g' \
+  -e "s/-qopenmp/-fopenmp/g" \
+  -e "s/-xHost/$AMD_ARCH/g" \
+  -e "s/-traceback//g" \
+  -e "s/-shared-intel//g" \
+  -e "s/-lmkl_intel_lp64//g" \
+  -e "s/-lmkl_intel_thread//g" \
+  -e "s/-lmkl_core//g" \
+  -e "s/-liomp5//g" \
   {} \;
 find RESPACK/src -name Makefile -exec \
   sed -i \
-  -e 's/FFLAGS[[:space:]]*=.*/FFLAGS = -O3 -fopenmp -march=znver3 -mtune=znver3/' \
+  -e "s/FFLAGS[[:space:]]*=.*/FFLAGS = -O3 -fopenmp $AMD_ARCH/" \
   {} \;
 find RESPACK/src -name Makefile -exec \
   sed -i \
-  -e 's/^LDFLAGS *=.*/LDFLAGS = -fopenmp/' \
-  -e 's/^LIBBLAS *=.*/LIBBLAS = $(LAPACKLIB) $(BLASLIB) -lgomp/' \
+  -e "s/^LDFLAGS *=.*/LDFLAGS = -fopenmp/" \
+  -e "s/^LIBBLAS *=.*/LIBBLAS = $(LAPACKLIB) $(BLASLIB) -lgomp/" \
   {} \;
-sed -i 's/^OBJECTS = /OBJECTS = libtetrabz_dos.o /' RESPACK/src/transfer_analysis/Makefile
+sed -i "s/^OBJECTS = /OBJECTS = libtetrabz_dos.o /" RESPACK/src/transfer_analysis/Makefile
 RESPACK_BLAS="$AOCL_LIB/libblis-mt.a -lm -lpthread -lgfortran"
 RESPACK_LAPACK="$AOCL_LIB/libflame.so -lm -lpthread -lgfortran"
 RESPACK_FC="$CONDA_PREFIX/bin/mpif90"
