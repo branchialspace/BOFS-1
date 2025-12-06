@@ -23,6 +23,7 @@ pip install pymatgen
 pip install ase
 pip install rdkit
 pip install mendeleev
+pip install seekpath
 pip install gdown
 gdown 1p4Pjl8_nrV4lYY_vIZ6dn4tseQ7iTY1v # 369 Bi MOFs from ARCMOF, CSDMOF, QMOF, MOSAEC-DB
 mkdir -p mofs
