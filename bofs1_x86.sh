@@ -21,6 +21,7 @@ pip install torch_geometric
 pip install wandb
 pip install pymatgen
 pip install ase
+pip install spglib
 pip install rdkit
 pip install mendeleev
 pip install seekpath
