@@ -8,10 +8,11 @@ import numpy as np
 import subprocess
 from subprocess import CalledProcessError
 from ase import Atoms
-from ase.io import read
+from ase.io import read, write
 from ase.data import atomic_masses, atomic_numbers
 from ase.neighborlist import NeighborList, natural_cutoffs
 from ase.build import bulk
+import spglib
 from mendeleev import element
 
 
