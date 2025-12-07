@@ -30,7 +30,7 @@ pwx_scf_config = {
     },
     'system': {
         'input_dft': 'pbe',
-        'vdw_corr': 'dft-d3',
+        'vdw_corr': 'mbd',
         'ibrav': 0,
         'occupations': 'smearing',
         'smearing': 'fermi-dirac', # gaussian     marzari-vanderbilt     fermi-dirac
