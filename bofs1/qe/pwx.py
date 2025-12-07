@@ -26,6 +26,34 @@ def pwx(
     config : dict
         Configuration dictionary containing required settings.
     """
+    def symmetrize_structure(structure_path):
+        """
+        Determine spacegroup of structure and write symmetrized unit cell.
+        Returns
+        sym_structure : symmetrized cif 
+        """
+        atoms = read(structure_path)
+        lattice = atoms.get_cell()
+        positions = atoms.get_scaled_positions()
+        numbers = atoms.get_atomic_numbers()
+        cell_tuple = (lattice, positions, numbers)
+        dataset = spglib.get_symmetry_dataset(cell_tuple)
+        print("Detected space group:", dataset.international, dataset.number)
+        sym_structure = f"{os.path.splitext(structure_path)[0]}_{dataset.international}.cif"
+        standardized_cell = spglib.standardize_cell(
+            cell_tuple,
+            to_primitive=False,
+            no_idealize=False)
+        std_lattice, std_positions, std_numbers = standardized_cell
+        atoms_std = Atoms(
+            numbers=std_numbers,
+            cell=std_lattice,
+            scaled_positions=std_positions,
+            pbc=True)
+        write(sym_structure, atoms_std)
+
+        return sym_structure
+        
     def pseudopotentials(structure, pseudo_directory):
         """
         Determine the appropriate pseudopotential file for each atomic species of the structure
@@ -448,8 +476,9 @@ def pwx(
                     f.write(f"  {line}\n")
 
     # Args
-    structure = read(structure_path)  # ASE Atoms object
-    structure_name = os.path.splitext(os.path.basename(structure_path))[0]
+    sym_structure = symmetrize_structure(structure_path)
+    structure = read(sym_structure)  # ASE Atoms object
+    structure_name = os.path.splitext(os.path.basename(sym_structure))[0]
     calculation = config['control']['calculation']
     run_name = f"{structure_name}_{calculation}"
     command = config['command']
