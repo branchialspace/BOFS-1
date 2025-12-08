@@ -20,9 +20,9 @@ pwx_scf_config = {
         "f": 0.8
     },
     'control': {
-        'calculation': 'scf', # scf     nscf     bands
+        'calculation': 'scf',
         'restart_mode': 'from_scratch',
-        'pseudo_dir': './pslibrary/rel-pbe/PSEUDOPOTENTIALS', # /content/ONCVPseudoPack/Abinit_v0.4/UPF/PBEsol   /content/pslibrary/rel-pbe/PSEUDOPOTENTIALS
+        'pseudo_dir': './pslibrary/rel-pbe/PSEUDOPOTENTIALS',
         'disk_io': 'low',
         'verbosity': 'high',
         'tprnfor': True,
@@ -33,7 +33,7 @@ pwx_scf_config = {
         'vdw_corr': 'mbd',
         'ibrav': 0,
         'occupations': 'smearing',
-        'smearing': 'fermi-dirac', # gaussian     marzari-vanderbilt     fermi-dirac
+        'smearing': 'fermi-dirac',
         'degauss': 0.01,
         'noncolin': True,
         'lspinorb': True
