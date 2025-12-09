@@ -14,12 +14,5 @@ mlwf_config = {
     "bands_plot": "true",
     "wannier_plot": "true",
     "wannier_plot_format": "xcrysden",
-    "bands_plot_format": "gnuplot",
-    "kpoint_path": [
-        "G 0.0 0.0 0.0  X 0.5 0.0 0.0",
-        "X 0.5 0.0 0.0  M 0.5 0.5 0.0",
-        "M 0.5 0.5 0.0  G 0.0 0.0 0.0",
-        "G 0.0 0.0 0.0  R 0.5 0.5 0.5"
-    ]
+    "bands_plot_format": "gnuplot"
 }
-
