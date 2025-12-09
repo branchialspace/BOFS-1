@@ -2,6 +2,8 @@
 
 import os
 import re
+import sys
+import importlib.util
 from pathlib import Path
 import seekpath
 from seekpath.util import atoms_num_dict
@@ -240,3 +242,14 @@ def w90_win(
     kpoint_path, path_info = get_kpoint_path(lattice, atoms)
     write_win_file(output_filename, config, mp_grid, e_fermi, num_bands, num_wann, lattice, atoms, projections, kpoint_path, path_info)
     print(f"Successfully wrote {output_filename} with {num_wann} Wannier functions.")
+
+if __name__ == "__main__":
+    pwo_arg = sys.argv[1]
+    pwi_arg = sys.argv[2]
+    config_arg = sys.argv[3]
+    config_scope = {}
+    with open(config_arg, 'r') as f:
+        exec(f.read(), {}, config_scope)
+    config_dict = list(config_scope.values())[0]
+
+    w90_win(pwo_arg, pwi_arg, config_dict)
