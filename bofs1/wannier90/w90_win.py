@@ -3,6 +3,8 @@
 import os
 import re
 from pathlib import Path
+import seekpath
+from seekpath.util import atoms_num_dict
 
 
 def w90_win(
@@ -129,7 +131,59 @@ def w90_win(
 
         return projections, total_wann
 
-    def write_win_file(filename, config, mp_grid, e_fermi, num_bands, num_wann, lattice, atoms, projections):
+    def get_kpoint_path(lattice, atoms):
+        """
+        Use SeeK-path to determine the k-point path for band structure plotting.
+        lattice : list
+            3x3 list of lattice vectors in Angstrom.
+        atoms : list
+            List of tuples (symbol, [x, y, z]) with fractional coordinates.    
+        Returns
+        kpoint_path : list
+            List of strings formatted for Wannier90 kpoint_path block.
+        path_info : dict
+            Dictionary containing additional path information (labels, coordinates, etc.)
+        """
+        # Convert atoms to seekpath format
+        positions = [atom[1] for atom in atoms]
+        numbers = [atoms_num_dict.get(atom[0], 0) for atom in atoms]
+        structure = (lattice, positions, numbers)
+        # Get k-path for the original cell (no standardization)
+        path_result = seekpath.get_path_orig_cell(
+            structure,
+            with_time_reversal=True,
+            recipe='hpkot',
+            threshold=1.0e-7,
+            symprec=1e-5,
+            angle_tolerance=-1.0)
+        # Extract path and point coordinates
+        path = path_result['path']
+        point_coords = path_result['point_coords']
+        # Wannier90 format: "LABEL1 k1x k1y k1z  LABEL2 k2x k2y k2z"
+        kpoint_path = []
+        for start_label, end_label in path:
+            start_coords = point_coords[start_label]
+            end_coords = point_coords[end_label]
+            # Format label (replace GAMMA with G for brevity)
+            start_label_fmt = "G" if start_label == "GAMMA" else start_label
+            end_label_fmt = "G" if end_label == "GAMMA" else end_label
+            line = (
+                f"{start_label_fmt} {start_coords[0]:.6f} {start_coords[1]:.6f} {start_coords[2]:.6f}  "
+                f"{end_label_fmt} {end_coords[0]:.6f} {end_coords[1]:.6f} {end_coords[2]:.6f}")
+            kpoint_path.append(line)
+        # Collect path info for reference
+        path_info = {
+            'bravais_lattice': path_result.get('bravais_lattice', 'unknown'),
+            'spacegroup_number': path_result.get('spacegroup_number', None),
+            'spacegroup_international': path_result.get('spacegroup_international', None),
+            'point_coords': point_coords,
+            'path': path,
+            'has_inversion_symmetry': path_result.get('has_inversion_symmetry', None),
+            'is_supercell': path_result.get('is_supercell', False)}
+        
+        return kpoint_path, path_info
+
+    def write_win_file(filename, config, mp_grid, e_fermi, num_bands, num_wann, lattice, atoms, projections, kpoint_path, path_info):
         """
         Write the final .win file.
         """
@@ -164,10 +218,17 @@ def w90_win(
                 for line in projections:
                     f.write(f"{line}\n")
                 f.write("end projections\n")
-            # K-path
-            if config.get("bands_plot") == "true" and "kpoint_path" in config:
-                f.write("\nbegin kpoint_path\n")
-                for segment in config["kpoint_path"]:
+            # K-path (from SeeK-path)
+            if config.get("bands_plot") == "true" and kpoint_path:
+                f.write("\n! K-path determined by SeeK-path (HPKOT convention)\n")
+                if path_info:
+                    f.write(f"! Bravais lattice: {path_info.get('bravais_lattice', 'unknown')}\n")
+                    f.write(f"! Space group: {path_info.get('spacegroup_international', 'unknown')} "
+                            f"(#{path_info.get('spacegroup_number', '?')})\n")
+                    if path_info.get('is_supercell'):
+                        f.write("! WARNING: Cell detected as supercell - k-path is for primitive cell\n")
+                f.write("begin kpoint_path\n")
+                for segment in kpoint_path:
                     f.write(f"{segment}\n")
                 f.write("end kpoint_path\n")
                 
@@ -176,5 +237,6 @@ def w90_win(
     pseudo_dir, pseudo_dict, mp_grid, lattice, atoms = parse_pwi_data(pwi_path)
     e_fermi, num_bands = parse_pwo_data(pwo_path)
     projections, num_wann = get_wannier_projections(atoms, pseudo_dict, pseudo_dir)
-    write_win_file(output_filename, config, mp_grid, e_fermi, num_bands, num_wann, lattice, atoms, projections)
+    kpoint_path, path_info = get_kpoint_path(lattice, atoms)
+    write_win_file(output_filename, config, mp_grid, e_fermi, num_bands, num_wann, lattice, atoms, projections, kpoint_path, path_info)
     print(f"Successfully wrote {output_filename} with {num_wann} Wannier functions.")
