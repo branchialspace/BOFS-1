@@ -240,6 +240,7 @@ def w90_win(
     e_fermi, num_bands = parse_pwo_data(pwo_path)
     projections, num_wann = get_wannier_projections(atoms, pseudo_dict, pseudo_dir)
     kpoint_path, path_info = get_kpoint_path(lattice, atoms)
+    # Write .win
     write_win_file(output_filename, config, mp_grid, e_fermi, num_bands, num_wann, lattice, atoms, projections, kpoint_path, path_info)
     print(f"Successfully wrote {output_filename} with {num_wann} Wannier functions.")
 
