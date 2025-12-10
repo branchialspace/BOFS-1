@@ -87,49 +87,49 @@ def w90_win(
         return e_fermi, num_bands
 
     def get_wannier_projections(atoms_list, pseudo_dict, pseudo_dir):
-            """
-            Identify valence orbitals based on available UPF channels.
-            """
-            unique_symbols = sorted(list(set(a[0] for a in atoms_list)))
-            projections = []
-            orb_counts = {}
-            for symbol in unique_symbols:
-                # Locate Pseudo
-                pp_filename = pseudo_dict.get(symbol)
-                if not pp_filename:
-                    continue
-                pp_path = Path(pseudo_dir) / pp_filename.strip("'").strip('"')
-                with open(pp_path, 'r') as f:
-                    content = f.read()
-                # Extract all available channels (n, l)
-                pattern = (r'<PP_CHI\.(\d+).*?label\s*=\s*"([^"]+)"')
-                matches = re.findall(pattern, content, re.DOTALL)
-                # Select all orbitals found in the pseudo
-                found_orbitals = set()
-                for _, label in matches:
-                    l_char = next((c.lower() for c in label if c.lower() in 'spdf'), None)
-                    if l_char:
-                        found_orbitals.add(l_char)
-                selected_types = []
-                for orb in ['s', 'p', 'd', 'f']:
-                    if orb in found_orbitals:
-                        selected_types.append(orb)
-                # format
-                if selected_types:
-                    order = {'s':0, 'p':1, 'd':2, 'f':3}
-                    selected_types.sort(key=lambda x: order[x])
-                    projections.append(f"{symbol}: {'; '.join(selected_types)}")
-                # Count orbitals for num_wann
-                count = 0
-                for t in selected_types:
-                    count += {'s':1, 'p':3, 'd':5, 'f':7}.get(t, 0)
-                orb_counts[symbol] = count
-            # Calculate Total num_wann
-            spinors = config.get("spinors", "false").lower() == "true"
-            spin_factor = 2 if spinors else 1
-            total_wann = 0
-            for sym, _ in atoms_list:
-                total_wann += (orb_counts.get(sym, 0) * spin_factor)
+        """
+        Identify valence orbitals based on available UPF channels.
+        """
+        unique_symbols = sorted(list(set(a[0] for a in atoms_list)))
+        projections = []
+        orb_counts = {}
+        for symbol in unique_symbols:
+            # Locate Pseudo
+            pp_filename = pseudo_dict.get(symbol)
+            if not pp_filename:
+                continue
+            pp_path = Path(pseudo_dir) / pp_filename.strip("'").strip('"')
+            with open(pp_path, 'r') as f:
+                content = f.read()
+            # Extract all available channels (n, l)
+            pattern = (r'<PP_CHI\.(\d+).*?label\s*=\s*"([^"]+)"')
+            matches = re.findall(pattern, content, re.DOTALL)
+            # Select all orbitals found in the pseudo
+            found_orbitals = set()
+            for _, label in matches:
+                l_char = next((c.lower() for c in label if c.lower() in 'spdf'), None)
+                if l_char:
+                    found_orbitals.add(l_char)
+            selected_types = []
+            for orb in ['s', 'p', 'd', 'f']:
+                if orb in found_orbitals:
+                    selected_types.append(orb)
+            # format
+            if selected_types:
+                order = {'s':0, 'p':1, 'd':2, 'f':3}
+                selected_types.sort(key=lambda x: order[x])
+                projections.append(f"{symbol}: {'; '.join(selected_types)}")
+            # Count orbitals for num_wann
+            count = 0
+            for t in selected_types:
+                count += {'s':1, 'p':3, 'd':5, 'f':7}.get(t, 0)
+            orb_counts[symbol] = count
+        # Calculate Total num_wann
+        spinors = config.get("spinors", "false").lower() == "true"
+        spin_factor = 2 if spinors else 1
+        total_wann = 0
+        for sym, _ in atoms_list:
+            total_wann += (orb_counts.get(sym, 0) * spin_factor)
 
         return projections, total_wann
 
