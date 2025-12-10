@@ -123,17 +123,17 @@ def pwx(
         # Decide final cutoffs based on presence of wfc_cutoff
         if len(all_wfc) == 0:
             # That means each file must have had only 'rho_cutoff', which is wfc.
-            # We'll use the maximum of those as ecutwfc, and ecutrho = 4 * ecutwfc.
+            # Use the maximum of those as ecutwfc, and ecutrho = 4 * ecutwfc.
             if not all_rho:
                 # No cutoffs found at all
                 raise ValueError("No wfc_cutoff or rho_cutoff found in any pseudopotential file.")
             max_wfc = max(all_rho)
             max_rho = 4.0 * max_wfc
         else:
-            # We have proper wfc_cutoff in each file (and presumably also rho_cutoff).
+            # wfc_cutoff and rho_cutoff are in each file.
             max_wfc = max(all_wfc)
             max_rho = max(all_rho)
-        # Multipliers to be safe, then round up
+        # scale to be safe, then round up
         ecutwfc = ceil(max_wfc * wfn_scalar)
         ecutrho = ceil(max_rho * rho_scalar)
 
