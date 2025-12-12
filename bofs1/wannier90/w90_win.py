@@ -5,6 +5,7 @@ import re
 import sys
 import importlib.util
 from pathlib import Path
+import xml.etree.ElementTree as ET
 import seekpath
 from seekpath.util import atoms_num_dict
 
@@ -85,53 +86,69 @@ def w90_win(
         num_bands = int(nbnd_match.group(1)) if nbnd_match else 0
         
         return e_fermi, num_bands
-
-    def get_wannier_projections(atoms_list, pseudo_dict, pseudo_dir):
+    
+    def total_wannier(atoms_list, pseudo_dict, pseudo_dir, config):
         """
-        Identify valence orbitals based on available UPF channels.
+        Calculates total_wann for SCDM by parsing UPF files.
+        Prioritizes PP_RELWFC (jchi) for fully relativistic PPs.
+        Falls back to PP_PSWFC (l) for scalar PPs.
+        Handles SOC doubling when necessary.
         """
+        spinors = str(config.get("spinors", "false")).lower() == "true"
         unique_symbols = sorted(list(set(a[0] for a in atoms_list)))
-        projections = []
         orb_counts = {}
         for symbol in unique_symbols:
-            # Locate Pseudo
             pp_filename = pseudo_dict.get(symbol)
             if not pp_filename:
                 continue
             pp_path = Path(pseudo_dir) / pp_filename.strip("'").strip('"')
-            with open(pp_path, 'r') as f:
-                content = f.read()
-            # Extract all available channels (n, l)
-            pattern = (r'<PP_CHI\.(\d+).*?label\s*=\s*"([^"]+)"')
-            matches = re.findall(pattern, content, re.DOTALL)
-            # Select all orbitals found in the pseudo
-            found_orbitals = set()
-            for _, label in matches:
-                l_char = next((c.lower() for c in label if c.lower() in 'spdf'), None)
-                if l_char:
-                    found_orbitals.add(l_char)
-            selected_types = []
-            for orb in ['s', 'p', 'd', 'f']:
-                if orb in found_orbitals:
-                    selected_types.append(orb)
-            # format
-            if selected_types:
-                order = {'s':0, 'p':1, 'd':2, 'f':3}
-                selected_types.sort(key=lambda x: order[x])
-                projections.append(f"{symbol}: {'; '.join(selected_types)}")
-            # Count orbitals for num_wann
-            count = 0
-            for t in selected_types:
-                count += {'s':1, 'p':3, 'd':5, 'f':7}.get(t, 0)
-            orb_counts[symbol] = count
-        # Calculate Total num_wann
-        spinors = config.get("spinors", "false").lower() == "true"
-        spin_factor = 2 if spinors else 1
+            if not pp_path.exists():
+                print(f"Warning: UPF {pp_path} not found. Skipping.")
+                orb_counts[symbol] = 0
+                continue
+            try:
+                tree = ET.parse(pp_path)
+                root = tree.getroot()
+                atom_wfc_count = 0
+                is_fully_relativistic = False
+                # Check for Fully Relativistic Block <PP_SPIN_ORB>
+                spin_orb_section = root.find('PP_SPIN_ORB')
+                if spin_orb_section is not None:
+                    is_fully_relativistic = True
+                    # Find PP_RELWFC (Wavefunctions)
+                    for child in spin_orb_section:
+                        if "PP_RELWFC" in child.tag:
+                            try:
+                                # Extract jchi
+                                jchi = float(child.get('jchi'))
+                                # Degeneracy = 2j + 1
+                                deg = int(2 * jchi + 1)
+                                atom_wfc_count += deg
+                            except (ValueError, TypeError):
+                                continue                                
+                # Fallback if Scalar <PP_PSWFC>
+                else:
+                    pswfc_section = root.find('PP_PSWFC')
+                    if pswfc_section is None:
+                        pswfc_section = root.find('PP_WAVEFUNCTIONS') # Support for older UPF formats
+                    if pswfc_section is not None:
+                        for wfc in pswfc_section:
+                            l = int(wfc.get('l'))
+                            # Degeneracy = 2l + 1 (Spatial only)
+                            atom_wfc_count += (2 * l + 1)
+                # If the UPF is scalar but we are running an SOC calculation, multiply by 2 to account for spin up/down.
+                # If the UPF is fr, spin is included in jchi.
+                if spinors and not is_fully_relativistic:
+                    atom_wfc_count *= 2
+                orb_counts[symbol] = atom_wfc_count                
+            except Exception as e:
+                print(f"Error parsing UPF for {symbol}: {e}")
+                orb_counts[symbol] = 0
         total_wann = 0
         for sym, _ in atoms_list:
-            total_wann += (orb_counts.get(sym, 0) * spin_factor)
-
-        return projections, total_wann
+            total_wann += orb_counts.get(sym, 0)
+    
+        return total_wann
 
     def get_kpoint_path(lattice, atoms):
         """
@@ -185,7 +202,7 @@ def w90_win(
         
         return kpoint_path, path_info
 
-    def write_win_file(filename, config, mp_grid, e_fermi, num_bands, num_wann, lattice, atoms, projections, kpoint_path, path_info):
+    def write_win_file(filename, config, mp_grid, e_fermi, num_bands, num_wann, lattice, atoms, kpoint_path, path_info):
         """
         Write the final .win file.
         """
@@ -198,13 +215,6 @@ def w90_win(
             # Config params
             for key, val in config.items():
                 f.write(f"{key} = {val}\n")
-            # Disentanglement Windows (Offsets)
-            if "dis_win_min_offset" in config:
-                f.write(f"\n! Fermi Energy: {e_fermi:.4f} eV\n")
-                f.write(f"dis_win_min = {e_fermi + config['dis_win_min_offset']:.4f}\n")
-                f.write(f"dis_win_max = {e_fermi + config['dis_win_max_offset']:.4f}\n")
-                f.write(f"dis_froz_min = {e_fermi + config['dis_froz_min_offset']:.4f}\n")
-                f.write(f"dis_froz_max = {e_fermi + config['dis_froz_max_offset']:.4f}\n")
             # Geometry
             f.write("\nbegin unit_cell_cart\nAng\n")
             for vec in lattice:
@@ -214,12 +224,6 @@ def w90_win(
             for sym, pos in atoms:
                 f.write(f"{sym:<4}  {pos[0]:>10.6f}  {pos[1]:>10.6f}  {pos[2]:>10.6f}\n")
             f.write("end atoms_frac\n")
-            # Projections
-            if projections:
-                f.write("\nbegin projections\n")
-                for line in projections:
-                    f.write(f"{line}\n")
-                f.write("end projections\n")
             # K-path (from SeeK-path)
             if config.get("bands_plot") == "true" and kpoint_path:
                 f.write("\n! K-path determined by SeeK-path (HPKOT convention)\n")
@@ -238,10 +242,10 @@ def w90_win(
     output_filename = Path(pwi_path).stem + ".win"
     pseudo_dir, pseudo_dict, mp_grid, lattice, atoms = parse_pwi_data(pwi_path)
     e_fermi, num_bands = parse_pwo_data(pwo_path)
-    projections, num_wann = get_wannier_projections(atoms, pseudo_dict, pseudo_dir)
+    num_wann = total_wannier(atoms, pseudo_dict, pseudo_dir, config)
     kpoint_path, path_info = get_kpoint_path(lattice, atoms)
     # Write .win
-    write_win_file(output_filename, config, mp_grid, e_fermi, num_bands, num_wann, lattice, atoms, projections, kpoint_path, path_info)
+    write_win_file(output_filename, config, mp_grid, e_fermi, num_bands, num_wann, lattice, atoms, kpoint_path, path_info)
     print(f"Successfully wrote {output_filename} with {num_wann} Wannier functions.")
 
 if __name__ == "__main__":
