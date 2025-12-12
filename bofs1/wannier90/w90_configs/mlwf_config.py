@@ -7,10 +7,8 @@ mlwf_config = {
     "write_xyz": "true",
     "translate_home_cell": "true",
     "iprint": 2,
-    "dis_win_min_offset": -15.0, 
-    "dis_win_max_offset": 20.0,
-    "dis_froz_min_offset": -15.0,
-    "dis_froz_max_offset": 2.0, 
+    "dis_num_iter": 0,   # for SCDM
+    "num_iter": 0,       # Preserves symmetry for Yambo
     "bands_plot": "true",
     "wannier_plot": "true",
     "wannier_plot_format": "xcrysden",
