@@ -2,7 +2,7 @@
 # w90_run.sh
 # Run processes for Wannier90 (BOFS-1 Python3 env)
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-ROOT_DIR="$( cd "$SCRIPT_DIR/../../.." && pwd )"
+ROOT_DIR="$( cd "$SCRIPT_DIR/../.." && pwd )"
 source "$ROOT_DIR/miniforge3/etc/profile.d/conda.sh"
 
 # Write win and run -pp
@@ -31,5 +31,6 @@ w90_run () {
     echo "Running wannier90.x on ${seedname} (NP=${mpi_np})..."
     mpirun -np "$mpi_np" wannier90.x "$seedname"
 }
+
 
 
