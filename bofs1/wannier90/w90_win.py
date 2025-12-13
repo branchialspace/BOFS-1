@@ -1,10 +1,10 @@
 # Write Wannier90 .win input file
 
-import os
 import re
 import sys
-import importlib.util
 from pathlib import Path
+import numpy as np
+from ase.io import read
 import xml.etree.ElementTree as ET
 import seekpath
 from seekpath.util import atoms_num_dict
@@ -50,25 +50,15 @@ def w90_win(
             k_data = k_block.group(2).split()
             if len(k_data) >= 3:
                 mp_grid = [int(k_data[0]), int(k_data[1]), int(k_data[2])]
-        # Lattice Vectors (CELL_PARAMETERS)
-        lattice = []
-        cell_block = re.search(r'CELL_PARAMETERS\s+[a-zA-Z]+\s*\n(.*?)(?=\n\s*[A-Z_]+|\Z)', content, re.DOTALL | re.IGNORECASE)
-        if cell_block:
-            for line in cell_block.group(1).strip().split('\n'):
-                parts = line.split()
-                if len(parts) >= 3:
-                    lattice.append([float(x) for x in parts[:3]])
+        # Lattice Vectors
+        structure = read(pwi_path, format='espresso-in')
+        lattice = np.array(structure.get_cell())
         # Atomic Positions
+        scaled_positions = structure.get_scaled_positions()
+        symbols = structure.get_chemical_symbols()
         atoms = []
-        pos_block = re.search(r'ATOMIC_POSITIONS\s+[a-zA-Z]+\s*\n(.*?)(?=\n\s*[A-Z_]+|\Z)', content, re.DOTALL | re.IGNORECASE)
-        if pos_block:
-            for line in pos_block.group(1).strip().split('\n'):
-                parts = line.split()
-                if len(parts) >= 4:
-                    # Format: Symbol x y z
-                    sym = parts[0]
-                    coords = [float(x) for x in parts[1:4]]
-                    atoms.append((sym, coords))
+        for sym, pos in zip(symbols, scaled_positions):
+            atoms.append((sym, pos))
 
         return pseudo_dir, pseudo_dict, mp_grid, lattice, atoms
 
