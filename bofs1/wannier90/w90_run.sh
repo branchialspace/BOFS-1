@@ -32,5 +32,4 @@ w90_run () {
     mpirun -np "$mpi_np" wannier90.x "$seedname"
 }
 
-
-
+"$@"
