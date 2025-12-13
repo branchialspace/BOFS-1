@@ -61,8 +61,7 @@ def pw2w90x(
     pwo_path = f"{run_name}.pwo"
     e_fermi = get_fermi_energy(pwo_path)
     print(f"Detected Fermi energy from {pwo_path}: {e_fermi} eV. Setting scdm_mu.")
-    if 'scdm_mu' not in config['inputpp']:
-        config['inputpp']['scdm_mu'] = e_fermi
+    config['inputpp']['scdm_mu'] = e_fermi
     # Write input file
     write_pw2w90_input(config, f"{run_name}.win")
     # Subprocess run
