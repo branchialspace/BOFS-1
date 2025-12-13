@@ -69,3 +69,5 @@ respack_run () {
     cd "$calc_dir" || return 1
     python ./tr.py
 }
+
+"$@"
