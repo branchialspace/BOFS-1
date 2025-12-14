@@ -209,7 +209,7 @@ def pwx(
             line = f"  {kp[0]:12.8f}{kp[1]:12.8f}{kp[2]:12.8f}  {weight:14.6e}"
             nscf_lines.append(line)
         content_nscf = "\n".join(nscf_lines)
-        # Wannier90 mp_grid
+        # Wannier90 k-point grid
         win_lines = []
         win_lines.append(f"mp_grid : {nk1} {nk2} {nk3}")
         win_lines.append("begin kpoints")
