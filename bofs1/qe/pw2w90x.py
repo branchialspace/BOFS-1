@@ -60,7 +60,7 @@ def pw2w90x(
     write_pw2w90_input(config, f"{structure_name}.pw2win")
     # Subprocess run
     try:
-        with open(f"{structure_name}.wout", 'w') as f_out:
+        with open(f"{structure_name}.pw2wout", 'w') as f_out:
             command_list = config['command'] + ['-in', f"{structure_name}.pw2win"]
             subprocess.run(
                 command_list,
