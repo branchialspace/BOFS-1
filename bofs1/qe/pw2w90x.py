@@ -6,17 +6,14 @@ from subprocess import CalledProcessError
 
 
 def pw2w90x(
-        structure_name,
-        run_name,
+        structure_path,
         config
 ):
     """
     Run QE pw2wannier90.x interface calculation.
-    structure_name : string
-        Name of the structure (used for prefix/outdir matching).
-    run_name : string
-        The filename of the pw.x calculation.
-        used to parse Fermi energy for SCDM and locate the outdir.
+    structure_path : string
+        Path of the structure file that was used in the previous pw.x calculation.
+        Used to derive the structure name, which must match the prefix used in pw.x.
     config : dict
         Configuration dictionary containing required settings.
     """
@@ -32,10 +29,7 @@ def pw2w90x(
             fermi_match = re.search(r'the Fermi energy is\s+([-\d.]+)\s+ev', content, re.IGNORECASE)
             return float(fermi_match.group(1))
 
-    def write_pw2w90_input(
-            config,
-            input_filename
-    ):
+    def write_pw2w90_input(config, input_filename):
         """
         Write the pw2wannier90.x input file.
         """
@@ -57,17 +51,17 @@ def pw2w90x(
             f.write('/\n')
 
     # Args
-    run_name = f"{structure_name}_pw2wan"
-    pwo_path = f"{run_name}.pwo"
+    structure_name = os.path.splitext(os.path.basename(structure_path))[0]
+    pwo_path = f"{structure_name}_nscf.pwo"
     e_fermi = get_fermi_energy(pwo_path)
     print(f"Detected Fermi energy from {pwo_path}: {e_fermi} eV. Setting scdm_mu.")
     config['inputpp']['scdm_mu'] = e_fermi
     # Write input file
-    write_pw2w90_input(config, f"{run_name}.win")
+    write_pw2w90_input(config, f"{structure_name}.pw2win")
     # Subprocess run
     try:
-        with open(f"{run_name}.wout", 'w') as f_out:
-            command_list = config['command'] + ['-in', f"{run_name}.win"]
+        with open(f"{structure_name}.wout", 'w') as f_out:
+            command_list = config['command'] + ['-in', f"{structure_name}.pw2win"]
             subprocess.run(
                 command_list,
                 stdout=f_out,
@@ -77,7 +71,7 @@ def pw2w90x(
     except CalledProcessError as cpe:
         print(f"Error running pw2wannier90: {cpe}")
         try:
-            with open(f"{run_name}.wout", 'r') as f_out:
+            with open(f"{structure_name}.pw2wout", 'r') as f_out:
                 print("\npw2wannier90 Output:")
                 print(f_out.read())
         except Exception as e:
