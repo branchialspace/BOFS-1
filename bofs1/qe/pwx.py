@@ -40,7 +40,7 @@ def pwx(
         cell_tuple = (lattice, positions, numbers)
         dataset = spglib.get_symmetry_dataset(cell_tuple)
         print("Detected space group:", dataset.international, dataset.number)
-        sym_structure = f"{os.path.splitext(structure_path)[0]}_{dataset.international}.cif"
+        sym_structure = f"{os.path.splitext(os.path.basename(structure_path))[0]}.cif"
         standardized_cell = spglib.standardize_cell(
             cell_tuple,
             to_primitive=False,
