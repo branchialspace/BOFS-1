@@ -178,6 +178,50 @@ def pwx(
 
         return (n1, n2, n3, s1, s2, s3)
 
+    def w90_kmeshpl(nk1, nk2, nk3):
+        """
+        kmesh.pl k-point grid method for consistency between nscf and wannier90.
+        Returns
+        content_nscf: Block for QE nscf input (includes weights)
+        content_win:  Block for wannier90.win (coordinates only)
+        """
+        kpoints = []
+        # Wannier90 kmesh.pl logic:
+        # for ($x=0; $x<$ARGV[0]; $x++) {      <-- Outer
+        #   for ($y=0; $y<$ARGV[1]; $y++) {    <-- Middle
+        #     for ($z=0; $z<$ARGV[2]; $z++) {  <-- Inner (Fastest)
+        for i in range(nk1):          # x direction
+            for j in range(nk2):      # y direction
+                for k in range(nk3):  # z direction
+                    x_frac = i / nk1
+                    y_frac = j / nk2
+                    z_frac = k / nk3
+                    kpoints.append((x_frac, y_frac, z_frac))
+        # W90 kmesh.pl weights: 1 / totpts
+        total_pts = nk1 * nk2 * nk3
+        weight = 1.0 / total_pts
+        # NSCF k-point grid
+        nscf_lines = []
+        nscf_lines.append("K_POINTS crystal")
+        nscf_lines.append(f"{len(kpoints)}")
+        for kp in kpoints:
+            # W90 kmesh.pl format: %12.8f%12.8f%12.8f%14.6e
+            line = f"  {kp[0]:12.8f}{kp[1]:12.8f}{kp[2]:12.8f}  {weight:14.6e}"
+            nscf_lines.append(line)
+        content_nscf = "\n".join(nscf_lines)
+        # Wannier90 mp_grid
+        win_lines = []
+        win_lines.append(f"mp_grid : {nk1} {nk2} {nk3}")
+        win_lines.append("begin kpoints")
+        for kp in kpoints:
+            # W90 kmesh.pl format: %12.8f%12.8f%12.8f
+            line = f"  {kp[0]:12.8f}{kp[1]:12.8f}{kp[2]:12.8f}"
+            win_lines.append(line)
+        win_lines.append("end kpoints")
+        content_win = "\n".join(win_lines)
+    
+        return content_nscf, content_win
+
     def nbnd(structure, nbnd_scalar=2):
         """
         Number of electronic states (bands) to be calculated,
@@ -466,8 +510,12 @@ def pwx(
                     if atom.symbol == symbol:
                         f.write(f"  {symbol.title()} {pos[0]:.10f} {pos[1]:.10f} {pos[2]:.10f}\n")
             # K-points grid
-            f.write('\nK_POINTS automatic\n')
-            f.write(f"  {kpoints[0]} {kpoints[1]} {kpoints[2]} {kpoints[3]} {kpoints[4]} {kpoints[5]}\n")
+            if calculation == 'nscf':
+                content_nscf, _ = w90_kmeshpl(kpoints[0], kpoints[1], kpoints[2])
+                f.write('\n' + content_nscf + '\n')
+            else:
+                f.write('\nK_POINTS automatic\n')
+                f.write(f"  {kpoints[0]} {kpoints[1]} {kpoints[2]} {kpoints[3]} {kpoints[4]} {kpoints[5]}\n")
             # Cell parameters in angstrom
             f.write('\nCELL_PARAMETERS angstrom\n')
             for vec in structure.cell:
