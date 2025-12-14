@@ -30,6 +30,7 @@ def qe_run():
                     magnonx  - Magnon Properties
                     phx      - Phonon Properties
                     projwfcx - Projected Wavefunctions
+                    pw2w90x  - Preprocess scf for Wannier90 (Use after wannier90.x -pp step)
                 """,
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('module', help='QE module to run')
