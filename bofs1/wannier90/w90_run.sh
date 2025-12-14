@@ -17,8 +17,8 @@ w90_preprocess () {
     # Run wan90_win.py to write .win file
     python "$SCRIPT_DIR/w90_win.py" "$pwo_path" "$pwi_path" "$config_path"
     # Run Wannier90 Pre-processing (-pp)
-    echo "Running wannier90.x -pp on ${seedname}..."
     wannier90.x -pp "$seedname"
+    echo "Ran wannier90.x -pp on ${seedname}."
 }
 
 # Run wannier90.x
@@ -28,8 +28,9 @@ w90_run () {
     conda activate "$ROOT_DIR/bofs1_env"
     local filename=$(basename -- "$input_arg")
     local seedname="${filename%.*}"
-    echo "Running wannier90.x on ${seedname} (NP=${mpi_np})..."
     mpirun -np "$mpi_np" wannier90.x "$seedname"
+    echo "Ran wannier90.x on ${seedname} (NP=${mpi_np})."
 }
 
 "$@"
+
