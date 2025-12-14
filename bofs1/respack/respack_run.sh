@@ -4,7 +4,7 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 ROOT_DIR="$( cd "$SCRIPT_DIR/../../.." && pwd )"
 source "$ROOT_DIR/miniforge3/etc/profile.d/conda.sh"
 
-# Run wan2respack preprocessing for Wannier90 input
+# Run wan2respack preprocessing on Wannier90 input
 wan2respack_pre () {
     local qe_outdir="$1"
     local seedname="$2"
@@ -31,7 +31,7 @@ EOF
     cd - > /dev/null
 }
 
-# Run wan2respack Wannier90 postprocessing for RESPACK
+# Run wan2respack Wannier90 postprocessing to prepare for RESPACK
 wan2respack_post () {
     local work_dir="$1"
     local calc_dir="$2"
