@@ -41,8 +41,7 @@ def pwx(
         cell_tuple = (lattice, positions, numbers)
         dataset = spglib.get_symmetry_dataset(cell_tuple)
         print("Detected space group:", dataset.international, dataset.number)
-        sg_clean = dataset.international.replace('/', '').replace(' ', '')
-        sym_structure = f"sg{sg_clean}-{os.path.splitext(os.path.basename(structure_path))[0]}.cif"
+        sym_structure = f"{os.path.splitext(os.path.basename(structure_path))[0]}.cif"
         standardized_cell = spglib.standardize_cell(
             cell_tuple,
             to_primitive=False,
@@ -528,9 +527,8 @@ def pwx(
 
     # Args
     sym_structure = symmetrize_structure(structure_path)
-    serial_structure = shutil.move(sym_structure, f"{datetime.now():%Y%m%d%H%M}-{sym_structure}")
-    structure = read(serial_structure)  # ASE Atoms object
-    structure_name = os.path.splitext(os.path.basename(serial_structure))[0]
+    structure = read(sym_structure)  # ASE Atoms object
+    structure_name = os.path.splitext(os.path.basename(sym_structure))[0]
     calculation = config['control']['calculation']
     run_name = f"{structure_name}_{calculation}"
     command = config['command']
