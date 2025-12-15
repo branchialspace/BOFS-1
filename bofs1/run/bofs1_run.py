@@ -13,7 +13,7 @@ def run(cmd):
 
 def serialize(structure_path):
     path = Path(structure_path)
-    if re.match(r'^\d{12}-', path.name): # checked if already serialized
+    if re.match(r'^\d{12}-', path.name): # check if already serialized
         return str(path)
     serial_name = f"{datetime.now():%Y%m%d%H%M}-{path.name}"
     serial_path = Path.cwd() / serial_name
@@ -47,3 +47,4 @@ if __name__ == '__main__':
                  if callable(func) and not name.startswith('_') and name not in ('run', 'serialize')}    
     structure = serialize(sys.argv[2])
     workflows[sys.argv[1]](structure)
+
