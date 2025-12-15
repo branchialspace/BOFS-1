@@ -510,7 +510,7 @@ def pwx(
                     if atom.symbol == symbol:
                         f.write(f"  {symbol.title()} {pos[0]:.10f} {pos[1]:.10f} {pos[2]:.10f}\n")
             # K-points grid
-            if calculation == 'nscf':
+            if config['kpts_method'] == 'kmeshpl':
                 content_nscf, _ = w90_kmeshpl(kpoints[0], kpoints[1], kpoints[2])
                 f.write('\n' + content_nscf + '\n')
             else:
