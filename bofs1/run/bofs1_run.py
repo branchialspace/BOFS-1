@@ -22,6 +22,7 @@ def serialize(structure_path):
 
 def bofs1(structure_path):
     name = Path(structure_path).stem
+    # Add Relax Step
     # QE SCF
     run(f'./qe_run pwx pwx_scf_config {structure_path}')
     # QE NSCF
@@ -47,4 +48,5 @@ if __name__ == '__main__':
                  if callable(func) and not name.startswith('_') and name not in ('run', 'serialize')}    
     structure = serialize(sys.argv[2])
     workflows[sys.argv[1]](structure)
+
 
