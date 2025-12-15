@@ -142,6 +142,7 @@ bash ./bofs1/qe/pslibrary_run.sh
 git clone https://github.com/pipidog/ONCVPSP.git
 git clone https://github.com/MarioAndWario/ONCVPseudoPack.git
 # Project-level permissions
+chmod +x ./bofs1_run.py
 chmod -R u+rwX,go+rwX "$SCRIPT_DIR"
 
 echo "built BOFS1 environment"
