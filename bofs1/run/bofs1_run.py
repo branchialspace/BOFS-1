@@ -11,8 +11,16 @@ def run(cmd):
     print(f"\n{'='*60}\n{cmd}\n{'='*60}")
     result = subprocess.run(cmd, shell=True)
 
+def serialize(structure_path):
+    path = Path(structure_path)
+    if re.match(r'^\d{12}-', path.name): # checked if already serialized
+        return str(path)
+    serial_name = f"{datetime.now():%Y%m%d%H%M}-{path.name}"
+    serial_path = Path.cwd() / serial_name
+    shutil.copy(path, serial_path)
+    return str(serial_path)
+
 def bofs1(structure_path):
-    """Full workflow: SCF -> NSCF -> Wannier90 -> RESPACK"""
     name = Path(structure_path).stem
     # QE SCF
     run(f'./qe_run pwx pwx_scf_config {structure_path}')
@@ -36,6 +44,6 @@ def bofs1(structure_path):
 
 if __name__ == '__main__':
     workflows = {name: func for name, func in globals().items() 
-                 if callable(func) and not name.startswith('_') and name != 'run'}    
-    workflows[sys.argv[1]](sys.argv[2])
-
+                 if callable(func) and not name.startswith('_') and name not in ('run', 'serialize')}    
+    structure = serialize(sys.argv[2])
+    workflows[sys.argv[1]](structure)
