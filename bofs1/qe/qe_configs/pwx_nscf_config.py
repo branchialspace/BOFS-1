@@ -9,6 +9,7 @@ pwx_nscf_config = {
                 './qe-7.5/bin/pw.x'],
     'wfn_scalar': 1.15,
     'rho_scalar': 1.15,
+    'kpts_method': "kmeshpl",
     'kpts_k_minimum': 6,
     'kpts_k_spacing': 0.05,
     'kpts_shift': (1,1,1),
