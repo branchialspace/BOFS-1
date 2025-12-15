@@ -192,7 +192,50 @@ def w90_win(
         
         return kpoint_path, path_info
 
-    def write_win_file(filename, config, mp_grid, e_fermi, num_bands, num_wann, lattice, atoms, kpoint_path, path_info):
+    def w90_kmeshpl(nk1, nk2, nk3):
+        """
+        kmesh.pl k-point grid method for consistency between nscf and wannier90.
+        Returns
+        content_nscf: Block for QE nscf input (includes weights)
+        content_win:  Block for wannier90.win (coordinates only)
+        """
+        kpoints = []
+        # Wannier90 kmesh.pl logic:
+        # for ($x=0; $x<$ARGV[0]; $x++) {      <-- Outer
+        #   for ($y=0; $y<$ARGV[1]; $y++) {    <-- Middle
+        #     for ($z=0; $z<$ARGV[2]; $z++) {  <-- Inner (Fastest)
+        for i in range(nk1):          # x direction
+            for j in range(nk2):      # y direction
+                for k in range(nk3):  # z direction
+                    x_frac = i / nk1
+                    y_frac = j / nk2
+                    z_frac = k / nk3
+                    kpoints.append((x_frac, y_frac, z_frac))
+        # W90 kmesh.pl weights: 1 / totpts
+        total_pts = nk1 * nk2 * nk3
+        weight = 1.0 / total_pts
+        # NSCF k-point grid
+        nscf_lines = []
+        nscf_lines.append("K_POINTS crystal")
+        nscf_lines.append(f"{len(kpoints)}")
+        for kp in kpoints:
+            # W90 kmesh.pl format: %12.8f%12.8f%12.8f%14.6e
+            line = f"  {kp[0]:12.8f}{kp[1]:12.8f}{kp[2]:12.8f}  {weight:14.6e}"
+            nscf_lines.append(line)
+        content_nscf = "\n".join(nscf_lines)
+        # Wannier90 k-point grid
+        win_lines = []
+        win_lines.append("begin kpoints")
+        for kp in kpoints:
+            # W90 kmesh.pl format: %12.8f%12.8f%12.8f
+            line = f"  {kp[0]:12.8f}{kp[1]:12.8f}{kp[2]:12.8f}"
+            win_lines.append(line)
+        win_lines.append("end kpoints")
+        content_win = "\n".join(win_lines)
+    
+        return content_nscf, content_win
+
+    def write_win_file(filename, config, mp_grid, e_fermi, num_bands, num_wann, lattice, atoms, kpoint_path, kpoint_block, path_info):
         """
         Write the final .win file.
         """
@@ -227,6 +270,8 @@ def w90_win(
                 for segment in kpoint_path:
                     f.write(f"{segment}\n")
                 f.write("end kpoint_path\n")
+            # K-points
+            f.write(f"\n{kpoint_block}\n")
                 
     # Args
     output_filename = Path(pwi_path).stem + ".win"
@@ -234,8 +279,9 @@ def w90_win(
     e_fermi, num_bands = parse_pwo_data(pwo_path)
     num_wann = total_wannier(atoms, pseudo_dict, pseudo_dir, config)
     kpoint_path, path_info = get_kpoint_path(lattice, atoms)
+    _, kpoint_block = w90_kmeshpl(mp_grid[0], mp_grid[1], mp_grid[2])
     # Write .win
-    write_win_file(output_filename, config, mp_grid, e_fermi, num_bands, num_wann, lattice, atoms, kpoint_path, path_info)
+    write_win_file(output_filename, config, mp_grid, e_fermi, num_bands, num_wann, lattice, atoms, kpoint_path, kpoint_block, path_info)
     print(f"Successfully wrote {output_filename} with {num_wann} Wannier functions.")
 
 if __name__ == "__main__":
