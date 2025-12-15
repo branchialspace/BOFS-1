@@ -1,26 +1,41 @@
 pwx_nscf_config = {
-    'command': ['/usr/bin/mpirun', '--allow-run-as-root', '-x', 'OMP_NUM_THREADS=2', '-np', '4', '/content/bin/pw.x'],
+    'command': ['./bofs1_env/bin/mpirun',
+                '--allow-run-as-root',
+                '--use-hwthread-cpus',
+                '-x', 'OMP_NUM_THREADS=1',
+                '-x', 'BLIS_NUM_THREADS=1',
+                '-x', 'FLAME_NUM_THREADS=1',
+                '-np', '32',
+                './qe-7.5/bin/pw.x'],
     'wfn_scalar': 1.15,
     'rho_scalar': 1.15,
-    'kpts_k_spacing': 0.09, # scf: 0.13    nscf: 0.09
+    'kpts_k_minimum': 6,
+    'kpts_k_spacing': 0.05,
     'kpts_shift': (1,1,1),
-    'initial_u_value': 0.1,
-    'nbnd_scalar': 2.5,
-    'n_manifolds': 1,
+    'nbnd_scalar': 2.3,
+    'initial_u_value': "off",
+    "magnetization": {
+        "d_3d": 0.6,
+        "d_4d5d": 0.3,
+        "f": 0.8
+    },
     'control': {
-        'calculation': 'nscf', # scf     nscf     bands
+        'calculation': 'nscf',
         'restart_mode': 'from_scratch',
-        'pseudo_dir': '/content/pslibrary/rel-pbe/PSEUDOPOTENTIALS',
-        'disk_io': 'medium',
+        'pseudo_dir': './pslibrary/rel-pbe/PSEUDOPOTENTIALS',    # ./ONCVPseudoPack/PseudoDojo/FR_v0.4/PBE_stringent   ./pslibrary/rel-pbe/PSEUDOPOTENTIALS 
+        'disk_io': 'low',
         'verbosity': 'high',
-        'wf_collect': True,
         'tprnfor': True,
-        'tstress': True
+        'tstress': False
     },
     'system': {
+        'input_dft': 'pbe',
+        'vdw_corr': 'mbd',
+        'nosym': 'true',
+        'noinv': 'true',
         'ibrav': 0,
         'occupations': 'smearing',
-        'smearing': 'gaussian', # gaussian     marzari-vanderbilt     fermi-dirac
+        'smearing': 'fermi-dirac',
         'degauss': 0.01,
         'noncolin': True,
         'lspinorb': True
