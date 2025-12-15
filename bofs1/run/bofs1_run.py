@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # BOFS-1 Workflow
-# Usage: ./bofs1_run.py <structure.cif>
+# Usage: ./bofs1_run.py <workflow> <structure.cif>
 
 import subprocess
 import sys
@@ -35,4 +35,7 @@ def bofs1(structure_path):
 
 
 if __name__ == '__main__':
-    bofs1(sys.argv[1])
+    workflows = {name: func for name, func in globals().items() 
+                 if callable(func) and not name.startswith('_') and name != 'run'}    
+    workflows[sys.argv[1]](sys.argv[2])
+
