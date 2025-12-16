@@ -39,8 +39,8 @@ def bofs1_run(structure_path):
     # Wannier90 preprocess
     pwo = f'{name}_nscf.pwo'
     pwi = f'{name}_nscf.pwi'
-    config = './bofs1/wannier90/w90_configs/mlwf_config.py'
-    run(f'bash ./bofs1/wannier90/w90_run.sh w90_preprocess {pwo} {pwi} {config}')
+    w90_config = './bofs1/wannier90/w90_configs/mlwf_config.py'
+    run(f'bash ./bofs1/wannier90/w90_run.sh w90_preprocess {pwo} {pwi} {w90_config}')
     # pw2wannier90
     bofs1.pw2w90x(structure_path, bofs1.pw2w90x_config)
     # Wannier90 run
@@ -55,3 +55,4 @@ if __name__ == '__main__':
     workflows = {name: func for name, func in globals().items() if callable(func) and not name.startswith('_') and name not in ('run', 'serialize')}
     structure = serialize(sys.argv[2])
     workflows[sys.argv[1]](structure)
+
