@@ -67,6 +67,15 @@ conda activate "$SCRIPT_DIR/bofs1_env"
 exec python "$SCRIPT_DIR/bofs1/qe/qe_run.py" "$@"
 EOF
 chmod +x qe_run
+# BOFS1 workflow runner venv wrapper
+cat > bofs1_run << 'EOF'
+#!/bin/bash
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source "$SCRIPT_DIR/miniforge3/etc/profile.d/conda.sh"
+conda activate "$SCRIPT_DIR/bofs1_env"
+exec python "$SCRIPT_DIR/bofs1_run.py" "$@"
+EOF
+chmod +x bofs1_run
 # Wannier90
 git clone https://github.com/wannier-developers/wannier90.git wannier90_src
 cat > wannier90_src/make.inc << EOF
@@ -142,7 +151,6 @@ bash ./bofs1/qe/pslibrary_run.sh
 git clone https://github.com/pipidog/ONCVPSP.git
 git clone https://github.com/MarioAndWario/ONCVPseudoPack.git
 # Project-level permissions
-chmod +x ./bofs1_run.py
 chmod -R u+rwX,go+rwX "$SCRIPT_DIR"
 
 echo "built BOFS1 environment"
