@@ -1,46 +1,49 @@
 # bofs1/__init__.py
 
-# Assembly modules
-from bofs1.utils.tests.assemble.ligand import generate_ligand
-from bofs1.utils.tests.assemble.ligand_bonding_sites import ligand_bonding_sites
-from bofs1.utils.tests.assemble.ligand_electron_analysis import ligand_electron_analysis
-from bofs1.utils.tests.assemble.metal_polyhedron import generate_metal_center
-from bofs1.utils.tests.assemble.mof_cubic_cell import mof_cell
-from bofs1.utils.tests.assemble.mof_nanoparticle import mof_nanoparticle
-from bofs1.utils.tests.assemble.ligand_metal_docking import ligand_metal_docking
-from bofs1.utils.tests.assemble.orca_docking import orca_docking
-from .tests.assemble import utils
 # QE modules
-from .qe.qe_pwx import qe_pwx
-from .qe.qe_dosx import qe_dosx
-from .qe.qe_eelsx import qe_eelsx
-from .qe.qe_hpx import qe_hpx
-from .qe.qe_lanczosx import qe_lanczosx
-from .qe.qe_magnonx import qe_magnonx
-from .qe.qe_phx import qe_phx
-from .qe.qe_projwfcx import qe_projwfcx
+from .qe.pwx import pwx
+from .qe.pw2w90x_config import pw2w90x
+from .qe.dosx import dosx
+from .qe.eelsx import eelsx
+from .qe.hpx import hpx
+from .qe.lanczosx import lanczosx
+from .qe.magnonx import magnonx
+from .qe.phx import phx
+from .qe.projwfcx import projwfcx
 from .qe.qe_run import qe_run
+from .qe.qe_configs.pwx_scf_config import pwx_scf_config
+from .qe.qe_configs.pwx_nscf_config import pwx_nscf_config
+from .qe.qe_configs.pw2w90x_config import pw2w90x_config
+from .qe.qe_configs.dosx_config import dosx_config
+from .qe.qe_configs.eelsx_config import eelsx_config
+from .qe.qe_configs.hpx_config import hpx_config
+from .qe.qe_configs.lanczosx_config import lanczosx_config
+from .qe.qe_configs.magnonx_config import magnonx_config
+from .qe.qe_configs.phx_config import phx_config
+from .qe.qe_configs.projwfcx_config import projwfcx_config
 
 __all__ = [
-    # Assembly functions
-    'generate_ligand',
-    'ligand_bonding_sites', 
-    'ligand_electron_analysis',
-    'generate_metal_center',
-    'mof_cell',
-    'mof_nanoparticle',
-    'ligand_metal_docking',
-    'orca_docking',
-    'utils',
     # QE modules
-    'qe_pwx',
-    'qe_dosx',
-    'qe_eelsx', 
-    'qe_hpx',
-    'qe_lanczosx',
-    'qe_magnonx',
-    'qe_phx',
-    'qe_projwfcx',
-    'qe_run',
-    'pwx_scf'
+    'pwx',
+    'pw2w90x',
+    'dosx',
+    'eelsx', 
+    'hpx',
+    'lanczosx',
+    'magnonx',
+    'phx',
+    'projwfcx',
+    'run',
+    'pwx_scf',
+    # QE configs
+    'pwx_scf_config',
+    'pwx_nscf_config',
+    'pw2w90x_config',
+    'dosx_config',
+    'eelsx_config',
+    'hpx_config',
+    'lanczosx_config',
+    'magnonx_config',
+    'phx_config',
+    'projwfcx_config',
 ]
