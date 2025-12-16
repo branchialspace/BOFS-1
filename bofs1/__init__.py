@@ -2,7 +2,7 @@
 
 # QE modules
 from .qe.pwx import pwx
-from .qe.pw2w90x_config import pw2w90x
+from .qe.pw2w90x import pw2w90x
 from .qe.dosx import dosx
 from .qe.eelsx import eelsx
 from .qe.hpx import hpx
