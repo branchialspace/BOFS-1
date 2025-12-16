@@ -67,7 +67,7 @@ conda activate "$SCRIPT_DIR/bofs1_env"
 exec python "$SCRIPT_DIR/bofs1/qe/qe_run.py" "$@"
 EOF
 chmod +x qe_run
-# BOFS1 workflow runner venv wrapper
+# BOFS1 workflow venv wrapper
 cat > bofs1_run << 'EOF'
 #!/bin/bash
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
