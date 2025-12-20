@@ -3,22 +3,9 @@
 
 import subprocess
 import sys
-import shutil
-import re
 from pathlib import Path
-from datetime import datetime
 import bofs1
 
-
-def serialize(structure_path):
-    """Add timestamp to structure filename"""
-    path = Path(structure_path)
-    if re.match(r'^\d{12}-', path.name):  # check if already serialized
-        return str(path)
-    serial_name = f"{datetime.now():%Y%m%d%H%M}-{path.name}"
-    serial_path = Path.cwd() / serial_name
-    shutil.copy(path, serial_path)
-    return str(serial_path)
 
 def bofs1_run(structure_path):
     """BOFS-1 workflow"""
@@ -49,6 +36,7 @@ def bofs1_run(structure_path):
         shell=True, check=True)
 
 if __name__ == '__main__':
-    workflows = {name: func for name, func in globals().items() if callable(func) and not name.startswith('_') and name != 'serialize'}
-    structure = serialize(sys.argv[2])
+    workflows = {name: func for name, func in globals().items() if callable(func) and not name.startswith('_')}
+    structure = bofs1.normalize_structure(sys.argv[2])
     workflows[sys.argv[1]](structure)
+
