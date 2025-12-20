@@ -10,13 +10,6 @@ from datetime import datetime
 import bofs1
 
 
-def run(cmd):
-    """Run bash modules"""
-    print(f"\n{'='*60}\n{cmd}\n{'='*60}")
-    result = subprocess.run(cmd, shell=True)
-    if result.returncode != 0:
-        raise RuntimeError(f"Command failed: {cmd}")
-
 def serialize(structure_path):
     """Add timestamp to structure filename"""
     path = Path(structure_path)
@@ -40,19 +33,22 @@ def bofs1_run(structure_path):
     pwo = f'{name}_nscf.pwo'
     pwi = f'{name}_nscf.pwi'
     w90_config = './bofs1/wannier90/w90_configs/mlwf_config.py'
-    run(f'bash ./bofs1/wannier90/w90_run.sh w90_preprocess {pwo} {pwi} {w90_config}')
+    subprocess.run(
+        f'bash ./bofs1/wannier90/w90_run.sh w90_preprocess {pwo} {pwi} {w90_config}', 
+        shell=True, check=True)
     # pw2wannier90
     bofs1.pw2w90x(structure_path, bofs1.pw2w90x_config)
-    # Wannier90 run
-    run(f'bash ./bofs1/wannier90/w90_run.sh w90_run {name} 1')
-    # wan2respack
-    run(f'bash ./bofs1/respack/respack_run.sh wan2respack_pre {name} {name} {pwi} {name}.win ./wan2respack_work')
-    run(f'bash ./bofs1/respack/respack_run.sh wan2respack_post ./wan2respack_work ./respack_calc')
-    # RESPACK
-    run(f'bash ./bofs1/respack/respack_run.sh respack_run ./respack_calc {name} input.in 16 16 1')
+    subprocess.run(
+        # Wannier90
+        f'bash ./bofs1/wannier90/w90_run.sh w90_run {name} 1 && '
+        # wan2respack
+        f'bash ./bofs1/respack/respack_run.sh wan2respack_pre {name} {name} {pwi} {name}.win ./wan2respack_work && '
+        f'bash ./bofs1/respack/respack_run.sh wan2respack_post ./wan2respack_work ./respack_calc && '
+        # Respack
+        f'bash ./bofs1/respack/respack_run.sh respack_run ./respack_calc {name} input.in 16 16 1',
+        shell=True, check=True)
 
 if __name__ == '__main__':
-    workflows = {name: func for name, func in globals().items() if callable(func) and not name.startswith('_') and name not in ('run', 'serialize')}
+    workflows = {name: func for name, func in globals().items() if callable(func) and not name.startswith('_') and name != 'serialize'}
     structure = serialize(sys.argv[2])
     workflows[sys.argv[1]](structure)
-
