@@ -5,6 +5,7 @@ from datetime import datetime
 import spglib
 from ase import Atoms
 from ase.io import read, write
+import bofs1
 
 def normalize_structure(structure_path):
     """
@@ -38,5 +39,8 @@ def normalize_structure(structure_path):
     serial_name = f"{datetime.now():%Y%m%d%H%M}-{path.name}"
     serial_path = Path.cwd() / serial_name
     write(serial_path, atoms_std)
+    # Relax
+    relax_config = bofs1.pwx_relax_config
+    bofs1.pwx(serial_path, relax_config)
     
     return str(serial_path)
