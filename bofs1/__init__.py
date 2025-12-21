@@ -11,6 +11,7 @@ from .qe.magnonx import magnonx
 from .qe.phx import phx
 from .qe.projwfcx import projwfcx
 from .qe.qe_run import qe_run
+from .qe.qe_configs.pwx_relax_config import pwx_relax_config
 from .qe.qe_configs.pwx_scf_config import pwx_scf_config
 from .qe.qe_configs.pwx_nscf_config import pwx_nscf_config
 from .qe.qe_configs.pw2w90x_config import pw2w90x_config
@@ -36,6 +37,7 @@ __all__ = [
     'projwfcx',
     'run',
     'pwx_scf',
+    'pwx_relax_config',
     'pwx_scf_config',
     'pwx_nscf_config',
     'pw2w90x_config',
