@@ -7,7 +7,7 @@ from ase import Atoms
 from ase.io import read, write
 import bofs1
 
-def normalize_structure(structure_path):
+def normalize_structure(structure_path, relax_config):
     """
     Determine spacegroup of structure and write symmetrized unit cell.
     Add timestamp to structure filename.
@@ -41,7 +41,6 @@ def normalize_structure(structure_path):
     serial_path = Path.cwd() / serial_name
     write(serial_path, atoms_std)
     # Relax
-    relax_config = bofs1.pwx_relax_config
     bofs1.pwx(serial_path, relax_config)
     
     return str(serial_path)
