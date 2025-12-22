@@ -499,9 +499,11 @@ def pwx(
 
     # Args
     structure = read(structure_path)  # ASE Atoms object
-    structure_name = os.path.splitext(os.path.basename(structure))[0]
+    structure_name = os.path.splitext(os.path.basename(structure_path))[0]
     calculation = config['control']['calculation']
     run_name = f"{structure_name}_{calculation}"
+    if calculation == 'nscf' and config['kpts_method'] != 'kmeshpl': # IBZ NSCF for wan2respack -pp
+        run_name = f"{structure_name}_{calculation}_ibz"
     command = config['command']
     pseudo_dir = config['control']['pseudo_dir']
     config['control']['prefix'] = structure_name
