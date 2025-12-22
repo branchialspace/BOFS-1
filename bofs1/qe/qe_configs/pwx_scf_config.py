@@ -25,7 +25,7 @@ pwx_scf_config = {
         'pseudo_dir': './ONCVPseudoPack/PseudoDojo/FR_v0.4/PBE_stringent',    # ./ONCVPseudoPack/PseudoDojo/FR_v0.4/PBE_stringent   ./pslibrary/rel-pbe/PSEUDOPOTENTIALS 
         'disk_io': 'low',
         'verbosity': 'high',
-        'tprnfor': True,
+        'tprnfor': False,
         'tstress': False
     },
     'system': {
