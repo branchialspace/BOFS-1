@@ -21,7 +21,7 @@ def bofs1_run(structure_path):
     bofs1.pwx(structure_path, nscf_config)
     # QE IBZ NSCF
     ibz_nscf_config = bofs1.pwx_nscf_config
-    ibz_nscf_config['kptsmethod'] = ''
+    ibz_nscf_config['kpts_method'] = ''
     ibz_nscf_config['nosym'] = False
     ibz_nscf_config['noinv'] = False
     bofs1.pwx(structure_path, ibz_nscf_config)
@@ -48,6 +48,7 @@ if __name__ == '__main__':
     workflows = {name: func for name, func in globals().items() if callable(func) and not name.startswith('_')}
     structure = bofs1.normalize_structure(sys.argv[2])
     workflows[sys.argv[1]](structure)
+
 
 
 
