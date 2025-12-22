@@ -26,7 +26,8 @@ def bofs1_run(structure_path):
     bofs1.pwx(structure_path, ibz_nscf_config)
     shutil.copytree(f'{name}', f'{name}_ibz', dirs_exist_ok=True)
     # wan2respack preprocess
-    subprocess.run(f'bash ./bofs1/wannier90/w90_run.sh w90_preprocess {pwo} {pwi} {w90_config}', shell=True, check=True)
+    ibz_pwi = f'{name}_nscf_ibz.pwi'
+    subprocess.run(f'bash ./bofs1/respack/respack_run.sh wan2respack_pre {name} {name} {ibz_pwi} {name}.win ./wan2respack_work', shell=True, check=True)
     # QE NSCF
     nscf_config = bofs1.pwx_nscf_config
     bofs1.pwx(structure_path, nscf_config)
@@ -51,3 +52,4 @@ if __name__ == '__main__':
     workflows = {name: func for name, func in globals().items() if callable(func) and not name.startswith('_')}
     structure = bofs1.normalize_structure(sys.argv[2])
     workflows[sys.argv[1]](structure)
+
