@@ -11,6 +11,7 @@ def normalize_structure(structure_path):
     """
     Determine spacegroup of structure and write symmetrized unit cell.
     Add timestamp to structure filename.
+    Run QE Relax.
     Returns
     norm_structure : symmetrized cif 
     """
