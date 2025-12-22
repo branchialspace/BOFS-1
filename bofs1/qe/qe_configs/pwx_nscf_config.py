@@ -26,7 +26,7 @@ pwx_nscf_config = {
         'pseudo_dir': './pslibrary/rel-pbe/PSEUDOPOTENTIALS',    # ./ONCVPseudoPack/PseudoDojo/FR_v0.4/PBE_stringent   ./pslibrary/rel-pbe/PSEUDOPOTENTIALS 
         'disk_io': 'low',
         'verbosity': 'high',
-        'tprnfor': True,
+        'tprnfor': False,
         'tstress': False
     },
     'system': {
@@ -45,5 +45,6 @@ pwx_nscf_config = {
         'conv_thr': 1.0e-6,
         'mixing_beta': 0.3,
         'electron_maxstep': 300,
+        'diago_full_acc': True
     }
 }
