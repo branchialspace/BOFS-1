@@ -29,7 +29,7 @@ def bofs1_run(structure_path):
     pwi = f'{name}_nscf_ibz.pwi'
     w90_config = './bofs1/wannier90/w90_configs/mlwf_config.py'
     bofs1.w90_win(pwo, pwi, w90_config, nokpts=True) # No k-points in .win for w2r .win reference 
-    subprocess.run(f'bash ./bofs1/respack/respack_run.sh wan2respack_pre {name} {name} {ibz_pwi} {name}.win ./wan2respack_work', shell=True, check=True)
+    subprocess.run(f'bash ./bofs1/respack/respack_run.sh wan2respack_pre {name} {name} {ibz_pwi} {name}_w2r.win ./wan2respack_work', shell=True, check=True)
     # QE NSCF W2R
     subprocess.run(f'mpirun -n 16 ./qe-7.5/bin/pw.x -nk 4 < {seedname}_nscf_w2r.in > {seedname}_nscf_w2r.out', shell=True, check=True)
     # Wannier90 preprocess
@@ -68,5 +68,6 @@ if __name__ == '__main__':
     workflows = {name: func for name, func in globals().items() if callable(func) and not name.startswith('_')}
     structure = bofs1.normalize_structure(sys.argv[2])
     workflows[sys.argv[1]](structure)
+
 
 
