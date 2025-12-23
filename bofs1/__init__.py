@@ -23,6 +23,7 @@ from .qe.qe_configs.magnonx_config import magnonx_config
 from .qe.qe_configs.phx_config import phx_config
 from .qe.qe_configs.projwfcx_config import projwfcx_config
 from .wannier90.w90_configs.mlwf_config import mlwf_config
+from .wannier90.w90_win import w90_win
 
 __all__ = [
     'normalize_structure',
@@ -48,5 +49,6 @@ __all__ = [
     'magnonx_config',
     'phx_config',
     'projwfcx_config',
-    'mlwf_config'
+    'mlwf_config',
+    'w90_win'
 ]
