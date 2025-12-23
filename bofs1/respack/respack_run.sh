@@ -24,8 +24,8 @@ nscf = "$nscf_ref"
 win = "$win_ref"
 
 [pre.output]
-nscf = "${seedname}.nscf_wannier.in"
-win = "${seedname}.win"
+nscf = "${seedname}_nscf_w2r.in"
+win = "${seedname}_w2r.win"
 EOF
     python "$ROOT_DIR/wan2respack/bin/wan2respack.py" -pp conf.toml
     cd - > /dev/null
