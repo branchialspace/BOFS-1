@@ -13,7 +13,8 @@ from seekpath.util import atoms_num_dict
 def w90_win(
     pwo_path,
     pwi_path,
-    config
+    config,
+    nokpts=False
 ):
     """
     Generate a Wannier90 .win input file by parsing QE input/output, pseudopotential files, using SeeK-Path for k-point path.
@@ -23,6 +24,8 @@ def w90_win(
         Path to the Quantum ESPRESSO input file (for pseudos, k-points, atom positions, lattice vectors).
     config : dict
         Configuration dictionary containing W90 job control parameters.
+    nokpts : bool
+        Toggle to omit k-points for wan2respack -pp method .win.ref file.
     """
   
     def parse_pwi_data(pwi_path):
@@ -235,7 +238,7 @@ def w90_win(
     
         return content_nscf, content_win
 
-    def write_win_file(filename, config, mp_grid, e_fermi, num_bands, num_wann, lattice, atoms, kpoint_path, kpoint_block, path_info):
+    def write_win_file(filename, config, nokpts, mp_grid, e_fermi, num_bands, num_wann, lattice, atoms, kpoint_path, kpoint_block, path_info):
         """
         Write the final .win file.
         """
@@ -271,7 +274,8 @@ def w90_win(
                     f.write(f"{segment}\n")
                 f.write("end kpoint_path\n")
             # K-points
-            f.write(f"\n{kpoint_block}\n")
+            if nokpts != True:
+                f.write(f"\n{kpoint_block}\n")
                 
     # Args
     output_filename = Path(pwi_path).stem + ".win"
@@ -281,7 +285,7 @@ def w90_win(
     kpoint_path, path_info = get_kpoint_path(lattice, atoms)
     _, kpoint_block = w90_kmeshpl(mp_grid[0], mp_grid[1], mp_grid[2])
     # Write .win
-    write_win_file(output_filename, config, mp_grid, e_fermi, num_bands, num_wann, lattice, atoms, kpoint_path, kpoint_block, path_info)
+    write_win_file(output_filename, config, nokpts, mp_grid, e_fermi, num_bands, num_wann, lattice, atoms, kpoint_path, kpoint_block, path_info)
     print(f"Successfully wrote {output_filename} with {num_wann} Wannier functions.")
 
 if __name__ == "__main__":
