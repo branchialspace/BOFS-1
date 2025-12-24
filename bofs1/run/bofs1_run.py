@@ -17,7 +17,7 @@ def bofs1_run(structure_path):
     # QE SCF
     scf_config = bofs1.pwx_scf_config
     bofs1.pwx(structure_path, scf_config)
-    # QE NSCF IBZ
+    # QE NSCF IBZ W2R
     ibz_nscf_config = bofs1.pwx_nscf_config
     ibz_nscf_config['kpts_method'] = '' # Use automatic/IBZ
     ibz_nscf_config['nosym'] = False
@@ -29,21 +29,24 @@ def bofs1_run(structure_path):
     pwi = f'{name}_nscf_ibz.pwi'
     w90_config = './bofs1/wannier90/w90_configs/mlwf_config.py'
     bofs1.w90_win(pwo, pwi, w90_config, nokpts=True) # No k-points in .win for w2r .win reference 
-    subprocess.run(f'bash ./bofs1/respack/respack_run.sh wan2respack_pre {name} {name} {ibz_pwi} {name}.win ./wan2respack_work', shell=True, check=True)
-    # copy ibz .win before the same name gets overwritten in final w90 run?
+    subprocess.run(
+        f'bash ./bofs1/respack/respack_run.sh wan2respack_pre {name} {name} {ibz_pwi} {name}.win ./wan2respack_work && '
+        f'cp {name}.win {name}_ibz.win', shell=True, check=True)
     # QE NSCF W2R
-    subprocess.run(f'mpirun -n 16 ./qe-7.5/bin/pw.x -nk 4 < {name}_nscf_w2r.in > {name}_nscf_w2r.out', shell=True, check=True)
+    subprocess.run(f'mpirun -n 16 ./qe-7.5/bin/pw.x -nk 1 < {name}_nscf_w2r.in > {name}_nscf_w2r.out', shell=True, check=True)
     # Wannier90 preprocess W2R
     subprocess.run(f'wannier90.x -pp {name}_w2r', shell=True, check=True)
-    # pw2wannier90
-    bofs1.pw2w90x(structure_path, bofs1.pw2w90x_config)
+    # pw2wannier90 W2R
+    pw2w90x_config = bofs1.pw2w90x_config
+    pw2w90x_config['inputpp']['seedname'] = f'{name}_w2r'
+    bofs1.pw2w90x(structure_path, pw2w90x_config)
     subprocess.run(
-        # Wannier90
-        f'bash ./bofs1/wannier90/w90_run.sh w90_run {name}_w2r 1 && '
-        # wan2respack
+    # Wannier90 W2R
+        f'bash ./bofs1/wannier90/w90_run.sh w90_run {name}_w2r 16 && '
+    # wan2respack
         f'bash ./bofs1/respack/respack_run.sh wan2respack_post ./wan2respack_work ./respack_calc && '
-        # Respack
-        f'bash ./bofs1/respack/respack_run.sh respack_run ./respack_calc {name} input.in 16 16 1',
+    # Respack
+        f'bash ./bofs1/respack/respack_run.sh respack_run ./respack_calc {name} input.in 1 1 16',
         shell=True, check=True)
     # QE SCF+U+V
     scf_config = bofs1.pwx_scf_config
@@ -57,9 +60,11 @@ def bofs1_run(structure_path):
     w90_config = './bofs1/wannier90/w90_configs/mlwf_config.py'
     subprocess.run(f'bash ./bofs1/wannier90/w90_run.sh w90_preprocess {pwo} {pwi} {w90_config}', shell=True, check=True)
     # pw2wannier90
-    bofs1.pw2w90x(structure_path, bofs1.pw2w90x_config)
+    pw2w90x_config = bofs1.pw2w90x_config
+    pw2w90x_config['inputpp']['seedname'] = f'{name}'
+    bofs1.pw2w90x(structure_path, pw2w90x_config)
     # Wannier90
-    subprocess.run(f'bash ./bofs1/wannier90/w90_run.sh w90_run {name} 1', shell=True, check=True)
+    subprocess.run(f'bash ./bofs1/wannier90/w90_run.sh w90_run {name} 16', shell=True, check=True)
     
 
 if __name__ == '__main__':
