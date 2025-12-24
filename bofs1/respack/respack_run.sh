@@ -25,7 +25,7 @@ win = "$win_ref"
 
 [pre.output]
 nscf = "${seedname}_nscf_w2r.in"
-win = "${seedname}.win"
+win = "${seedname}_w2r.win"
 EOF
     python "$ROOT_DIR/wan2respack/bin/wan2respack.py" -pp conf.toml
     cd - > /dev/null
