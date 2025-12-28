@@ -16,6 +16,7 @@ def bofs1_run(structure_path):
     name = Path(structure_path).stem
     # QE SCF
     scf_config = bofs1.pwx_scf_config
+    np = scf_config['command'][scf_config['command'].index('-np') + 1]
     bofs1.pwx(structure_path, scf_config)
     # QE NSCF IBZ W2R
     ibz_nscf_config = bofs1.pwx_nscf_config
@@ -33,7 +34,7 @@ def bofs1_run(structure_path):
         f'bash ./bofs1/respack/respack_run.sh wan2respack_pre {name} {name} {ibz_pwi} {name}.win ./wan2respack_work && '
         f'cp {name}.win {name}_ibz.win', shell=True, check=True)
     # QE NSCF W2R
-    subprocess.run(f'mpirun -n 16 ./qe-7.5/bin/pw.x -nk 1 < {name}_nscf_w2r.in > {name}_nscf_w2r.out', shell=True, check=True)
+    subprocess.run(f'mpirun -n {np} ./qe-7.5/bin/pw.x -nk 1 < {name}_nscf_w2r.in > {name}_nscf_w2r.out', shell=True, check=True)
     # Wannier90 preprocess W2R
     subprocess.run(f'wannier90.x -pp {name}_w2r', shell=True, check=True)
     # pw2wannier90 W2R
@@ -42,11 +43,11 @@ def bofs1_run(structure_path):
     bofs1.pw2w90x(structure_path, pw2w90x_config)
     subprocess.run(
     # Wannier90 W2R
-        f'bash ./bofs1/wannier90/w90_run.sh w90_run {name}_w2r 16 && '
+        f'bash ./bofs1/wannier90/w90_run.sh w90_run {name}_w2r {np} && '
     # wan2respack
         f'bash ./bofs1/respack/respack_run.sh wan2respack_post ./wan2respack_work ./respack_calc && '
     # Respack
-        f'bash ./bofs1/respack/respack_run.sh respack_run ./respack_calc {name} input.in 1 1 16',
+        f'bash ./bofs1/respack/respack_run.sh respack_run ./respack_calc {name} input.in 1 1 {np}',
         shell=True, check=True)
     # QE SCF+U+V
     scf_config = bofs1.pwx_scf_config
@@ -64,10 +65,11 @@ def bofs1_run(structure_path):
     pw2w90x_config['inputpp']['seedname'] = f'{name}'
     bofs1.pw2w90x(structure_path, pw2w90x_config)
     # Wannier90
-    subprocess.run(f'bash ./bofs1/wannier90/w90_run.sh w90_run {name} 16', shell=True, check=True)
+    subprocess.run(f'bash ./bofs1/wannier90/w90_run.sh w90_run {name} {np}', shell=True, check=True)
     
 
 if __name__ == '__main__':
     workflows = {name: func for name, func in globals().items() if callable(func) and not name.startswith('_')}
     structure = bofs1.normalize_structure(sys.argv[2])
     workflows[sys.argv[1]](structure)
+
