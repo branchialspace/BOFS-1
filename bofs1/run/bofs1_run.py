@@ -47,7 +47,7 @@ def bofs1_run(structure_path):
     # wan2respack
         f'bash ./bofs1/respack/respack_run.sh wan2respack_post ./wan2respack_work ./respack_calc && '
     # Respack
-        f'bash ./bofs1/respack/respack_run.sh respack_run ./respack_calc {name} input.in 1 1 {np}',
+        f'bash ./bofs1/respack/respack_run.sh respack_run ./respack_calc 1 1 {np}',
         shell=True, check=True)
     # QE SCF+U+V
     scf_config = bofs1.pwx_scf_config
@@ -72,4 +72,5 @@ if __name__ == '__main__':
     workflows = {name: func for name, func in globals().items() if callable(func) and not name.startswith('_')}
     structure = bofs1.normalize_structure(sys.argv[2])
     workflows[sys.argv[1]](structure)
+
 
