@@ -12,7 +12,7 @@ def bofs1_run(structure_path):
     name = Path(structure_path).stem
     # Normalize structure (Symmetrize, Serialize, QE Relax)
     relax_config = bofs1.pwx_relax_config
-    structure_path = bofs1.normalize_structure(structure_path, relax_config)
+    structure_path, spacegroup, sg_number = bofs1.normalize_structure(structure_path, relax_config)
     name = Path(structure_path).stem
     # QE SCF
     scf_config = bofs1.pwx_scf_config
@@ -75,6 +75,7 @@ if __name__ == '__main__':
     workflows = {name: func for name, func in globals().items() if callable(func) and not name.startswith('_')}
     structure = bofs1.normalize_structure(sys.argv[2])
     workflows[sys.argv[1]](structure)
+
 
 
 
