@@ -16,7 +16,7 @@ def get_structure(source, material_id):
     source : str
     	The database alias ('mp', 'cod', 'nomad', 'oqmd', 'aflow') or a full valid OPTIMADE URL.
     material_id : str
-    	The ID of the material (e.g., 'mp-149' or '1010068').
+    	The ID of the material (e.g., 'mp-23152' or '1010068').
     Returns 
     structure_path : str
     	Path to the saved structure.
