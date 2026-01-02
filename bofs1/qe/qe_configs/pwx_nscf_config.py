@@ -30,8 +30,8 @@ pwx_nscf_config = {
         'tstress': False
     },
     'system': {
-        'input_dft': 'pbe',
-        'vdw_corr': 'mbd',
+        'input_dft': 'rvv10',
+        # 'vdw_corr': 'mbd',
         'nosym': 'true',
         'noinv': 'true',
         'ibrav': 0,
