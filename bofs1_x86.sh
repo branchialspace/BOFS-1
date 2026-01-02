@@ -26,6 +26,7 @@ pip install rdkit
 pip install mendeleev
 pip install seekpath
 pip install gdown
+pip install optimade[http_client]
 gdown 1p4Pjl8_nrV4lYY_vIZ6dn4tseQ7iTY1v # 369 Bi MOFs from ARCMOF, CSDMOF, QMOF, MOSAEC-DB
 mkdir -p mofs
 unzip bimofs2.zip -d mofs
