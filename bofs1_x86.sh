@@ -73,7 +73,7 @@ cat > bofs1_run << 'EOF'
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source "$SCRIPT_DIR/miniforge3/etc/profile.d/conda.sh"
 conda activate "$SCRIPT_DIR/bofs1_env"
-exec python "$SCRIPT_DIR/bofs1_run.py" "$@"
+exec python "$SCRIPT_DIR/bofs1/run/bofs1_run.py" "$@"
 EOF
 chmod +x bofs1_run
 # Wannier90
