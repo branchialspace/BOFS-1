@@ -1,6 +1,6 @@
 # bofs1/__init__.py
 
-from .run.normalize_structure import normalize_structure
+from .run.structure import normalize_structure
 from .qe.pwx import pwx
 from .qe.pw2w90x import pw2w90x
 from .qe.dosx import dosx
