@@ -1,5 +1,6 @@
 # bofs1/__init__.py
 
+from .run.structure import get_structure
 from .run.structure import normalize_structure
 from .qe.pwx import pwx
 from .qe.pw2w90x import pw2w90x
@@ -26,6 +27,7 @@ from .wannier90.w90_configs.mlwf_config import mlwf_config
 from .wannier90.w90_win import w90_win
 
 __all__ = [
+    'get_structure',
     'normalize_structure',
     'pwx',
     'pw2w90x',
