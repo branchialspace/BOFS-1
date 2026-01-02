@@ -9,7 +9,7 @@ from pathlib import Path
 import bofs1
 
 
-def bofs1_run(*args):
+def bofs1_test(*args):
     """BOFS-1 workflow"""
     structure_path = args[0] if len(args) == 1 else bofs1.get_structure(*args)
     name = Path(structure_path).stem
@@ -75,6 +75,7 @@ def bofs1_run(*args):
 if __name__ == '__main__':
     workflows = {name: func for name, func in globals().items() if callable(func) and not name.startswith('_')}
     workflows[sys.argv[1]](*sys.argv[2:])
+
 
 
 
