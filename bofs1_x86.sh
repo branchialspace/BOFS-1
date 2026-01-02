@@ -150,6 +150,8 @@ bash ./bofs1/qe/pslibrary_run.sh
 # ONCV fully-relativistic pseudopotentials repositories
 git clone https://github.com/pipidog/ONCVPSP.git
 git clone https://github.com/MarioAndWario/ONCVPseudoPack.git
+# BOFS-1 to path
+echo "export PYTHONPATH=$SCRIPT_DIR:\$PYTHONPATH" >> "$CONDA_PREFIX/etc/conda/activate.d/bofs1_path.sh"
 # Project-level permissions
 chmod -R u+rwX,go+rwX "$SCRIPT_DIR"
 
