@@ -5,27 +5,40 @@ import spglib
 from ase import Atoms
 from ase.io import read, write
 import bofs1
-from pymatgen.ext.optimade import OptimadeRester
+from optimade.client import OptimadeClient
+from optimade.adapters import Structure as OptimadeStructure
+
 
 def get_structure(source, material_id):
     """
-    Download a structure from a specific OPTIMADE provider, save it 
-    to the current working directory, return the path.
+    Fetches a structure from an OPTIMADE provider, saves it as a CIF, 
+    and returns the absolute file path.
     source : str
-    	The database alias (ex: 'mp', 'cod', 'oqmd', 'aflow').
+    	The database alias ('mp', 'cod', 'nomad', 'oqmd', 'aflow') or a full valid OPTIMADE URL.
     material_id : str
     	The ID of the material (e.g., 'mp-149' or '1010068').
     Returns 
     structure_path : str
     	Path to the saved structure.
     """
-    with OptimadeRester(source) as optimade:
-        print(f"Querying {source.upper()} for {material_id}...")
-        results = optimade.get_structures(filter=f'id="{material_id}"')
-        structure_path = os.path.abspath(f"{material_id}.cif")
-        results[material_id].to(filename=structure_path)
-        print(f"{material_id} saved as: {structure_path}")
-        
+    provider_urls = {
+        "mp": "https://optimade.materialsproject.org",
+        "cod": "https://www.crystallography.net/cod/optimade",
+        "oqmd": "http://oqmd.org/optimade/",
+        "nomad": "https://nomad-lab.eu/prod/rae/optimade/",
+        "aflow": "http://aflow.org/API/optimade/"}
+    base_url = provider_urls.get(source, source)
+    client = OptimadeClient(base_urls=[base_url])
+    print(f"Querying {base_url} for {material_id}...")
+    filter_str = f'id="{material_id}"'
+    client.get(filter=filter_str)
+    results = client.all_results["structures"][filter_str][base_url]["data"]
+    entry = results[0]
+    pmg_structure = OptimadeStructure(entry).as_pymatgen
+    structure_path = os.path.abspath(f"{material_id}.cif")
+    pmg_structure.to(filename=structure_path)
+    print(f"Structure saved to: {structure_path}")
+    
     return structure_path
 
 def normalize_structure(structure_path, relax_config):
