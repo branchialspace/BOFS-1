@@ -22,12 +22,11 @@ def pw2w90x(
         """
         Extract Fermi energy from the .pwo file for SCDM mu.
         """
-        try:
-            with open(pwo_path, 'r') as f:
-                lines = f.readlines()
-                content = "".join(lines)
-            fermi_match = re.search(r'the Fermi energy is\s+([-\d.]+)\s+ev', content, re.IGNORECASE)
-            return float(fermi_match.group(1))
+        with open(pwo_path, 'r') as f:
+            lines = f.readlines()
+            content = "".join(lines)
+        fermi_match = re.search(r'the Fermi energy is\s+([-\d.]+)\s+ev', content, re.IGNORECASE)
+        return float(fermi_match.group(1))
 
     def write_pw2w90_input(config, input_filename):
         """
