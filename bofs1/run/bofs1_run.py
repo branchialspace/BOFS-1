@@ -7,8 +7,9 @@ from pathlib import Path
 import bofs1
 
 
-def bofs1_run(structure_path):
+def bofs1_run(*args):
     """BOFS-1 workflow"""
+    structure_path = args[0] if len(args) == 1 else bofs1.get_structure(*args)
     name = Path(structure_path).stem
     # Normalize structure (Serialize, QE vc-relax, spglib)
     relax_config = bofs1.pwx_relax_config
@@ -73,7 +74,8 @@ def bofs1_run(structure_path):
 
 if __name__ == '__main__':
     workflows = {name: func for name, func in globals().items() if callable(func) and not name.startswith('_')}
-    workflows[sys.argv[1]](sys.argv[2])
+    workflows[sys.argv[1]](*sys.argv[2:])
+
 
 
 
