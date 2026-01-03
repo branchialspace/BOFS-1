@@ -9,6 +9,11 @@ curl -L https://github.com/branchialspace/BOFS-1/archive/main.tar.gz | tar xz &&
 cd BOFS-1
 bash bofs1_x86.sh
 
+# Run bofs1
+cd BOFS-1
+./bofs1_run bofs1_test mp mp-23152  # ./bofs1_run <workflow> <optimade_database> <id>
+./bofs1_run bofs1_test mofs/SIWZOO_full_n2.cif  # ./bofs1_run <workflow> <path/structure.cif>
+
 # Run QE modules
 cd BOFS-1
 ./qe_run pwx pwx_scf_config mofs/SIWZOO_full_n2.cif  # ./qe_run <module> <config_name> <mof_file>
