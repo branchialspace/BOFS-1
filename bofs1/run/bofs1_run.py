@@ -19,7 +19,7 @@ def bofs1_test(*args):
     relax_config = bofs1.pwx_relax_config
     structure_path = bofs1.relax_structure(structure_path, relax_config)
     name = Path(structure_path).stem
-    # spglib detect structure spacegroup
+    # spglib detect structure space group
     bofs1.spglib_structure(structure_path)
     # QE SCF
     scf_config = bofs1.pwx_scf_config
@@ -78,6 +78,7 @@ def bofs1_test(*args):
 if __name__ == '__main__':
     workflows = {name: func for name, func in globals().items() if callable(func) and not name.startswith('_')}
     workflows[sys.argv[1]](*sys.argv[2:])
+
 
 
 
