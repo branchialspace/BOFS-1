@@ -41,28 +41,47 @@ def get_structure(source, material_id):
     
     return structure_path
 
-def normalize_structure(structure_path, relax_config):
+def serialize_structure(structure_path):
     """
     Add timestamp to structure filename.
-    Run QE vc-relax, update structure.
-    Determine spacegroup with spglib.
+    Overwrites serialization if present.
     Returns
-    relaxed_structure_path : str
-        Path to relaxed structure
+    serial_path : Path
+        Path to serialized structure
     """
     atoms = read(structure_path)
-    # Serialize
     path = Path(structure_path)
-    serial_name = f"{datetime.now():%Y%m%d%H%M}-{path.name}"
+    name = path.name
+    if name[12:13] == '-' and name[:12].isdigit():
+        name = name[13:]
+    serial_name = f"{datetime.now():%Y%m%d%H%M}-{name}"
     serial_path = Path.cwd() / serial_name
     write(serial_path, atoms)
+    
+    return serial_path
+
+def relax_structure(structure_path, relax_config):
+    """
+    Run QE vc-relax, update structure.
+    Returns
+    relaxed_path : Path
+        Path to relaxed structure
+    """
     # Run QE vc-relax
-    bofs1.pwx(serial_path, relax_config)
-    relaxed_atoms = read(serial_path)
+    bofs1.pwx(structure_path, relax_config)
+    
+    return structure_path
+    
+def spglib_structure(structure_path):
+    """
+    Determine spacegroup with spglib.
+    Write dataset to file with _spglib suffix.
+    """
+    atoms = read(structure_path)
     # Detect symmetry with spglib
-    lattice = relaxed_atoms.get_cell()
-    positions = relaxed_atoms.get_scaled_positions()
-    numbers = relaxed_atoms.get_atomic_numbers()
+    lattice = atoms.get_cell()
+    positions = atoms.get_scaled_positions()
+    numbers = atoms.get_atomic_numbers()
     cell_tuple = (lattice, positions, numbers)
     dataset = spglib.get_symmetry_dataset(cell_tuple)
     if isinstance(dataset, dict):
@@ -71,8 +90,8 @@ def normalize_structure(structure_path, relax_config):
     else:
         spacegroup = dataset.international
         number = dataset.number
-    print(f"Detected space group after vc-relax: {spacegroup} ({number})")
-
-    return str(serial_path)
-
-
+    print(f"Detected space group: {spacegroup} ({number})")
+    # Write spglib dataset to file
+    spglib_path = f"{serial_path}_spglib"
+    with open(spglib_path, 'w') as f:
+        f.write(str(dataset))
