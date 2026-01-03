@@ -74,7 +74,7 @@ def relax_structure(structure_path, relax_config):
     
 def spglib_structure(structure_path):
     """
-    Determine spacegroup with spglib.
+    Determine space group with spglib.
     Write dataset to file with _spglib suffix.
     """
     atoms = read(structure_path)
