@@ -62,7 +62,7 @@ def serialize_structure(structure_path):
 
 def relax_structure(structure_path, relax_config):
     """
-    Run QE vc-relax, update structure.
+    Run QE vc-relax, save relaxed structure.
     Returns
     relaxed_path : Path
         Path to relaxed structure
