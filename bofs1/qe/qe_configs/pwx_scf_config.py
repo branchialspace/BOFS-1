@@ -29,8 +29,8 @@ pwx_scf_config = {
         'tstress': False
     },
     'system': {
-        'input_dft': 'rvv10',
-        # 'vdw_corr': '',
+        'input_dft': 'pbe',
+        'vdw_corr': 'grimme-d2',
         'ibrav': 0,
         'occupations': 'smearing',
         'smearing': 'fermi-dirac',
