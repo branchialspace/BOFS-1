@@ -90,7 +90,7 @@ def compare_structure(structure_paths):
     """
     Quantify geometric differences between near-identical relaxed structures.
     Compares lattice parameters, volume, and atomic displacements pairwise.
-    Matches corresponding atoms by species using Hungarian algorithm.
+    Matches corresponding atoms by species using Hungarian.
     Write results to file with _compare suffix.
     structure_paths : list
         List of paths to .cif files (minimum 2).
