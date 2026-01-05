@@ -110,7 +110,7 @@ def compare_structure(structure_paths):
             raise ValueError(f"Atom count mismatch: {names[0]} has {n_atoms}, {names[i]} has {len(s)}")
     def match_atoms(s1, s2):
         """
-        Match atoms between two structures by species using Hungarian algorithm.
+        Match atoms between two structures by species using Hungarian.
         Minimizes total displacement with periodic boundary conditions.
         Returns reordered indices for s2 to match s1 atom ordering.
         """
