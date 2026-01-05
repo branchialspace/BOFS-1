@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from datetime import datetime
 import numpy as np
+from scipy.optimize import linear_sum_assignment
 import spglib
 from ase import Atoms
 from ase.io import read, write
