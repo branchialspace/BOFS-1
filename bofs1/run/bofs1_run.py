@@ -15,16 +15,16 @@ def bofs1_test(*args):
     name = Path(structure_path).stem
     # Serialize structure
     structure_path = bofs1.serialize_structure(structure_path)
-    # QE rVV10 vc-relax structure
+    # QE d3 vc-relax structure
     relax_config = bofs1.pwx_relax_config
     relax_config['control']['calculation'] = 'vc-relax'
-    relax_config['system']['input_dft'] = 'rvv10'
-    relax_config['system']['vdw_corr'] = ''
+    relax_config['system']['vdw_corr'] = 'grimme-d3'
+    relax_config['system']['dftd3_version'] = 4  # D3-BJ damping
     structure_path = bofs1.relax_structure(structure_path, relax_config)
     name = Path(structure_path).stem
     # spglib detect structure space group
     bofs1.spglib_structure(structure_path)
-    # QE relax structure
+    # QE d2 relax structure
     relax_config = bofs1.pwx_relax_config
     structure_path = bofs1.relax_structure(structure_path, relax_config)
     name = Path(structure_path).stem
@@ -87,6 +87,7 @@ def bofs1_test(*args):
 if __name__ == '__main__':
     workflows = {name: func for name, func in globals().items() if callable(func) and not name.startswith('_')}
     workflows[sys.argv[1]](*sys.argv[2:])
+
 
 
 
