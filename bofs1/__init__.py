@@ -4,6 +4,7 @@ from .run.structure import get_structure
 from .run.structure import serialize_structure
 from .run.structure import relax_structure
 from .run.structure import spglib_structure
+from .run.structure import compare_structure
 from .qe.pwx import pwx
 from .qe.pw2w90x import pw2w90x
 from .qe.dosx import dosx
@@ -33,6 +34,7 @@ __all__ = [
     'serialize_structure',
     'relax_structure',
     'spglib_structure',
+    'compare_structure',
     'pwx',
     'pw2w90x',
     'dosx',
