@@ -468,6 +468,32 @@ def pwx(
                     for occ_line in hubbard_occ_lines:
                         f.write(f"  Hubbard_occ{occ_line}\n")
                 f.write('/\n')
+            # Ions namelist for relax/vc-relax
+            if config['control'].get('calculation') in ('relax', 'vc-relax'):
+                f.write('&ions\n')
+                if 'ions' in config:
+                    for key, value in config['ions'].items():
+                        if isinstance(value, bool):
+                            val = '.true.' if value else '.false.'
+                        elif isinstance(value, str):
+                            val = f"'{value}'"
+                        else:
+                            val = value
+                        f.write(f"  {key} = {val}\n")
+                f.write('/\n')
+            # Cell namelist for vc-relax
+            if config['control'].get('calculation') == 'vc-relax':
+                f.write('&cell\n')
+                if 'cell' in config:
+                    for key, value in config['cell'].items():
+                        if isinstance(value, bool):
+                            val = '.true.' if value else '.false.'
+                        elif isinstance(value, str):
+                            val = f"'{value}'"
+                        else:
+                            val = value
+                        f.write(f"  {key} = {val}\n")
+                f.write('/\n')
             # Atomic species
             f.write('\nATOMIC_SPECIES\n')
             for symbol in species_order:
