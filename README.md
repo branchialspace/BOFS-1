@@ -11,7 +11,7 @@ bash bofs1_x86.sh
 
 # Run bofs1
 cd BOFS-1
-./bofs1_run bofs1_test mp mp-23152  # ./bofs1_run <workflow> <optimade_database> <id>
+./bofs1_run bofs1_test $MP_KEY mp-23152  # ./bofs1_run <workflow> <mp_api_key> <mp-id>
 ./bofs1_run bofs1_test mofs/SIWZOO_full_n2.cif  # ./bofs1_run <workflow> <path/structure.cif>
 
 # Run QE modules
