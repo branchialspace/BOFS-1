@@ -16,7 +16,7 @@ mamba create -y -p ./bofs1_env python=3.10
 conda activate ./bofs1_env
 # dependencies
 mamba install -y -c conda-forge cmake ninja make git wget unzip openmpi openmpi-mpicc gfortran binutils
-pip install numpy==1.26.4
+pip install numpy
 pip install torch_geometric
 pip install wandb
 pip install pymatgen
