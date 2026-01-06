@@ -12,7 +12,7 @@ rm -f Miniforge3.sh
 source ./miniforge3/etc/profile.d/conda.sh
 export MAMBA_ROOT_PREFIX="$SCRIPT_DIR/miniforge3"
 # Create mamba venv
-mamba create -y -p ./bofs1_env python=3.10
+mamba create -y -p ./bofs1_env python=3.11
 conda activate ./bofs1_env
 # dependencies
 mamba install -y -c conda-forge cmake ninja make git wget unzip openmpi openmpi-mpicc gfortran binutils
