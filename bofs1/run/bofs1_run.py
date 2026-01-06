@@ -1,7 +1,7 @@
 # BOFS-1 Workflow
 # Usage:
 # ./bofs1_run <workflow> <path/structure.cif>
-# ./bofs1_run <workflow> <optimade_database> <id>
+# ./bofs1_run <workflow> <mp_api_key> <mp-id>
 
 import subprocess
 import sys
@@ -86,6 +86,7 @@ def bofs1_test(*args):
 if __name__ == '__main__':
     workflows = {name: func for name, func in globals().items() if callable(func) and not name.startswith('_')}
     workflows[sys.argv[1]](*sys.argv[2:])
+
 
 
 
