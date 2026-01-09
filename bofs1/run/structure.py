@@ -90,9 +90,6 @@ def relax_structure(structure_path, relax_config):
         final_block,
         re.DOTALL
     )
-    if not positions_match:
-        print("Warning: Could not parse atomic positions. Returning original structure.")
-        return structure_path
     positions_block = positions_match.group(1).strip()
     symbols = []
     positions = []
