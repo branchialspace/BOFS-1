@@ -52,15 +52,76 @@ def serialize_structure(structure_path):
 
 def relax_structure(structure_path, relax_config):
     """
-    Run QE vc-relax, save relaxed structure.
+    Run QE relax/vc-relax, parse relaxed structure from output, save as new CIF.
     Returns
     relaxed_path : Path
-        Path to relaxed structure
+        Path to relaxed structure CIF
     """
-    # Run QE vc-relax
+    # Run QE relax
     bofs1.pwx(structure_path, relax_config)
+    calculation = relax_config['control']['calculation']
+    structure_name = os.path.splitext(os.path.basename(structure_path))[0]
+    pwo_path = f"{structure_name}_{calculation}.pwo"
+    with open(pwo_path, 'r') as f:
+        content = f.read()
+    final_block_match = re.search(
+        r'Begin final coordinates.*?End final coordinates',
+        content,
+        re.DOTALL
+    )
+    final_block = final_block_match.group(0)
+    # Parse CELL_PARAMETERS (present in vc-relax)
+    cell_match = re.search(
+        r'CELL_PARAMETERS \(angstrom\)\s*\n\s*([\d\.\-\+eE\s]+)\n\s*([\d\.\-\+eE\s]+)\n\s*([\d\.\-\+eE\s]+)',
+        final_block
+    )
+    if cell_match:
+        cell = []
+        for i in range(1, 4):
+            vec = [float(x) for x in cell_match.group(i).split()]
+            cell.append(vec)
+    else:
+        # If no new cell parameters (regular relax, not vc-relax), use original
+        original_atoms = read(structure_path)
+        cell = original_atoms.get_cell().tolist()
+    # Parse ATOMIC_POSITIONS
+    positions_match = re.search(
+        r'ATOMIC_POSITIONS \(angstrom\)\s*\n(.*?)(?=End final coordinates)',
+        final_block,
+        re.DOTALL
+    )
+    if not positions_match:
+        print("Warning: Could not parse atomic positions. Returning original structure.")
+        return structure_path
+    positions_block = positions_match.group(1).strip()
+    symbols = []
+    positions = []
+    for line in positions_block.split('\n'):
+        parts = line.split()
+        if len(parts) >= 4:
+            symbols.append(parts[0])
+            positions.append([float(parts[1]), float(parts[2]), float(parts[3])])
+    # Create new Atoms object with relaxed coordinates
+    relaxed_atoms = Atoms(
+        symbols=symbols,
+        positions=positions,
+        cell=cell,
+        pbc=True
+    )
+    # Generate new filename with _{calculation} right after serialization tag
+    path = Path(structure_path)
+    name = path.stem
+    if len(name) > 13 and name[12] == '-' and name[:12].isdigit():
+        serial_tag = name[:12]
+        rest = name[13:]
+        new_name = f"{serial_tag}_{calculation}-{rest}"
+    else:
+        new_name = f"{calculation}_{name}"
+    relaxed_path = Path.cwd() / f"{new_name}.cif"
+    write(relaxed_path, relaxed_atoms)
+    print(f"Relaxed structure saved to: {relaxed_path}")
     
-    return structure_path
+    return relaxed_path
     
 def spglib_structure(structure_path):
     """
