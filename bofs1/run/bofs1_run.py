@@ -40,12 +40,11 @@ def bofs1_test(*args):
     ibz_nscf_config['noinv'] = False
     bofs1.pwx(relaxed_path, ibz_nscf_config)
     # wan2respack preprocess
-    ibz_pwi = f'{name}_nscf_ibz.pwi'
     pwo = f'{name}_nscf_ibz.pwo'
     pwi = f'{name}_nscf_ibz.pwi'
     w90_config = './bofs1/wannier90/w90_configs/mlwf_config.py'
     bofs1.w90_win(pwo, pwi, w90_config, nokpts=True) # No k-points in .win for w2r .win reference
-    subprocess.run(f'bash ./bofs1/respack/respack_run.sh wan2respack_pre ./{name}/{name}.save {name} {ibz_pwi} {name}.win ./wan2respack_work', shell=True, check=True)
+    subprocess.run(f'bash ./bofs1/respack/respack_run.sh wan2respack_pre ./{name}/{name}.save {name} {pwi} {name}.win ./wan2respack_work', shell=True, check=True)
     subprocess.run(f'cp {name}.win {name}_ibz.win', shell=True, check=True)
     # QE NSCF W2R
     subprocess.run(f'mpirun -n {np} ./qe-7.5/bin/pw.x -nk 1 < {name}_nscf_w2r.in > {name}_nscf_w2r.out', shell=True, check=True)
@@ -85,3 +84,4 @@ def bofs1_test(*args):
 if __name__ == '__main__':
     workflows = {name: func for name, func in globals().items() if callable(func) and not name.startswith('_')}
     workflows[sys.argv[1]](*sys.argv[2:])
+
