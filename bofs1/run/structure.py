@@ -68,14 +68,12 @@ def relax_structure(structure_path, relax_config):
     final_block_match = re.search(
         r'Begin final coordinates.*?End final coordinates',
         content,
-        re.DOTALL
-    )
+        re.DOTALL)
     final_block = final_block_match.group(0)
     # Parse CELL_PARAMETERS (present in vc-relax)
     cell_match = re.search(
         r'CELL_PARAMETERS \(angstrom\)\s*\n\s*([\d\.\-\+eE\s]+)\n\s*([\d\.\-\+eE\s]+)\n\s*([\d\.\-\+eE\s]+)',
-        final_block
-    )
+        final_block)
     if cell_match:
         cell = []
         for i in range(1, 4):
@@ -89,8 +87,7 @@ def relax_structure(structure_path, relax_config):
     positions_match = re.search(
         r'ATOMIC_POSITIONS \(angstrom\)\s*\n(.*?)(?=End final coordinates)',
         final_block,
-        re.DOTALL
-    )
+        re.DOTALL)
     positions_block = positions_match.group(1).strip()
     symbols = []
     positions = []
@@ -104,8 +101,7 @@ def relax_structure(structure_path, relax_config):
         symbols=symbols,
         positions=positions,
         cell=cell,
-        pbc=True
-    )
+        pbc=True)
     # Generate new filename with _{calculation} right after serialization tag
     path = Path(structure_path)
     name = path.stem
