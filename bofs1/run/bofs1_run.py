@@ -13,34 +13,32 @@ import bofs1
 def bofs1_test(*args):
     """BOFS-1 workflow"""
     structure_path = args[0] if len(args) == 1 else bofs1.get_structure(*args)
-    name = Path(structure_path).stem
-    # Serialize structure
     structure_path = bofs1.serialize_structure(structure_path)
+    bofs1.spglib_structure(structure_path)
     # QE d3 vc-relax structure
     relax_config = copy.deepcopy(bofs1.pwx_relax_config)
     relax_config['control']['calculation'] = 'vc-relax'
     relax_config['system']['vdw_corr'] = 'grimme-d3'
     relax_config['system']['dftd3_version'] = 4  # D3-BJ damping
-    structure_path = bofs1.relax_structure(structure_path, relax_config)
-    name = Path(structure_path).stem
-    # spglib detect structure space group
-    bofs1.spglib_structure(structure_path)
+    vc_relaxed_path = bofs1.relax_structure(structure_path, relax_config)
+    bofs1.spglib_structure(vc_relaxed_path)
     # QE d2 relax structure
     relax_config = copy.deepcopy(bofs1.pwx_relax_config)
-    structure_path = bofs1.relax_structure(structure_path, relax_config)
-    name = Path(structure_path).stem
-    # spglib detect structure space group
-    bofs1.spglib_structure(structure_path)
+    relaxed_path = bofs1.relax_structure(vc_relaxed_path, relax_config)
+    bofs1.spglib_structure(relaxed_path)
+    name = Path(relaxed_path).stem
+    # Compare structures
+    bofs1.compare_structure(structure_path, vc_relaxed_path, relaxed_path)
     # QE SCF
     scf_config = copy.deepcopy(bofs1.pwx_scf_config)
     np = scf_config['command'][scf_config['command'].index('-np') + 1]
-    bofs1.pwx(structure_path, scf_config)
+    bofs1.pwx(relaxed_path, scf_config)
     # QE NSCF IBZ W2R
     ibz_nscf_config = copy.deepcopy(bofs1.pwx_nscf_config)
     ibz_nscf_config['kpts_method'] = '' # Use automatic/IBZ
     ibz_nscf_config['nosym'] = False
     ibz_nscf_config['noinv'] = False
-    bofs1.pwx(structure_path, ibz_nscf_config)
+    bofs1.pwx(relaxed_path, ibz_nscf_config)
     # wan2respack preprocess
     ibz_pwi = f'{name}_nscf_ibz.pwi'
     pwo = f'{name}_nscf_ibz.pwo'
@@ -56,7 +54,7 @@ def bofs1_test(*args):
     # pw2wannier90 W2R
     pw2w90x_config = copy.deepcopy(bofs1.pw2w90x_config)
     pw2w90x_config['inputpp']['seedname'] = f'{name}_w2r'
-    bofs1.pw2w90x(structure_path, pw2w90x_config)
+    bofs1.pw2w90x(relaxed_path, pw2w90x_config)
     # Wannier90 W2R
     subprocess.run(f'bash ./bofs1/wannier90/w90_run.sh w90_run {name}_w2r {np}', shell=True, check=True)
     # wan2respack
@@ -65,10 +63,10 @@ def bofs1_test(*args):
     subprocess.run(f'bash ./bofs1/respack/respack_run.sh respack_run ./respack_calc 1 1 {np}', shell=True, check=True)
     # QE SCF+U+V
     scf_config = copy.deepcopy(bofs1.pwx_scf_config)
-    bofs1.pwx(structure_path, scf_config)
+    bofs1.pwx(relaxed_path, scf_config)
     # QE NSCF+U+V
     nscf_config = copy.deepcopy(bofs1.pwx_nscf_config)
-    bofs1.pwx(structure_path, nscf_config)
+    bofs1.pwx(relaxed_path, nscf_config)
     # Wannier90 preprocess
     pwo = f'{name}_nscf.pwo'
     pwi = f'{name}_nscf.pwi'
@@ -77,34 +75,13 @@ def bofs1_test(*args):
     # pw2wannier90
     pw2w90x_config = copy.deepcopy(bofs1.pw2w90x_config)
     pw2w90x_config['inputpp']['seedname'] = f'{name}'
-    bofs1.pw2w90x(structure_path, pw2w90x_config)
+    bofs1.pw2w90x(relaxed_path, pw2w90x_config)
     # Wannier90
     subprocess.run(f'bash ./bofs1/wannier90/w90_run.sh w90_run {name} {np}', shell=True, check=True)
     # QE Phonons
     phonons_config = copy.deepcopy(bofs1.phx_config)
-    bofs1.phx(structure_path, phonons_config)
-    
+    bofs1.phx(relaxed_path, phonons_config)
 
 if __name__ == '__main__':
     workflows = {name: func for name, func in globals().items() if callable(func) and not name.startswith('_')}
     workflows[sys.argv[1]](*sys.argv[2:])
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
