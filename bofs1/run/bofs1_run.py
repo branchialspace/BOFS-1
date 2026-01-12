@@ -28,7 +28,7 @@ def bofs1_test(*args):
     bofs1.spglib_structure(relaxed_path)
     name = Path(relaxed_path).stem
     # Compare structures
-    bofs1.compare_structure(structure_path, vc_relaxed_path, relaxed_path)
+    bofs1.compare_structure([structure_path, vc_relaxed_path, relaxed_path])
     # QE SCF
     scf_config = copy.deepcopy(bofs1.pwx_scf_config)
     np = scf_config['command'][scf_config['command'].index('-np') + 1]
@@ -84,4 +84,5 @@ def bofs1_test(*args):
 if __name__ == '__main__':
     workflows = {name: func for name, func in globals().items() if callable(func) and not name.startswith('_')}
     workflows[sys.argv[1]](*sys.argv[2:])
+
 
