@@ -26,7 +26,7 @@ pwx_relax_config = {
         'disk_io': 'low',
         'verbosity': 'high',
         'tprnfor': True,
-        'tstress': False,
+        'tstress': True,
         'etot_conv_thr': 1.0e-5,
         'forc_conv_thr': 1.0e-4
     },
