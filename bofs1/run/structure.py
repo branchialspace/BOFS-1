@@ -103,7 +103,7 @@ def relax_structure(structure_path, relax_config):
         positions=positions,
         cell=cell,
         pbc=True)
-    # Generate new filename with abreviated calculation right after serialization tag
+    # Write new filename with abbreviated calculation right after serialization tag
     path = Path(structure_path)
     name = path.stem
     prefix = "vcr-" if calculation == "vc-relax" else "r-"
