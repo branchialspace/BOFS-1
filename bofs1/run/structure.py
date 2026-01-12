@@ -137,7 +137,8 @@ def spglib_structure(structure_path):
         number = dataset.number
     print(f"Detected space group: {spacegroup} ({number})")
     # Write spglib dataset to file
-    spglib_path = f"{structure_path}_spglib"
+    structure_stem = os.path.splitext(structure_path)[0]
+    spglib_path = f"{structure_stem}_spglib"
     with open(spglib_path, 'w') as f:
         f.write(str(dataset))
 
