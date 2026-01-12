@@ -41,7 +41,7 @@ pwx_relax_config = {
         'lspinorb': True
     },
     'electrons': {
-        'conv_thr': 1.0e-6,
+        'conv_thr': 1.0e-9,
         'mixing_beta': 0.3,
         'electron_maxstep': 300,
     }
