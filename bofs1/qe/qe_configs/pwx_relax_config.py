@@ -12,7 +12,7 @@ pwx_relax_config = {
     'kpts_k_minimum': 6,
     'kpts_k_spacing': 0.10,
     'kpts_shift': (1,1,1),
-    'nbnd_scalar': 1.3, # 6 for Bi vc-relax
+    'nbnd_scalar': 6, # 6 for Bi vc-relax
     'initial_u_value': "off",
     "magnetization": {
         "d_3d": 0.6,
