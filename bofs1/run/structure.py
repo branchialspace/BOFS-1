@@ -72,7 +72,7 @@ def relax_structure(structure_path, relax_config):
     final_block = final_block_match.group(0)
     # Parse CELL_PARAMETERS (present in vc-relax)
     cell_match = re.search(
-        r'CELL_PARAMETERS \(angstrom\)\s*\n\s*([\d\.\-\+eE\s]+)\n\s*([\d\.\-\+eE\s]+)\n\s*([\d\.\-\+eE\s]+)',
+        r'CELL_PARAMETERS \(angstrom\)\s*\n\s*([\d\.\-\+eE ]+)\n\s*([\d\.\-\+eE ]+)\n\s*([\d\.\-\+eE ]+)',
         final_block)
     if cell_match:
         cell = []
