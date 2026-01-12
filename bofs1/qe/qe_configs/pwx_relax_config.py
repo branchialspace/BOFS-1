@@ -7,12 +7,12 @@ pwx_relax_config = {
                 '-x', 'FLAME_NUM_THREADS=1',
                 '-np', '32',
                 './qe-7.5/bin/pw.x'],
-    'wfn_scalar': 1.15,
-    'rho_scalar': 1.15,
+    'wfn_scalar': 2,
+    'rho_scalar': 2,
     'kpts_k_minimum': 6,
-    'kpts_k_spacing': 0.10,
+    'kpts_k_spacing': 0.13,
     'kpts_shift': (1,1,1),
-    'nbnd_scalar': 6, # 6 for Bi vc-relax
+    'nbnd_scalar': 6,
     'initial_u_value': "off",
     "magnetization": {
         "d_3d": 0.6,
