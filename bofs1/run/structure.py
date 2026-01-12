@@ -2,6 +2,7 @@ import os
 import re
 from pathlib import Path
 from datetime import datetime
+from pprint import pformat
 import numpy as np
 from scipy.optimize import linear_sum_assignment
 import spglib
@@ -267,7 +268,7 @@ def compare_structure(structure_paths):
     # Write results to file
     compare_path = f"{names[0]}_compare"
     with open(compare_path, 'w') as f:
-        f.write(str(results))
+        f.write(pformat(results, width=100))
     print(f"\nComparison results written to: {compare_path}")
     
     return results
