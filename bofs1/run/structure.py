@@ -102,13 +102,13 @@ def relax_structure(structure_path, relax_config):
         positions=positions,
         cell=cell,
         pbc=True)
-    # Generate new filename with _{calculation} right after serialization tag
+    # Generate new filename with {calculation}_ right after serialization tag
     path = Path(structure_path)
     name = path.stem
     if len(name) > 13 and name[12] == '-' and name[:12].isdigit():
         serial_tag = name[:12]
         rest = name[13:]
-        new_name = f"{serial_tag}_{calculation}-{rest}"
+        new_name = f"{serial_tag}-{calculation}_{rest}"
     else:
         new_name = f"{calculation}_{name}"
     relaxed_path = Path.cwd() / f"{new_name}.cif"
