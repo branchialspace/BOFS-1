@@ -11,7 +11,7 @@ pwx_relax_config = {
     'rho_scalar': 6,
     'kpts_k_minimum': 6,
     'kpts_k_spacing': 0.13,
-    'kpts_shift': (1,1,1),
+    'kpts_shift': (0,0,0),
     'nbnd_scalar': 6,
     'initial_u_value': "off",
     "magnetization": {
