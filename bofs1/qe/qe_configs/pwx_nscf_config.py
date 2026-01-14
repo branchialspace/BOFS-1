@@ -32,8 +32,8 @@ pwx_nscf_config = {
     'system': {
         'input_dft': 'pbe',
         'vdw_corr': 'grimme-d2',
-        'nosym': 'true',
-        'noinv': 'true',
+        'nosym': True,
+        'noinv': True,
         'ibrav': 0,
         'occupations': 'smearing',
         'smearing': 'fermi-dirac',
