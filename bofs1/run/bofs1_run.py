@@ -67,7 +67,7 @@ def bofs1_test(*args):
     bofs1.pwx(relaxed_path, scf_config)
     # QE NSCF+U+V
     nscf_config = copy.deepcopy(bofs1.pwx_nscf_config)
-    nscf_config['system']['force_symmorphic'] = True
+    nscf_config['system']['force_symmorphic'] = True # for Yambo
     bofs1.pwx(relaxed_path, nscf_config)
     # Wannier90 preprocess
     pwo = f'{name}_nscf.pwo'
@@ -87,6 +87,7 @@ def bofs1_test(*args):
 if __name__ == '__main__':
     workflows = {name: func for name, func in globals().items() if callable(func) and not name.startswith('_')}
     workflows[sys.argv[1]](*sys.argv[2:])
+
 
 
 
