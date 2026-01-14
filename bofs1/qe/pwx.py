@@ -216,6 +216,36 @@ def pwx(
 
         return nbnd
 
+    def nbnd(structure, pseudo_dict, pseudo_dir, nbnd_scalar=1.2):
+        """
+        Parse z_valence from UPF for number of bands.
+        nbnd_scalar: float
+            Scaling factor for bands.
+        Returns
+        nbnd : int
+            Number of electronic states (bands).
+        """
+        unique_symbols = sorted(list(set(structure.get_chemical_symbols())))
+        valence_counts = {}
+        for symbol in unique_symbols:
+            pp_filename = pseudo_dict[symbol]
+            pp_path = Path(pseudo_dir) / pp_filename.strip("'").strip('"')
+            with open(pp_path, 'r') as f:
+                content = f.read()
+            # Regex extract z_valence
+            match = re.search(r'z_valence\s*=\s*"\s*([\d\.E\+\-]+)\s*"', content, re.IGNORECASE)
+            valence_counts[symbol] = float(match.group(1))
+        total_electrons = sum(valence_counts[atom.symbol] for atom in structure)
+        # Minimum bands = Total Electrons / 2
+        min_bands = total_electrons / 2.0
+        # Calculate target bands
+        n_bands = max(int(min_bands * nbnd_scalar), int(min_bands) + 4)
+        # Ensure even number of bands for spin consistency
+        if n_bands % 2 != 0:
+            n_bands += 1
+        
+        return n_bands
+
     def charge(structure_path, structure_name):
         """
         Determine the total charge of the system from the structure name or (if '_charged'
