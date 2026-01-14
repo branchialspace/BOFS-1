@@ -65,10 +65,8 @@ def bofs1_test(*args):
     # QE SCF+U+V
     scf_config = copy.deepcopy(bofs1.pwx_scf_config)
     bofs1.pwx(relaxed_path, scf_config)
-    # QE NSCF+U+V
+    # QE NSCF+U+V for ph.x
     nscf_config = copy.deepcopy(bofs1.pwx_nscf_config)
-    nscf_config['system']['force_symmorphic'] = True # for Yambo
-    nscf_config['nbnd_scalar'] = 4
     bofs1.pwx(relaxed_path, nscf_config)
     # Wannier90 preprocess
     pwo = f'{name}_nscf.pwo'
@@ -84,10 +82,16 @@ def bofs1_test(*args):
     # QE Phonons
     phonons_config = copy.deepcopy(bofs1.phx_config)
     bofs1.phx(relaxed_path, phonons_config)
+    # QE NSCF+U+V for Yambo
+    nscf_config = copy.deepcopy(bofs1.pwx_nscf_config)
+    nscf_config['system']['force_symmorphic'] = True
+    nscf_config['nbnd_scalar'] = 4
+    bofs1.pwx(relaxed_path, nscf_config)
 
 if __name__ == '__main__':
     workflows = {name: func for name, func in globals().items() if callable(func) and not name.startswith('_')}
     workflows[sys.argv[1]](*sys.argv[2:])
+
 
 
 
