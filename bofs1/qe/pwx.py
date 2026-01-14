@@ -213,8 +213,8 @@ def pwx(
             match = re.search(r'z_valence\s*=\s*"\s*([\d\.E\+\-]+)\s*"', content, re.IGNORECASE)
             valence_counts[symbol] = float(match.group(1))
         total_electrons = sum(valence_counts[atom.symbol] for atom in structure)
-        # Minimum bands = Total Electrons / 2
-        min_bands = total_electrons / 2.0
+        # Minimum bands = Total Electrons
+        min_bands = total_electrons # total_electrons / 2.0 for noncolin = false systems
         # Calculate target bands
         n_bands = max(int(min_bands * nbnd_scalar), int(min_bands) + 4)
         # Ensure even number of bands for spin consistency
