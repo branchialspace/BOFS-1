@@ -193,29 +193,6 @@ def pwx(
     
         return content_nscf, content_win
 
-    def nbnd(structure, nbnd_scalar=2):
-        """
-        Number of electronic states (bands) to be calculated,
-        scaled total valence count from Mendeleev.
-        nbnd_scalar: float
-            Scaling factor for bands.
-        Returns
-        nbnd : int
-            Number of electronic states (bands).
-        """
-        # Sum valence electrons for each atom
-        total_valence = 0
-        for atom in structure:
-            symbol = atom.symbol
-            elem = element(symbol)
-            valence = elem.nvalence()
-            total_valence += valence
-        # Calculate recommended nbnd with safety factor
-        # Typically we use max(int(total_valence * 0.7), int(total_valence * 0.5) + 4) for a metal
-        nbnd = (int(total_valence * nbnd_scalar))
-
-        return nbnd
-
     def nbnd(structure, pseudo_dict, pseudo_dir, nbnd_scalar=1.2):
         """
         Parse z_valence from UPF for number of bands.
