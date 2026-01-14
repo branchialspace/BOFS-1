@@ -20,6 +20,8 @@ def bofs1_test(*args):
     relax_config['control']['calculation'] = 'vc-relax'
     relax_config['system']['vdw_corr'] = 'grimme-d3'
     relax_config['system']['dftd3_version'] = 4  # D3-BJ damping
+    relax_config['control']['etot_conv_thr'] = 1.0e-5
+    relax_config['control']['forc_conv_thr'] = 1.0e-4
     vc_relaxed_path = bofs1.relax_structure(structure_path, relax_config)
     bofs1.spglib_structure(vc_relaxed_path)
     # QE d2 relax structure
@@ -85,6 +87,7 @@ def bofs1_test(*args):
 if __name__ == '__main__':
     workflows = {name: func for name, func in globals().items() if callable(func) and not name.startswith('_')}
     workflows[sys.argv[1]](*sys.argv[2:])
+
 
 
 
