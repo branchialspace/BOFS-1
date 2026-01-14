@@ -36,7 +36,7 @@ pwx_relax_config = {
         'ibrav': 0,
         'occupations': 'smearing',
         'smearing': 'fermi-dirac',
-        'degauss': 0.01,
+        'degauss': 0.002, # 0.002 bulk Bi, 0.01 Bi-MOF
         'noncolin': True,
         'lspinorb': True
     },
