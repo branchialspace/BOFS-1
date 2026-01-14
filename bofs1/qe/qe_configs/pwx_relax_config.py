@@ -27,8 +27,8 @@ pwx_relax_config = {
         'verbosity': 'high',
         'tprnfor': True,
         'tstress': True,
-        'etot_conv_thr': 1.0e-5,
-        'forc_conv_thr': 1.0e-4
+        'etot_conv_thr': 1.0e-6,
+        'forc_conv_thr': 1.0e-5
     },
     'system': {
         'input_dft': 'pbe',
