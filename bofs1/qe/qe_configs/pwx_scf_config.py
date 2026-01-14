@@ -7,12 +7,12 @@ pwx_scf_config = {
                 '-x', 'FLAME_NUM_THREADS=1',
                 '-np', '32',
                 './qe-7.5/bin/pw.x'],
-    'wfn_scalar': 1.15,
-    'rho_scalar': 1.15,
+    'wfn_scalar': 6,
+    'rho_scalar': 6,
     'kpts_k_minimum': 6,
     'kpts_k_spacing': 0.05,
-    'kpts_shift': (1,1,1),
-    'nbnd_scalar': 2.3,
+    'kpts_shift': (0,0,0),
+    'nbnd_scalar': 6,
     'initial_u_value': "off",
     "magnetization": {
         "d_3d": 0.6,
@@ -39,7 +39,7 @@ pwx_scf_config = {
         'lspinorb': True
     },
     'electrons': {
-        'conv_thr': 1.0e-6,
+        'conv_thr': 1.0e-12,
         'mixing_beta': 0.3,
         'electron_maxstep': 300,
     }
