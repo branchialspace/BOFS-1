@@ -560,7 +560,7 @@ def pwx(
     kpoints = kpoints(structure, k_minimum, k_spacing, shift)
     # Set nbnd
     nbnd_scalar = config['nbnd_scalar']
-    config['system']['nbnd'] = nbnd(structure, nbnd_scalar)
+    config['system']['nbnd'] = nbnd(structure, pseudopotentials, pseudo_dir, nbnd_scalar)
     # Set total charge
     charge = charge(structure_path, structure_name)
     config['system']['tot_charge'] = charge
