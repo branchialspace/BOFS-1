@@ -45,7 +45,6 @@ __all__ = [
     'phx',
     'projwfcx',
     'run',
-    'pwx_scf',
     'pwx_relax_config',
     'pwx_scf_config',
     'pwx_nscf_config',
