@@ -62,11 +62,16 @@ def bofs1_test(*args):
     subprocess.run(f'bash ./bofs1/respack/respack_run.sh wan2respack_post ./wan2respack_work ./respack_calc', shell=True, check=True)
     # Respack
     subprocess.run(f'bash ./bofs1/respack/respack_run.sh respack_run ./respack_calc 1 1 {np}', shell=True, check=True)
-    # QE SCF+U+V
+    # QE SCF+U
     scf_config = copy.deepcopy(bofs1.pwx_scf_config)
     bofs1.pwx(relaxed_path, scf_config)
-    # QE NSCF+U+V for ph.x
+    # QE Phonons
+    phonons_config = copy.deepcopy(bofs1.phx_config)
+    bofs1.phx(relaxed_path, phonons_config)
+    # QE NSCF+U
     nscf_config = copy.deepcopy(bofs1.pwx_nscf_config)
+    nscf_config['system']['force_symmorphic'] = True
+    nscf_config['nbnd_scalar'] = 4
     bofs1.pwx(relaxed_path, nscf_config)
     # Wannier90 preprocess
     pwo = f'{name}_nscf.pwo'
@@ -79,18 +84,12 @@ def bofs1_test(*args):
     bofs1.pw2w90x(relaxed_path, pw2w90x_config)
     # Wannier90
     subprocess.run(f'bash ./bofs1/wannier90/w90_run.sh w90_run {name} {np}', shell=True, check=True)
-    # QE Phonons
-    phonons_config = copy.deepcopy(bofs1.phx_config)
-    bofs1.phx(relaxed_path, phonons_config)
-    # QE NSCF+U+V for Yambo
-    nscf_config = copy.deepcopy(bofs1.pwx_nscf_config)
-    nscf_config['system']['force_symmorphic'] = True
-    nscf_config['nbnd_scalar'] = 4
-    bofs1.pwx(relaxed_path, nscf_config)
+    # yambo
 
 if __name__ == '__main__':
     workflows = {name: func for name, func in globals().items() if callable(func) and not name.startswith('_')}
     workflows[sys.argv[1]](*sys.argv[2:])
+
 
 
 
