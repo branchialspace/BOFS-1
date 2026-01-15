@@ -119,18 +119,26 @@ def relax_structure(structure_path, relax_config):
     
     return relaxed_path
     
-def spglib_structure(structure_path):
+def spglib_structure(structure_path, symmetrize=False, symprec=1e-5):
     """
     Determine space group with spglib.
     Write dataset to file with _spglib suffix.
-    """
+    Optionally overwrite structure file.
+    structure_path : str
+        Path to the structure file.
+    symmetrize : bool
+        If True, symmetrize atomic positions and lattice vectors using spglib
+        and overwrite the structure file.
+    symprec : float
+        Symmetry precision for spglib. Default is 1e-5.
+    """    
     atoms = read(structure_path)
     # Detect symmetry with spglib
     lattice = atoms.get_cell()
     positions = atoms.get_scaled_positions()
     numbers = atoms.get_atomic_numbers()
     cell_tuple = (lattice, positions, numbers)
-    dataset = spglib.get_symmetry_dataset(cell_tuple)
+    dataset = spglib.get_symmetry_dataset(cell_tuple, symprec=symprec)
     if isinstance(dataset, dict):
         spacegroup = dataset["international"]
         number = dataset["number"]
@@ -143,6 +151,25 @@ def spglib_structure(structure_path):
     spglib_path = f"{structure_stem}_spglib"
     with open(spglib_path, 'w') as f:
         f.write(str(dataset))
+    # Symmetrize structure
+    if symmetrize:
+        standardized = spglib.standardize_cell(
+            cell_tuple,
+            to_primitive=False,
+            no_idealize=False,
+            symprec=symprec)
+        std_lattice, std_positions, std_numbers = standardized
+        # Map atomic numbers back to symbols
+        std_symbols = [chemical_symbols[n] for n in std_numbers]
+        # Create new ASE Atoms object with symmetrized geometry
+        symmetrized_atoms = Atoms(
+            symbols=std_symbols,
+            scaled_positions=std_positions,
+            cell=std_lattice,
+            pbc=True)
+        # Overwrite structure file
+        write(structure_path, symmetrized_atoms)
+        print(f"Structure symmetrized and overwritten: {structure_path}")
 
 def compare_structure(structure_paths):
     """
@@ -270,6 +297,15 @@ def compare_structure(structure_paths):
     compare_path = f"{names[0]}_compare"
     with open(compare_path, 'w') as f:
         f.write(pformat(results, width=100))
+        # Write full CIF files for reference
+        for i, (name, path) in enumerate(zip(names, structure_paths), start=1):
+            abs_path = Path(path).absolute()
+            f.write(f"\n\n{'='*60}\n")
+            f.write(f"[{i}] {name}\n")
+            f.write(f"    {abs_path}\n")
+            f.write(f"{'='*60}\n")
+            with open(path, 'r') as cif:
+                f.write(cif.read())
     print(f"\nComparison results written to: {compare_path}")
     
     return results
