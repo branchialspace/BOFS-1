@@ -109,6 +109,9 @@ def pwx(
         # scale to be safe, then round up
         ecutwfc = ceil(max_wfc * wfn_scalar)
         ecutrho = ceil(max_rho * rho_scalar)
+        min_required_rho = 4.0 * ecutwfc
+        if ecutrho < min_required_rho:
+            ecutrho = int(min_required_rho)
 
         return ecutwfc, ecutrho
 
