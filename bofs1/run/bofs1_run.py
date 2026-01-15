@@ -27,7 +27,7 @@ def bofs1_test(*args):
     # QE d2 relax structure
     relax_config = copy.deepcopy(bofs1.pwx_relax_config)
     relaxed_path = bofs1.relax_structure(vc_relaxed_path, relax_config)
-    bofs1.spglib_structure(relaxed_path)
+    bofs1.spglib_structure(relaxed_path, symmetrize=True)
     name = Path(relaxed_path).stem
     # Compare structures
     bofs1.compare_structure([structure_path, vc_relaxed_path, relaxed_path])
@@ -89,6 +89,7 @@ def bofs1_test(*args):
 if __name__ == '__main__':
     workflows = {name: func for name, func in globals().items() if callable(func) and not name.startswith('_')}
     workflows[sys.argv[1]](*sys.argv[2:])
+
 
 
 
