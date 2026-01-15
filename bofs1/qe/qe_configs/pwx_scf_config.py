@@ -23,7 +23,7 @@ pwx_scf_config = {
         'calculation': 'scf',
         'restart_mode': 'from_scratch',
         'pseudo_dir': './ONCVPseudoPack/PseudoDojo/FR_v0.4/PBE_stringent',    # ./ONCVPseudoPack/PseudoDojo/FR_v0.4/PBE_stringent   ./pslibrary/rel-pbe/PSEUDOPOTENTIALS 
-        'disk_io': 'low',
+        'disk_io': 'medium',
         'verbosity': 'high',
         'tprnfor': False,
         'tstress': False
