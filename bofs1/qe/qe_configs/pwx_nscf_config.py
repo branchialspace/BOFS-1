@@ -24,7 +24,7 @@ pwx_nscf_config = {
         'calculation': 'nscf',
         'restart_mode': 'from_scratch',
         'pseudo_dir': './pslibrary/rel-pbe/PSEUDOPOTENTIALS',    # ./ONCVPseudoPack/PseudoDojo/FR_v0.4/PBE_stringent   ./pslibrary/rel-pbe/PSEUDOPOTENTIALS 
-        'disk_io': 'medium',
+        'disk_io': 'low',
         'verbosity': 'high',
         'tprnfor': False,
         'tstress': False
