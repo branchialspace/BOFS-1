@@ -7,6 +7,7 @@ import numpy as np
 import spglib
 from ase import Atoms
 from ase.io import read, write
+from ase.data import chemical_symbols
 from pymatgen.io.ase import AseAtomsAdaptor
 from pymatgen.analysis.structure_matcher import StructureMatcher
 import bofs1
