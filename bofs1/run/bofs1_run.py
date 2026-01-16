@@ -16,7 +16,6 @@ def bofs1_test(*args):
     raw_path = args[0] if len(args) == 1 else bofs1.get_structure(*args)
     structure_path = bofs1.serialize_structure(raw_path)
     bofs1.spglib_structure(structure_path, symmetrize=True)
-    bofs1.compare_structure([raw_path, structure_path])
     # QE d3 vc-relax structure
     relax_config = copy.deepcopy(bofs1.pwx_relax_config)
     relax_config['control']['calculation'] = 'vc-relax'
@@ -91,4 +90,5 @@ def bofs1_test(*args):
 if __name__ == '__main__':
     workflows = {name: func for name, func in globals().items() if callable(func) and not name.startswith('_')}
     workflows[sys.argv[1]](*sys.argv[2:])
+
 
