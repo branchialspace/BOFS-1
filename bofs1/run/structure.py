@@ -4,10 +4,11 @@ from pathlib import Path
 from datetime import datetime
 from pprint import pformat
 import numpy as np
-from scipy.optimize import linear_sum_assignment
 import spglib
 from ase import Atoms
 from ase.io import read, write
+from pymatgen.io.ase import AseAtomsAdaptor
+from pymatgen.analysis.structure_matcher import StructureMatcher
 import bofs1
 from mp_api.client import MPRester
 
@@ -174,8 +175,8 @@ def spglib_structure(structure_path, symmetrize=False, symprec=1e-5):
 def compare_structure(structure_paths):
     """
     Quantify geometric differences between near-identical relaxed structures.
-    Compares lattice parameters, volume, and atomic displacements pairwise.
-    Matches corresponding atoms by species using Hungarian.
+    Compare lattice parameters, volume, and atomic displacements pairwise.
+    Match corresponding atoms by species using pymatgen StructureMatcher.
     Write results to file with _compare suffix.
     structure_paths : list
         List of paths to .cif files (minimum 2).
@@ -195,40 +196,27 @@ def compare_structure(structure_paths):
             raise ValueError(f"Atom count mismatch: {names[0]} has {n_atoms}, {names[i]} has {len(s)}")
     def match_atoms(s1, s2):
         """
-        Match atoms between two structures by species using Hungarian.
-        Minimizes total displacement with periodic boundary conditions.
+        Match atoms between two structures using pymatgen StructureMatcher.
         Returns reordered indices for s2 to match s1 atom ordering.
         """
         symbols1 = s1.get_chemical_symbols()
         symbols2 = s2.get_chemical_symbols()
-        frac1 = s1.get_scaled_positions()
-        frac2 = s2.get_scaled_positions()
         # Validate same species composition
         if sorted(symbols1) != sorted(symbols2):
             raise ValueError("Structures have different chemical compositions")
-        reorder = np.zeros(len(s2), dtype=int)
-        species = sorted(set(symbols1))
-        for sp in species:
-            # Indices of this species in each structure
-            idx1 = [i for i, sym in enumerate(symbols1) if sym == sp]
-            idx2 = [i for i, sym in enumerate(symbols2) if sym == sp]
-            if len(idx1) != len(idx2):
-                raise ValueError(f"Species count mismatch for {sp}")
-            # Fractional positions for this species
-            pos1 = frac1[idx1]
-            pos2 = frac2[idx2]
-            # Cost matrix: minimum image distance between all pairs
-            n_sp = len(idx1)
-            cost = np.zeros((n_sp, n_sp))
-            for a in range(n_sp):
-                diff = pos2 - pos1[a]
-                diff = diff - np.round(diff)
-                cost[a, :] = np.linalg.norm(diff, axis=1)
-            # Hungarian algorithm for optimal assignment
-            row_ind, col_ind = linear_sum_assignment(cost)
-            # Map s1 indices to matched s2 indices
-            for r, c in zip(row_ind, col_ind):
-                reorder[idx1[r]] = idx2[c]
+        # Convert ASE Atoms to pymatgen Structure
+        adaptor = AseAtomsAdaptor()
+        pmg_s1 = adaptor.get_structure(s1)
+        pmg_s2 = adaptor.get_structure(s2)
+        # Use StructureMatcher to get site mapping
+        # primitive_cell=False ensures we don't reduce to primitive cell
+        # scale=False prevents volume rescaling
+        matcher = StructureMatcher(primitive_cell=False, scale=False)
+        mapping = matcher.get_mapping(pmg_s1, pmg_s2)
+        if mapping is None:
+            raise ValueError("StructureMatcher could not find a mapping between structures")
+        # mapping[i] gives the index in s2 that corresponds to site i in s1
+        reorder = np.array(mapping, dtype=int)
         return reorder
     results = {
         'names': names,
