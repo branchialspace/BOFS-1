@@ -20,7 +20,7 @@ pwx_relax_config = {
         "f": 0.8
     },
     'control': {
-        'calculation': 'relax',
+        'calculation': 'vc-relax',
         'restart_mode': 'from_scratch',
         'pseudo_dir': './ONCVPseudoPack/PseudoDojo/FR_v0.4/PBE_stringent',    # ./ONCVPseudoPack/PseudoDojo/FR_v0.4/PBE_stringent   ./pslibrary/rel-pbe/PSEUDOPOTENTIALS 
         'disk_io': 'medium',
@@ -32,7 +32,9 @@ pwx_relax_config = {
     },
     'system': {
         'input_dft': 'pbe',
-        'vdw_corr': 'grimme-d2',
+        'vdw_corr': 'grimme-d3',
+        'dftd3_version': 4,
+        'dftd3_threebody': False,
         'ibrav': 0,
         'occupations': 'smearing',
         'smearing': 'fermi-dirac',
