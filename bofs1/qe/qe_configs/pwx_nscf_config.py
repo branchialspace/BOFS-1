@@ -31,7 +31,9 @@ pwx_nscf_config = {
     },
     'system': {
         'input_dft': 'pbe',
-        'vdw_corr': 'grimme-d2',
+        'vdw_corr': 'grimme-d3',
+        'dftd3_version': 4,
+        'dftd3_threebody': False,
         'nosym': True,
         'noinv': True,
         'ibrav': 0,
