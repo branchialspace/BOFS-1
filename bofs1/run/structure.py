@@ -282,7 +282,7 @@ def compare_structure(structure_paths):
             print(f"  RMSD: {rmsd:.4f} Å | Max: {max_disp:.4f} Å ({max_disp_atom}[{max_disp_idx}])")
             print(f"  Cell: Δa={cell_diff[0]:.4f} Δb={cell_diff[1]:.4f} Δc={cell_diff[2]:.4f} Å")
     # Write results to file
-    compare_path = f"{names[0]}_compare"
+    compare_path = f"{names[-1]}_compare"
     with open(compare_path, 'w') as f:
         f.write(pformat(results, width=100))
         # Write full CIF files for reference
