@@ -23,7 +23,7 @@ pwx_relax_config = {
         'calculation': 'vc-relax',
         'restart_mode': 'from_scratch',
         'pseudo_dir': './ONCVPseudoPack/PseudoDojo/FR_v0.4/PBE_stringent',    # ./ONCVPseudoPack/PseudoDojo/FR_v0.4/PBE_stringent   ./pslibrary/rel-pbe/PSEUDOPOTENTIALS 
-        'disk_io': 'medium',
+        'disk_io': 'low',
         'verbosity': 'high',
         'tprnfor': True,
         'tstress': True,
