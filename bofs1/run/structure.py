@@ -157,7 +157,7 @@ def spglib_structure(structure_path, symmetrize=False, symprec=1e-5):
     if symmetrize:
         standardized = spglib.standardize_cell(
             cell_tuple,
-            to_primitive=False,
+            to_primitive=True,
             no_idealize=False,
             symprec=symprec)
         std_lattice, std_positions, std_numbers = standardized
