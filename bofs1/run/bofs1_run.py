@@ -12,9 +12,11 @@ import bofs1
 
 def bofs1_test(*args):
     """BOFS-1 workflow"""
+    # Initialize structure
     raw_path = args[0] if len(args) == 1 else bofs1.get_structure(*args)
     structure_path = bofs1.serialize_structure(raw_path)
     bofs1.spglib_structure(structure_path, symmetrize=True)
+    bofs1.compare_structure([raw_path, structure_path])
     # QE d3 vc-relax structure
     relax_config = copy.deepcopy(bofs1.pwx_relax_config)
     relax_config['control']['calculation'] = 'vc-relax'
@@ -24,13 +26,13 @@ def bofs1_test(*args):
     relax_config['control']['forc_conv_thr'] = 1.0e-4
     vc_relaxed_path = bofs1.relax_structure(structure_path, relax_config)
     bofs1.spglib_structure(vc_relaxed_path, symmetrize=True)
+    bofs1.compare_structure([raw_path, structure_path, vc_relaxed_path])
     # QE d2 relax structure
     relax_config = copy.deepcopy(bofs1.pwx_relax_config)
     relaxed_path = bofs1.relax_structure(vc_relaxed_path, relax_config)
     bofs1.spglib_structure(relaxed_path, symmetrize=True)
     name = Path(relaxed_path).stem
-    # Compare structures
-    bofs1.compare_structure([structure_path, vc_relaxed_path, relaxed_path])
+    bofs1.compare_structure([raw_path, structure_path, vc_relaxed_path, relaxed_path])
     # QE SCF
     scf_config = copy.deepcopy(bofs1.pwx_scf_config)
     np = scf_config['command'][scf_config['command'].index('-np') + 1]
@@ -89,3 +91,4 @@ def bofs1_test(*args):
 if __name__ == '__main__':
     workflows = {name: func for name, func in globals().items() if callable(func) and not name.startswith('_')}
     workflows[sys.argv[1]](*sys.argv[2:])
+
