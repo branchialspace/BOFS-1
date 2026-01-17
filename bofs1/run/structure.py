@@ -161,7 +161,7 @@ def symmetrize_structure(structure_path, symprec=1e-5):
     print(f"Symmetrized structure saved to: {symmetrized_path}")
 
     return symmetrized_path
-
+    
 def compare_structure(structure_paths):
     """
     Quantify geometric differences between near-identical relaxed structures.
@@ -184,7 +184,6 @@ def compare_structure(structure_paths):
     for i, s in enumerate(structures):
         if len(s) != n_atoms:
             raise ValueError(f"Atom count mismatch: {names[0]} has {n_atoms}, {names[i]} has {len(s)}")
-
     def match_atoms(s1, s2):
         """
         Match atoms between two structures using pymatgen StructureMatcher.
@@ -209,7 +208,6 @@ def compare_structure(structure_paths):
         # mapping[i] gives the index in s2 that corresponds to site i in s1
         reorder = np.array(mapping, dtype=int)
         return reorder
-
     results = {
         'names': names,
         'pairwise': []}
