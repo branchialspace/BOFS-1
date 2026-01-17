@@ -8,6 +8,8 @@ import spglib
 from ase import Atoms
 from ase.io import read, write
 from ase.data import chemical_symbols
+from pymatgen.core import Structure
+from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.io.ase import AseAtomsAdaptor
 from pymatgen.analysis.structure_matcher import StructureMatcher
 import bofs1
@@ -121,57 +123,45 @@ def relax_structure(structure_path, relax_config):
     
     return relaxed_path
     
-def spglib_structure(structure_path, symmetrize=False, symprec=1e-5):
+def symmetrize_structure(structure_path, symmetrize=False, symprec=1e-5):
     """
-    Determine space group with spglib.
-    Write dataset to file with _spglib suffix.
-    Optionally overwrite structure file.
-    structure_path : str
-        Path to the structure file.
-    symmetrize : bool
-        If True, symmetrize atomic positions and lattice vectors using spglib
-        and overwrite the structure file.
-    symprec : float
-        Symmetry precision for spglib. Default is 1e-5.
-    """    
-    atoms = read(structure_path)
-    # Detect symmetry with spglib
-    lattice = atoms.get_cell()
-    positions = atoms.get_scaled_positions()
-    numbers = atoms.get_atomic_numbers()
-    cell_tuple = (lattice, positions, numbers)
-    dataset = spglib.get_symmetry_dataset(cell_tuple, symprec=symprec)
-    if isinstance(dataset, dict):
-        spacegroup = dataset["international"]
-        number = dataset["number"]
-    else:
-        spacegroup = dataset.international
-        number = dataset.number
+    Determine space group with pymatgen.
+    Write dataset to file with _spacegroup suffix.
+    Optionally symmetrize to standard setting compatible with QE.
+    """
+    pmg_structure = Structure.from_file(structure_path)
+    # Analyze symmetry
+    sga = SpacegroupAnalyzer(pmg_structure, symprec=symprec)
+    spacegroup = sga.get_space_group_symbol()
+    number = sga.get_space_group_number()
     print(f"Detected space group: {spacegroup} ({number})")
-    # Write spglib dataset to file
+    # Write symmetry info
     structure_stem = os.path.splitext(structure_path)[0]
-    spglib_path = f"{structure_stem}_spglib"
-    with open(spglib_path, 'w') as f:
-        f.write(str(dataset))
-    # Symmetrize structure
+    with open(f"{structure_stem}_spacegroup", 'w') as f:
+        f.write(f"Space group: {spacegroup} ({number})\n")
+        f.write(f"Point group: {sga.get_point_group_symbol()}\n")
+        f.write(f"Crystal system: {sga.get_crystal_system()}\n")
     if symmetrize:
-        standardized = spglib.standardize_cell(
-            cell_tuple,
-            to_primitive=True,
-            no_idealize=False,
-            symprec=symprec)
-        std_lattice, std_positions, std_numbers = standardized
-        # Map atomic numbers back to symbols
-        std_symbols = [chemical_symbols[n] for n in std_numbers]
-        # Create new ASE Atoms object with symmetrized geometry
-        symmetrized_atoms = Atoms(
-            symbols=std_symbols,
-            scaled_positions=std_positions,
-            cell=std_lattice,
-            pbc=True)
-        # Overwrite structure file
-        write(structure_path, symmetrized_atoms)
-        print(f"Structure symmetrized and overwritten: {structure_path}")
+        # Get primitive standard structure
+        std_structure = sga.get_primitive_standard_structure()
+        # Convert to ASE and save
+        adaptor = AseAtomsAdaptor()
+        symmetrized_atoms = adaptor.get_atoms(std_structure)
+        # Write new filename with "sym-" right after serialization tag
+	    path = Path(structure_path)
+	    name = path.stem
+	    prefix = "sym-"
+	    if len(name) > 13 and name[12] == '-' and name[:12].isdigit():
+	        serial_tag = name[:13]
+	        rest = name[13:]
+	        new_name = f"{serial_tag}{prefix}{rest}"
+	    else:
+	        new_name = f"{prefix}{name}"
+	    symmetrized_path = Path.cwd() / f"{new_name}.cif"
+	    write(symmetrized_path, symmetrized_atoms)
+	    print(f"Symmetrized structure saved to: {symmetrized_path}")
+	    
+	    return symmetrized_path
 
 def compare_structure(structure_paths):
     """
