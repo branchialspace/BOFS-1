@@ -123,11 +123,11 @@ def relax_structure(structure_path, relax_config):
     
     return relaxed_path
     
-def symmetrize_structure(structure_path, write_sym=False, symprec=1e-5):
+def symmetrize_structure(structure_path, symprec=1e-5):
     """
     Determine space group with pymatgen.
     Write space group dataset to file with _spacegroup suffix.
-    Optionally symmetrize to standard compatible with QE pw.x ibrav=0 using pymatgen.
+    Symmetrize to standard compatible with QE pw.x ibrav=0 using pymatgen.
     """
     pmg_structure = Structure.from_file(structure_path)
     # Analyze symmetry
@@ -141,27 +141,26 @@ def symmetrize_structure(structure_path, write_sym=False, symprec=1e-5):
         f.write(f"Space group: {spacegroup} ({number})\n")
         f.write(f"Point group: {sga.get_point_group_symbol()}\n")
         f.write(f"Crystal system: {sga.get_crystal_system()}\n")
-    if write_sym:
-        # Get primitive standard structure
-        std_structure = sga.get_primitive_standard_structure()
-        # Convert to ASE and save
-        adaptor = AseAtomsAdaptor()
-        symmetrized_atoms = adaptor.get_atoms(std_structure)
-        # Write new filename with "sym-" right after serialization tag
-	    path = Path(structure_path)
-	    name = path.stem
-	    prefix = "sym-"
-	    if len(name) > 13 and name[12] == '-' and name[:12].isdigit():
-	        serial_tag = name[:13]
-	        rest = name[13:]
-	        new_name = f"{serial_tag}{prefix}{rest}"
-	    else:
-	        new_name = f"{prefix}{name}"
-	    symmetrized_path = Path.cwd() / f"{new_name}.cif"
-	    write(symmetrized_path, symmetrized_atoms)
-	    print(f"Symmetrized structure saved to: {symmetrized_path}")
-	    
-	    return symmetrized_path
+	# Get primitive standard structure
+	std_structure = sga.get_primitive_standard_structure()
+	# Convert to ASE and save
+	adaptor = AseAtomsAdaptor()
+	symmetrized_atoms = adaptor.get_atoms(std_structure)
+	# Write new filename with "sym-" right after serialization tag
+	path = Path(structure_path)
+	name = path.stem
+	prefix = "sym-"
+	if len(name) > 13 and name[12] == '-' and name[:12].isdigit():
+		serial_tag = name[:13]
+		rest = name[13:]
+		new_name = f"{serial_tag}{prefix}{rest}"
+	else:
+		new_name = f"{prefix}{name}"
+	symmetrized_path = Path.cwd() / f"{new_name}.cif"
+	write(symmetrized_path, symmetrized_atoms)
+	print(f"Symmetrized structure saved to: {symmetrized_path}")
+	
+	return symmetrized_path
 
 def compare_structure(structure_paths):
     """
