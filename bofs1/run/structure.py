@@ -123,25 +123,25 @@ def relax_structure(structure_path, relax_config):
     
     return relaxed_path
     
-def symmetrize_structure(structure_path, symmetrize=False, symprec=1e-5):
+def symmetrize_structure(structure_path, write_sym=False, symprec=1e-5):
     """
     Determine space group with pymatgen.
-    Write dataset to file with _spacegroup suffix.
-    Optionally symmetrize to standard setting compatible with QE.
+    Write space group dataset to file with _spacegroup suffix.
+    Optionally symmetrize to standard compatible with QE pw.x ibrav=0 using pymatgen.
     """
     pmg_structure = Structure.from_file(structure_path)
     # Analyze symmetry
     sga = SpacegroupAnalyzer(pmg_structure, symprec=symprec)
     spacegroup = sga.get_space_group_symbol()
     number = sga.get_space_group_number()
-    print(f"Detected space group: {spacegroup} ({number})")
+	structure_stem = os.path.splitext(structure_path)[0]
+    print(f"Detected space group of structure {structure_stem}: {spacegroup} ({number})")
     # Write symmetry info
-    structure_stem = os.path.splitext(structure_path)[0]
     with open(f"{structure_stem}_spacegroup", 'w') as f:
         f.write(f"Space group: {spacegroup} ({number})\n")
         f.write(f"Point group: {sga.get_point_group_symbol()}\n")
         f.write(f"Crystal system: {sga.get_crystal_system()}\n")
-    if symmetrize:
+    if write_sym:
         # Get primitive standard structure
         std_structure = sga.get_primitive_standard_structure()
         # Convert to ASE and save
