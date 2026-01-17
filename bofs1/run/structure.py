@@ -141,7 +141,7 @@ def symmetrize_structure(structure_path, symprec=1e-5):
         f.write(f"Space group: {spacegroup} ({number})\n")
         f.write(f"Point group: {sga.get_point_group_symbol()}\n")
         f.write(f"Crystal system: {sga.get_crystal_system()}\n")
-	# Get primitive standard structure
+    # Get primitive standard structure
 	std_structure = sga.get_primitive_standard_structure()
 	# Convert to ASE and save
 	adaptor = AseAtomsAdaptor()
