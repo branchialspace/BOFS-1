@@ -34,7 +34,7 @@ def get_structure(mp_api_key, material_id):
     structure_path = os.path.abspath(f"{material_id}.cif")
     pmg_structure.to(filename=structure_path)
     print(f"Structure saved to: {structure_path}")
-    
+
     return structure_path
 
 def serialize_structure(structure_path):
@@ -53,7 +53,7 @@ def serialize_structure(structure_path):
     serial_name = f"{datetime.now():%Y%m%d%H%M}-{name}"
     serial_path = Path.cwd() / serial_name
     write(serial_path, atoms)
-    
+
     return serial_path
 
 def relax_structure(structure_path, relax_config):
@@ -120,9 +120,9 @@ def relax_structure(structure_path, relax_config):
     relaxed_path = Path.cwd() / f"{new_name}.cif"
     write(relaxed_path, relaxed_atoms)
     print(f"Relaxed structure saved to: {relaxed_path}")
-    
+
     return relaxed_path
-    
+
 def symmetrize_structure(structure_path, symprec=1e-5):
     """
     Determine space group with pymatgen.
@@ -134,7 +134,7 @@ def symmetrize_structure(structure_path, symprec=1e-5):
     sga = SpacegroupAnalyzer(pmg_structure, symprec=symprec)
     spacegroup = sga.get_space_group_symbol()
     number = sga.get_space_group_number()
-	structure_stem = os.path.splitext(structure_path)[0]
+    structure_stem = os.path.splitext(structure_path)[0]
     print(f"Detected space group of structure {structure_stem}: {spacegroup} ({number})")
     # Write symmetry info
     with open(f"{structure_stem}_spacegroup", 'w') as f:
@@ -142,25 +142,25 @@ def symmetrize_structure(structure_path, symprec=1e-5):
         f.write(f"Point group: {sga.get_point_group_symbol()}\n")
         f.write(f"Crystal system: {sga.get_crystal_system()}\n")
     # Get primitive standard structure
-	std_structure = sga.get_primitive_standard_structure()
-	# Convert to ASE and save
-	adaptor = AseAtomsAdaptor()
-	symmetrized_atoms = adaptor.get_atoms(std_structure)
-	# Write new filename with "sym-" right after serialization tag
-	path = Path(structure_path)
-	name = path.stem
-	prefix = "sym-"
-	if len(name) > 13 and name[12] == '-' and name[:12].isdigit():
-		serial_tag = name[:13]
-		rest = name[13:]
-		new_name = f"{serial_tag}{prefix}{rest}"
-	else:
-		new_name = f"{prefix}{name}"
-	symmetrized_path = Path.cwd() / f"{new_name}.cif"
-	write(symmetrized_path, symmetrized_atoms)
-	print(f"Symmetrized structure saved to: {symmetrized_path}")
-	
-	return symmetrized_path
+    std_structure = sga.get_primitive_standard_structure()
+    # Convert to ASE and save
+    adaptor = AseAtomsAdaptor()
+    symmetrized_atoms = adaptor.get_atoms(std_structure)
+    # Write new filename with "sym-" right after serialization tag
+    path = Path(structure_path)
+    name = path.stem
+    prefix = "sym-"
+    if len(name) > 13 and name[12] == '-' and name[:12].isdigit():
+        serial_tag = name[:13]
+        rest = name[13:]
+        new_name = f"{serial_tag}{prefix}{rest}"
+    else:
+        new_name = f"{prefix}{name}"
+    symmetrized_path = Path.cwd() / f"{new_name}.cif"
+    write(symmetrized_path, symmetrized_atoms)
+    print(f"Symmetrized structure saved to: {symmetrized_path}")
+
+    return symmetrized_path
 
 def compare_structure(structure_paths):
     """
@@ -184,6 +184,7 @@ def compare_structure(structure_paths):
     for i, s in enumerate(structures):
         if len(s) != n_atoms:
             raise ValueError(f"Atom count mismatch: {names[0]} has {n_atoms}, {names[i]} has {len(s)}")
+
     def match_atoms(s1, s2):
         """
         Match atoms between two structures using pymatgen StructureMatcher.
@@ -208,6 +209,7 @@ def compare_structure(structure_paths):
         # mapping[i] gives the index in s2 that corresponds to site i in s1
         reorder = np.array(mapping, dtype=int)
         return reorder
+
     results = {
         'names': names,
         'pairwise': []}
@@ -278,12 +280,12 @@ def compare_structure(structure_paths):
         # Write full CIF files for reference
         for i, (name, path) in enumerate(zip(names, structure_paths), start=1):
             abs_path = Path(path).absolute()
-            f.write(f"\n\n{'='*60}\n")
+            f.write(f"\n\n{'=' * 60}\n")
             f.write(f"[{i}] {name}\n")
             f.write(f"    {abs_path}\n")
-            f.write(f"{'='*60}\n")
+            f.write(f"{'=' * 60}\n")
             with open(path, 'r') as cif:
                 f.write(cif.read())
     print(f"\nComparison results written to: {compare_path}")
-    
+
     return results
