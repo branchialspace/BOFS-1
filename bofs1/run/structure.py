@@ -127,7 +127,7 @@ def symmetrize_structure(structure_path, symprec=1e-5):
     """
     Determine space group with pymatgen.
     Write space group dataset to file with _spacegroup suffix.
-    Symmetrize to standard compatible with QE pw.x ibrav=0 using pymatgen.
+    Symmetrize to primitive cell compatible with QE pw.x ibrav=0.
     """
     pmg_structure = Structure.from_file(structure_path)
     # Analyze symmetry
@@ -141,12 +141,9 @@ def symmetrize_structure(structure_path, symprec=1e-5):
         f.write(f"Space group: {spacegroup} ({number})\n")
         f.write(f"Point group: {sga.get_point_group_symbol()}\n")
         f.write(f"Crystal system: {sga.get_crystal_system()}\n")
-    # Get primitive standard structure
-    std_structure = sga.get_primitive_standard_structure()
-    # Convert to ASE and save
-    adaptor = AseAtomsAdaptor()
-    symmetrized_atoms = adaptor.get_atoms(std_structure)
-    # Write new filename with "sym-" right after serialization tag
+    # Find true primitive
+    primitive_structure = sga.find_primitive()
+    # Write filename
     path = Path(structure_path)
     name = path.stem
     prefix = "sym-"
@@ -157,7 +154,9 @@ def symmetrize_structure(structure_path, symprec=1e-5):
     else:
         new_name = f"{prefix}{name}"
     symmetrized_path = Path.cwd() / f"{new_name}.cif"
-    write(symmetrized_path, symmetrized_atoms)
+    # Write cif with pymatgen
+    writer = CifWriter(primitive_structure, symprec=None, refine_struct=False)
+    writer.write_file(str(symmetrized_path))
     print(f"Symmetrized structure saved to: {symmetrized_path}")
 
     return symmetrized_path
