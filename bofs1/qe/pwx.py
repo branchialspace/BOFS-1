@@ -147,10 +147,19 @@ def pwx(
         n1 = max(k_minimum, ceil(b1_len / k_spacing))
         n2 = max(k_minimum, ceil(b2_len / k_spacing))
         n3 = max(k_minimum, ceil(b3_len / k_spacing))
+        # If any two real-space lattice vectors are within 20% length of each other,
+        # use the highest number of divisions for those directions (so QE can recognize higher symmetry)
+        lengths = [np.linalg.norm(a1), np.linalg.norm(a2), np.linalg.norm(a3)]
+        divisions = [n1, n2, n3]
+        for i in range(len(lengths)):
+            for j in range(i + 1, len(lengths)):
+                if max(lengths[i], lengths[j]) / min(lengths[i], lengths[j]) <= 1.2:
+                    divisions[i] = divisions[j] = max(divisions[i], divisions[j])
+        n1, n2, n3 = divisions
         # Unpack the shift
         s1, s2, s3 = shift
 
-        return (n1, n2, n3, s1, s2, s3)
+        return n1, n2, n3, s1, s2, s3
 
     def w90_kmeshpl(nk1, nk2, nk3):
         """
