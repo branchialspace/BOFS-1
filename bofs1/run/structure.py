@@ -11,6 +11,7 @@ from ase.data import chemical_symbols
 from pymatgen.core import Structure
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.io.ase import AseAtomsAdaptor
+from pymatgen.io.cif import CifWriter
 from pymatgen.analysis.structure_matcher import StructureMatcher
 import bofs1
 from mp_api.client import MPRester
