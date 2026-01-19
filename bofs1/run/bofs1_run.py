@@ -21,7 +21,7 @@ def bofs1_test(*args):
     relaxed_path = bofs1.relax_structure(sym_path, relax_config)
     structure_path = bofs1.symmetrize_structure(relaxed_path)
     name = Path(structure_path).stem
-    bofs1.compare_structure([raw_path, sym_path, relaxed_path, structure_path])
+    bofs1.compare_structure([sym_path, relaxed_path, structure_path])
     # QE SCF
     scf_config = copy.deepcopy(bofs1.pwx_scf_config)
     np = scf_config['command'][scf_config['command'].index('-np') + 1]
@@ -80,6 +80,7 @@ def bofs1_test(*args):
 if __name__ == '__main__':
     workflows = {name: func for name, func in globals().items() if callable(func) and not name.startswith('_')}
     workflows[sys.argv[1]](*sys.argv[2:])
+
 
 
 
