@@ -162,7 +162,7 @@ def symmetrize_structure(structure_path, symprec=1e-5):
 
     return symmetrized_path
     
-def compare_structure(structure_paths):
+def compare_structure(structure_paths, symprec=1e-5):
     """
     Quantify geometric differences between near-identical relaxed structures.
     Compare lattice parameters, volume, and atomic displacements pairwise.
@@ -170,6 +170,8 @@ def compare_structure(structure_paths):
     Write results to file with _compare suffix.
     structure_paths : list
         List of paths to .cif files (minimum 2).
+    symprec : float
+        Symmetry precision for space group detection.
     Returns
     results : dict
         Dictionary containing pairwise comparison metrics.
@@ -184,6 +186,14 @@ def compare_structure(structure_paths):
     for i, s in enumerate(structures):
         if len(s) != n_atoms:
             raise ValueError(f"Atom count mismatch: {names[0]} has {n_atoms}, {names[i]} has {len(s)}")
+    # Analyze symmetry for each structure
+    spacegroups = []
+    for path, name in zip(structure_paths, names):
+        pmg_structure = Structure.from_file(path)
+        sga = SpacegroupAnalyzer(pmg_structure, symprec=symprec)
+        spacegroup = sga.get_space_group_symbol()
+        number = sga.get_space_group_number()
+        spacegroups.append({'symbol': spacegroup, 'number': number})
     def match_atoms(s1, s2):
         """
         Match atoms between two structures using pymatgen StructureMatcher.
@@ -210,6 +220,7 @@ def compare_structure(structure_paths):
         return reorder
     results = {
         'names': names,
+        'spacegroups': spacegroups,
         'pairwise': []}
     for i in range(n_structures):
         for j in range(i + 1, n_structures):
