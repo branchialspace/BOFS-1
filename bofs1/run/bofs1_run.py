@@ -35,7 +35,7 @@ def bofs1_test(*args):
     # wan2respack preprocess
     pwo = f'{name}_nscf_ibz.pwo'
     pwi = f'{name}_nscf_ibz.pwi'
-    w90_config = './bofs1/wannier90/w90_configs/mlwf_config.py'
+    w90_config = copy.deepcopy(bofs1.mlwf_config)
     bofs1.w90_win(pwo, pwi, w90_config, nokpts=True) # No k-points in .win for w2r .win reference
     subprocess.run(f'bash ./bofs1/respack/respack_run.sh wan2respack_pre ./{name}/{name}.save {name} {pwi} {name}.win ./wan2respack_work', shell=True, check=True)
     subprocess.run(f'cp {name}.win {name}_ibz.win', shell=True, check=True)
@@ -67,7 +67,7 @@ def bofs1_test(*args):
     # Wannier90 preprocess
     pwo = f'{name}_nscf.pwo'
     pwi = f'{name}_nscf.pwi'
-    w90_config = './bofs1/wannier90/w90_configs/mlwf_config.py'
+    w90_config = copy.deepcopy(bofs1.mlwf_config)
     subprocess.run(f'bash ./bofs1/wannier90/w90_run.sh w90_preprocess {pwo} {pwi} {w90_config}', shell=True, check=True)
     # pw2wannier90
     pw2w90x_config = copy.deepcopy(bofs1.pw2w90x_config)
@@ -102,7 +102,7 @@ def bofs1_U(*args):
     # wan2respack preprocess
     pwo = f'{name}_nscf_ibz.pwo'
     pwi = f'{name}_nscf_ibz.pwi'
-    w90_config = './bofs1/wannier90/w90_configs/mlwf_config.py'
+    w90_config = copy.deepcopy(bofs1.mlwf_config)
     bofs1.w90_win(pwo, pwi, w90_config, nokpts=True) # No k-points in .win for w2r .win reference
     subprocess.run(f'bash ./bofs1/respack/respack_run.sh wan2respack_pre ./{name}/{name}.save {name} {pwi} {name}.win ./wan2respack_work', shell=True, check=True)
     subprocess.run(f'cp {name}.win {name}_ibz.win', shell=True, check=True)
@@ -125,6 +125,7 @@ def bofs1_U(*args):
 if __name__ == '__main__':
     workflows = {name: func for name, func in globals().items() if callable(func) and not name.startswith('_')}
     workflows[sys.argv[1]](*sys.argv[2:])
+
 
 
 
