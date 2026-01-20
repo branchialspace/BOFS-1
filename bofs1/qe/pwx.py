@@ -115,7 +115,7 @@ def pwx(
 
         return ecutwfc, ecutrho
 
-    def kpoints(structure, k_minimum=6, k_spacing=0.05, shift=(1, 1, 1)):
+    def kpoints(structure, k_minimum=6, k_spacing=0.05, k_eq_thr=1.2, shift=(0, 0, 0)):
         """
         Given a desired k-point spacing k_spacing (in Å^-1),
         compute a suitable (n1, n2, n3) Monkhorst–Pack grid for the structure.
@@ -147,13 +147,13 @@ def pwx(
         n1 = max(k_minimum, ceil(b1_len / k_spacing))
         n2 = max(k_minimum, ceil(b2_len / k_spacing))
         n3 = max(k_minimum, ceil(b3_len / k_spacing))
-        # If any two real-space lattice vectors are within 20% length of each other,
+        # If any two real-space lattice vectors are within k_eq_thr scalar length of each other,
         # use the highest number of divisions for those directions (so QE can recognize higher symmetry)
         lengths = [np.linalg.norm(a1), np.linalg.norm(a2), np.linalg.norm(a3)]
         divisions = [n1, n2, n3]
         for i in range(len(lengths)):
             for j in range(i + 1, len(lengths)):
-                if max(lengths[i], lengths[j]) / min(lengths[i], lengths[j]) <= 1.2:
+                if max(lengths[i], lengths[j]) / min(lengths[i], lengths[j]) <= k_eq_thr:
                     divisions[i] = divisions[j] = max(divisions[i], divisions[j])
         n1, n2, n3 = divisions
         # Unpack the shift
@@ -568,8 +568,9 @@ def pwx(
     # Set k-points
     k_minimum = config['kpts_k_minimum']
     k_spacing = config['kpts_k_spacing']
+    k_eq_thr = config['kpts_eq_thr']
     shift = config['kpts_shift']
-    kpoints = kpoints(structure, k_minimum, k_spacing, shift)
+    kpoints = kpoints(structure, k_minimum, k_spacing, k_eq_thr, shift)
     # Set nbnd
     nbnd_scalar = config['nbnd_scalar']
     config['system']['nbnd'] = nbnd(structure, pseudopotentials, pseudo_dir, nbnd_scalar)
