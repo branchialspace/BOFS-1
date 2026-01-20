@@ -8,6 +8,7 @@ import spglib
 from ase import Atoms
 from ase.io import read, write
 from ase.data import chemical_symbols
+from ase.neighborlist import NeighborList, natural_cutoffs
 from pymatgen.core import Structure
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.io.ase import AseAtomsAdaptor
