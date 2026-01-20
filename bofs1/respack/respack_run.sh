@@ -14,7 +14,6 @@ wan2respack_pre () {
     local work_dir="${5:-./wan2respack_work}"
     conda activate "$ROOT_DIR/bofs1_env"
     mkdir -p "$work_dir"
-    cd "$work_dir" || return 1
     cat > conf.toml <<EOF
 [base]
 QE_output_dir = "$qe_outdir"
@@ -28,8 +27,7 @@ win = "$win_ref"
 nscf = "${seedname}_nscf_w2r.in"
 win = "${seedname}_w2r.win"
 EOF
-    python "$ROOT_DIR/wan2respack/bin/wan2respack.py" -pp conf.toml
-    cd - > /dev/null
+    python "$ROOT_DIR/wan2respack/bin/wan2respack.py" -pp "$work_dir/conf.toml"
 }
 
 # Run wan2respack Wannier90 postprocessing to prepare for RESPACK
