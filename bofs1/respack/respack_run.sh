@@ -1,6 +1,7 @@
 #!/bin/bash
 # Run processes for RESPACK (Python2.7 env) and wan2respack (BOFS-1 Python3 env)
-ROOT_DIR="$(pwd)"
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+ROOT_DIR="$( cd "$SCRIPT_DIR/../.." && pwd )"
 source "$ROOT_DIR/miniforge3/etc/profile.d/conda.sh"
 
 # Run wan2respack preprocessing on Wannier90 input
