@@ -29,8 +29,8 @@ def bofs1_test(*args):
     # QE NSCF IBZ W2R
     ibz_nscf_config = copy.deepcopy(bofs1.pwx_nscf_config)
     ibz_nscf_config['kpts_method'] = '' # Use automatic/IBZ
-    ibz_nscf_config['nosym'] = False
-    ibz_nscf_config['noinv'] = False
+    ibz_nscf_config['system']['nosym'] = False
+    ibz_nscf_config['system']['noinv'] = False
     bofs1.pwx(structure_path, ibz_nscf_config)
     # wan2respack preprocess
     pwo = f'{name}_nscf_ibz.pwo'
@@ -80,6 +80,7 @@ def bofs1_test(*args):
 if __name__ == '__main__':
     workflows = {name: func for name, func in globals().items() if callable(func) and not name.startswith('_')}
     workflows[sys.argv[1]](*sys.argv[2:])
+
 
 
 
