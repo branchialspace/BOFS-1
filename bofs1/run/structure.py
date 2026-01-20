@@ -162,10 +162,11 @@ def symmetrize_structure(structure_path, symprec=1e-5):
 
     return symmetrized_path
     
-def compare_structure(structure_paths, symprec=1e-5):
+def compare_structure(structure_paths, symprec=1e-5, metal="Bi"):
     """
     Quantify geometric differences between near-identical relaxed structures.
     Compare lattice parameters, volume, and atomic displacements pairwise.
+    Compare specified metal center species neighborhood topology for each structure.
     Match corresponding atoms by species using pymatgen StructureMatcher.
     Write results to file with _compare suffix.
     structure_paths : list
@@ -194,6 +195,27 @@ def compare_structure(structure_paths, symprec=1e-5):
         spacegroup = sga.get_space_group_symbol()
         number = sga.get_space_group_number()
         spacegroups.append({'symbol': spacegroup, 'number': number})
+    # Compare specified metal center species neighborhood topology for each structure.
+    metal_distance_stats = []
+    for s, name in zip(structures, names):
+        symbols = np.array(s.get_chemical_symbols())
+        metal_indices = np.where(symbols == metal)[0]
+        if len(metal_indices) >= 2:
+            all_dist = s.get_all_distances(mic=True)
+            metal_dist = all_dist[np.ix_(metal_indices, metal_indices)]
+            np.fill_diagonal(metal_dist, np.inf)
+            shortest = metal_dist.min()
+            longest = metal_dist[metal_dist < np.inf].max()
+            per_atom_avg = np.mean(metal_dist[metal_dist < np.inf].reshape(len(metal_indices), -1), axis=1)
+            metal_stats = {'shortest': shortest, 'longest': longest, 'per_atom_avg': dict(zip(metal_indices, per_atom_avg))}
+            print(f"\n{name} {metal}-{metal} distances:")
+            print(f"  Shortest: {shortest:.4f} Å | Longest: {longest:.4f} Å")
+            for idx, avg in zip(metal_indices, per_atom_avg):
+                print(f"  {metal}[{idx}] avg: {avg:.4f} Å")
+        else:
+            metal_stats = None
+            print(f"\n{name}: < 2 {metal} atoms, no {metal}-{metal} distances")
+        metal_distance_stats.append(metal_stats)
     def match_atoms(s1, s2):
         """
         Match atoms between two structures using pymatgen StructureMatcher.
@@ -221,6 +243,7 @@ def compare_structure(structure_paths, symprec=1e-5):
     results = {
         'names': names,
         'spacegroups': spacegroups,
+        'metal_distance_stats': metal_distance_stats,
         'pairwise': []}
     for i in range(n_structures):
         for j in range(i + 1, n_structures):
@@ -286,6 +309,19 @@ def compare_structure(structure_paths, symprec=1e-5):
     compare_path = f"{names[-1]}_compare"
     with open(compare_path, 'w') as f:
         f.write(pformat(results, width=100))
+        # Write metal-metal distance statistics section
+        f.write(f"\n\n{'=' * 60}\n")
+        f.write(f"{metal}-{metal} DISTANCE ANALYSIS\n")
+        f.write(f"{'=' * 60}\n")
+        for name, metal_stats in zip(names, metal_distance_stats):
+            f.write(f"\n{name}:\n")
+            if metal_stats:
+                f.write(f"  Shortest {metal}-{metal}: {metal_stats['shortest']:.4f} Å\n")
+                f.write(f"  Longest {metal}-{metal}:  {metal_stats['longest']:.4f} Å\n")
+                for idx, avg in metal_stats['per_atom_avg'].items():
+                    f.write(f"  {metal}[{idx}] avg: {avg:.4f} Å\n")
+            else:
+                f.write(f"  < 2 {metal} atoms\n")
         # Write full CIF files for reference
         for i, (name, path) in enumerate(zip(names, structure_paths), start=1):
             abs_path = Path(path).absolute()
