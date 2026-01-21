@@ -31,6 +31,8 @@ EOF
     # Fix wan2respack output _nscf_w2r.in for QE compatibility
     sed -i 's/K_POINTS {crystal}/K_POINTS crystal/' "${seedname}_nscf_w2r.in"
     sed -i '/^K_POINTS/{n;s/^[[:space:]]*//}' "${seedname}_nscf_w2r.in"
+    sed -i 's/nosym = .false./nosym = .true./' "${seedname}_nscf_w2r.in"
+    sed -i 's/noinv = .false./noinv = .true./' "${seedname}_nscf_w2r.in"
     cell="$(grep -A3 'CELL_PARAMETERS' "$nscf_ref")"
     perl -i -pe "BEGIN{\$c=q{$cell}} print \"\$c\\n\" if /^K_POINTS/" "${seedname}_nscf_w2r.in"
 }
