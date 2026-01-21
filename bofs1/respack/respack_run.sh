@@ -28,8 +28,10 @@ nscf = "${seedname}_nscf_w2r.in"
 win = "${seedname}_w2r.win"
 EOF
     python "$ROOT_DIR/wan2respack/bin/wan2respack.py" -pp "$work_dir/conf.toml"
-    # Fix K_POINTS format for QE compatibility
+    # Fix wan2respack output _nscf_w2r.in for QE compatibility
     sed -i 's/K_POINTS {crystal}/K_POINTS crystal/' "${seedname}_nscf_w2r.in"
+    grep -A3 "CELL_PARAMETERS" "$nscf_ref" > /tmp/cell_params.tmp
+    sed -i "/^K_POINTS/e cat /tmp/cell_params.tmp" "${seedname}_nscf_w2r.in"
 }
 
 # Run wan2respack Wannier90 postprocessing to prepare for RESPACK
