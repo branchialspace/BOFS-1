@@ -39,7 +39,7 @@ def bofs1_test(*args):
     bofs1.w90_win(pwo, pwi, w90_config, nokpts=True) # No k-points in .win for w2r .win reference
     subprocess.run(f'bash ./bofs1/respack/respack_run.sh wan2respack_pre ./{name}/{name}.save {name} {pwi} {name}_nscf_ibz.win ./wan2respack_work', shell=True, check=True)
     # QE NSCF W2R
-    subprocess.run(f'mpirun -n {np} ./qe-7.5/bin/pw.x -nk 1 < {name}_nscf_w2r.in > {name}_nscf_w2r.out', shell=True, check=True)
+    subprocess.run(f'mpirun --use-hwthread-cpus -n {np} ./qe-7.5/bin/pw.x -nk 1 < {name}_nscf_w2r.in > {name}_nscf_w2r.out', shell=True, check=True)
     # Wannier90 preprocess W2R
     subprocess.run(f'wannier90.x -pp {name}_w2r', shell=True, check=True)
     # pw2wannier90 W2R
@@ -79,6 +79,7 @@ def bofs1_test(*args):
 if __name__ == '__main__':
     workflows = {name: func for name, func in globals().items() if callable(func) and not name.startswith('_')}
     workflows[sys.argv[1]](*sys.argv[2:])
+
 
 
 
