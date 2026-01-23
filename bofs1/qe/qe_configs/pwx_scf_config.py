@@ -10,7 +10,7 @@ pwx_scf_config = {
     'wfn_scalar': 6,
     'rho_scalar': 6,
     'kpts_k_minimum': 6,
-    'kpts_k_spacing': 0.05,
+    'kpts_k_spacing': 0.05, # 0.05
     'kpts_eq_thr': 1.2,
     'kpts_shift': (0,0,0),
     'nbnd_scalar': 1.3,
