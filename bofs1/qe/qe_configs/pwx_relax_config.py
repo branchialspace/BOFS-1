@@ -10,7 +10,7 @@ pwx_relax_config = {
     'wfn_scalar': 6,
     'rho_scalar': 6,
     'kpts_k_minimum': 6,
-    'kpts_k_spacing': 0.08,
+    'kpts_k_spacing': 0.08, # 0.08
     'kpts_eq_thr': 1.2,
     'kpts_shift': (0,0,0),
     'nbnd_scalar': 1.3,
