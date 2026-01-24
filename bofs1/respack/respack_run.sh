@@ -35,7 +35,7 @@ EOF
     sed -i 's/nosym = .false./nosym = .true./' "${seedname}_nscf_w2r.in"
     sed -i 's/noinv = .false./noinv = .true./' "${seedname}_nscf_w2r.in"
     cell="$(grep -A3 'CELL_PARAMETERS' "$nscf_ref")"
-    perl -i -pe "BEGIN{\$c=q{$cell}} print \"\$c\\n\" if /^K_POINTS/" "${seedname}_nscf_w2r.in"
+    perl -i -pe "BEGIN{\$c=q{$cell}} print \"\$c\\n\\n\" if /^K_POINTS/" "${seedname}_nscf_w2r.in"
 }
 
 # Run wan2respack Wannier90 postprocessing to prepare for RESPACK
