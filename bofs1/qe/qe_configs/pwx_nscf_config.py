@@ -45,7 +45,7 @@ pwx_nscf_config = {
         'lspinorb': True
     },
     'electrons': {
-        'conv_thr': 1.0e-10,
+        'conv_thr': 1.0e-10, # 1.0e-10
         'mixing_beta': 0.3,
         'electron_maxstep': 300,
         'diago_full_acc': True
