@@ -42,7 +42,7 @@ pwx_scf_config = {
         'lspinorb': True
     },
     'electrons': {
-        'conv_thr': 1.0e-12,
+        'conv_thr': 1.0e-12, # 1.0e-12
         'mixing_beta': 0.3,
         'electron_maxstep': 300,
     }
