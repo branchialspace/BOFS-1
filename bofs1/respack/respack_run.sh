@@ -14,7 +14,7 @@ wan2respack_pre () {
     local work_dir="${5:-./wan2respack_work}"
     conda activate "$ROOT_DIR/bofs1_env"
     mkdir -p "$work_dir"
-    cat > conf.toml <<EOF
+    cat > "$work_dir/conf.toml" <<EOF
 [base]
 QE_output_dir = "$qe_outdir"
 seedname = "$seedname"
