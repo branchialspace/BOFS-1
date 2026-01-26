@@ -1,5 +1,6 @@
 mlwf_config = {
     "spinors": "true",
+    "auto_projections": "true",
     "dis_num_iter": 0,   # for SCDM
     "num_iter": 0,       # Preserves symmetry for Yambo
     "guiding_centres": "true",
