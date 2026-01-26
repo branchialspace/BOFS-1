@@ -52,6 +52,7 @@ def pw2w90x(
 
     # Args
     structure_name = os.path.splitext(os.path.basename(structure_path))[0]
+    config['inputpp']['seedname'] = structure_name
     pwo_path = config.get('nscf_output', f"{structure_name}_nscf.pwo")
     e_fermi = get_fermi_energy(pwo_path)
     print(f"Detected Fermi energy from {pwo_path}: {e_fermi} eV. Setting scdm_mu.")
