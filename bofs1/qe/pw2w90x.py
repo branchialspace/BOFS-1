@@ -1,6 +1,7 @@
 # Run QuantumESPRESSO pw2wannier90.x
 
 import re
+import os
 import subprocess
 from subprocess import CalledProcessError
 
