@@ -28,9 +28,10 @@ w90_run () {
     conda activate "$ROOT_DIR/bofs1_env"
     local filename=$(basename -- "$input_arg")
     local seedname="${filename%.*}"
-    mpirun -np "$mpi_np" wannier90.x "$seedname"
+    mpirun --allow-run-as-root --use-hwthread-cpus -np "$mpi_np" wannier90.x "$seedname"
     echo "Ran wannier90.x on ${seedname} (NP=${mpi_np})."
 }
 
 "$@"
+
 
