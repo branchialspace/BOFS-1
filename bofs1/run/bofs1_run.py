@@ -72,7 +72,6 @@ def bofs1_test(*args):
     subprocess.run(f'bash ./bofs1/wannier90/w90_run.sh w90_preprocess {pwo} {pwi} {w90_config}', shell=True, check=True)
     # pw2wannier90
     pw2w90x_config = copy.deepcopy(bofs1.pw2w90x_config)
-    pw2w90x_config['inputpp']['seedname'] = f'{name}'
     bofs1.pw2w90x(structure_path, pw2w90x_config)
     # Wannier90
     subprocess.run(f'bash ./bofs1/wannier90/w90_run.sh w90_run {name} {np}', shell=True, check=True)
@@ -81,6 +80,7 @@ def bofs1_test(*args):
 if __name__ == '__main__':
     workflows = {name: func for name, func in globals().items() if callable(func) and not name.startswith('_')}
     workflows[sys.argv[1]](*sys.argv[2:])
+
 
 
 
