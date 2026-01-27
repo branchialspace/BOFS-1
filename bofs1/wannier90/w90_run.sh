@@ -11,6 +11,7 @@ w90_preprocess () {
     local pwi_path="$2"
     local config_path="$3"
     conda activate "$ROOT_DIR/bofs1_env"
+    ulimit -s unlimited
     local filename=$(basename -- "$pwi_path")
     local seedname="${filename%.*}"
     echo "Generating ${seedname}.win using config: ${config_path}..."
@@ -26,6 +27,7 @@ w90_run () {
     local input_arg="$1"
     local mpi_np="${2:-1}"
     conda activate "$ROOT_DIR/bofs1_env"
+    ulimit -s unlimited
     local filename=$(basename -- "$input_arg")
     local seedname="${filename%.*}"
     mpirun --allow-run-as-root --use-hwthread-cpus -np "$mpi_np" wannier90.x "$seedname"
@@ -33,5 +35,6 @@ w90_run () {
 }
 
 "$@"
+
 
 
