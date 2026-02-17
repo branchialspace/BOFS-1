@@ -3,7 +3,7 @@ mlwf_config = {
     "auto_projections": "true",
     "dis_num_iter": 0,   # for SCDM
     "num_iter": 0,       # Preserves symmetry for Yambo
-    "guiding_centres": "true",
+    "guiding_centres": "false",
     "write_hr": "true",
     "write_xyz": "true",
     "translate_home_cell": "true",
