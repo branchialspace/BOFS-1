@@ -1,0 +1,7 @@
+*
+
+!.gitignore
+!README.md
+!bofs1_x86.sh
+!bofs1/
+!bofs1/**
