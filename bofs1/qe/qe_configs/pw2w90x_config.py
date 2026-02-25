@@ -14,7 +14,7 @@ pw2w90x_config = {
         "write_unk": False,
         "scdm_proj": True, # necessary
         "scdm_entanglement": "erfc",
-        "scdm_sigma": 0.2,
+        "scdm_sigma": 2,
         # 'scdm_mu' is .pwo fermi energy
     }
 }
