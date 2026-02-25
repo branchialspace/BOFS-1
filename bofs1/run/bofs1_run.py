@@ -12,6 +12,25 @@ import bofs1
 
 def bofs1_test(*args):
     """BOFS-1 workflow"""
+    structure_path = "./202601242133-sym-vcr-sym-mp-23152.cif"
+    name = Path(structure_path).stem
+    scf_config = copy.deepcopy(bofs1.pwx_scf_config)
+    np = scf_config['command'][scf_config['command'].index('-np') + 1]
+    nk = scf_config['command'][scf_config['command'].index('-nk') + 1]
+    # pw2wannier90 W2R
+    pw2w90x_config = copy.deepcopy(bofs1.pw2w90x_config)
+    pw2w90x_config['inputpp']['seedname'] = f'{name}_w2r'
+    pw2w90x_config['nscf_output'] = f'{name}_nscf_w2r.out'
+    bofs1.pw2w90x(structure_path, pw2w90x_config)
+    # Wannier90 W2R
+    subprocess.run(f'bash ./bofs1/wannier90/w90_run.sh w90_run {name}_w2r {np}', shell=True, check=True)
+    # wan2respack
+    subprocess.run(f'bash ./bofs1/respack/respack_run.sh wan2respack_post ./wan2respack_work ./respack_calc', shell=True, check=True)
+    # Respack
+    subprocess.run(f'bash ./bofs1/respack/respack_run.sh respack_run ./respack_calc 1 1 {np}', shell=True, check=True)
+
+def bofs1_full(*args):
+    """BOFS-1 workflow"""
     # Initialize structure
     raw_path = args[0] if len(args) == 1 else bofs1.get_structure(*args)
     serial_path = bofs1.serialize_structure(raw_path)
@@ -81,22 +100,3 @@ def bofs1_test(*args):
 if __name__ == '__main__':
     workflows = {name: func for name, func in globals().items() if callable(func) and not name.startswith('_')}
     workflows[sys.argv[1]](*sys.argv[2:])
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
