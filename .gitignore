@@ -7,4 +7,3 @@
 !bofs1/**
 __pycache__/
 *.pyc
-bofs1/run/bofs1_run.py
