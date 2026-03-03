@@ -21,49 +21,32 @@ def scdm_fit(
     """
     def parse_atomic_proj_xml(xml_path):
         """
-        Parse atomic_proj.xml written by projwfc.x.
         Returns arrays of eigenvalues (eV) and projectabilities for all (n,k) states.
         """
         tree = ET.parse(xml_path)
         root = tree.getroot()
         header = root.find('.//HEADER')
         nbnd = int(header.get('NUMBER_OF_BANDS'))
-        nkpts = int(header.get('NUMBER_OF_K-POINTS'))
-        natomwfc = int(header.get('NUMBER_OF_ATOMIC_WFC'))
-        nspin = int(header.get('NUMBER_OF_SPIN_COMPONENTS'))
+        eigenstates = root.find('.//EIGENSTATES')
+        if eigenstates is None:
+            raise ValueError(f"Could not find EIGENSTATES in {xml_path}")
+        e_elems = list(eigenstates.iter('E'))
+        projs_elems = list(eigenstates.iter('PROJS'))
+        if len(e_elems) != len(projs_elems):
+            raise ValueError(f"Mismatch: {len(e_elems)} E blocks vs {len(projs_elems)} PROJS blocks")
         eigenvalues = []
         projectabilities = []
-        for ik in range(nkpts):
-            for ispin in range(nspin):
-                kpt_tag = f'K-POINT.{ik + 1}'
-                kpt_elem = root.find(f'.//{kpt_tag}')
-                if kpt_elem is None:
-                    raise ValueError(f"Could not find {kpt_tag} in {xml_path}")
-                if nspin == 2:
-                    spin_tag = f'SPIN.{ispin + 1}'
-                    spin_elem = kpt_elem.find(spin_tag)
-                    if spin_elem is None:
-                        raise ValueError(f"Could not find {spin_tag} under {kpt_tag}")
-                    work_elem = spin_elem
-                else:
-                    work_elem = kpt_elem
-                e_elem = work_elem.find('E')
-                if e_elem is None:
-                    raise ValueError(f"Could not find eigenvalues under {kpt_tag}")
-                ek = np.array(e_elem.text.split(), dtype=float)
-                eigenvalues.extend(ek)
-                # p_nk = sum_i |<psi_nk|phi_i>|^2
-                proj_k = np.zeros(nbnd)
-                for iatom in range(natomwfc):
-                    atmwfc_tag = f'ATMWFC.{iatom + 1}'
-                    atmwfc_elem = work_elem.find(atmwfc_tag)
-                    if atmwfc_elem is None:
-                        raise ValueError(f"Could not find {atmwfc_tag}")
-                    vals = np.array(atmwfc_elem.text.split(), dtype=float)
-                    re_parts = vals[0::2]
-                    im_parts = vals[1::2]
-                    proj_k += re_parts**2 + im_parts**2
-                projectabilities.extend(proj_k)
+        for e_elem, projs_elem in zip(e_elems, projs_elems):
+            ek = np.array(e_elem.text.split(), dtype=float)
+            eigenvalues.extend(ek)
+            # p_nk = sum_i |<psi_nk|phi_i>|^2
+            proj_k = np.zeros(nbnd)
+            for wfc_elem in projs_elem.iter('ATOMIC_WFC'):
+                vals = np.array(wfc_elem.text.split(), dtype=float)
+                re_parts = vals[0::2]
+                im_parts = vals[1::2]
+                proj_k += re_parts**2 + im_parts**2
+            projectabilities.extend(proj_k)
         eigenvalues = np.array(eigenvalues)
         projectabilities = np.array(projectabilities)
         ry_to_ev = 13.605693123

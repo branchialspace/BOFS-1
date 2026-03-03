@@ -66,7 +66,8 @@ def pw2w90x(
         print(f"Projectability fitting unavailable ({e}), falling back to Fermi energy for scdm_mu.")
         e_fermi = get_fermi_energy(pwo_path)
         config['inputpp']['scdm_mu'] = e_fermi
-        print(f"Detected Fermi energy from {pwo_path}: {e_fermi} eV. Setting scdm_mu.")
+        config['inputpp'].setdefault('scdm_sigma', 3.0)
+        print(f"Detected Fermi energy from {pwo_path}: {e_fermi} eV. Setting scdm_mu={e_fermi}, scdm_sigma={config['inputpp']['scdm_sigma']}")
     # Write input file
     write_pw2w90_input(config, f"{structure_name}.pw2win")
     # Subprocess run
