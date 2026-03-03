@@ -7,6 +7,7 @@ from .run.structure import symmetrize_structure
 from .run.structure import compare_structure
 from .qe.pwx import pwx
 from .qe.pw2w90x import pw2w90x
+from .qe.scdm_fit import scdm_fit
 from .qe.dosx import dosx
 from .qe.eelsx import eelsx
 from .qe.hpx import hpx
@@ -37,6 +38,7 @@ __all__ = [
     'compare_structure',
     'pwx',
     'pw2w90x',
+    'scdm_fit',
     'dosx',
     'eelsx', 
     'hpx',

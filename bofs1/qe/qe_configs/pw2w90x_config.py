@@ -12,9 +12,8 @@ pw2w90x_config = {
         "write_mmn": True,
         "write_amn": True,
         "write_unk": False,
-        "scdm_proj": True, # necessary
+        "scdm_proj": True,
         "scdm_entanglement": "erfc",
-        "scdm_sigma": 0.5,
-        # 'scdm_mu' is .pwo fermi energy
+        # scdm_mu and scdm_sigma derived from projectability fitting (Vitale et al.)
     }
 }

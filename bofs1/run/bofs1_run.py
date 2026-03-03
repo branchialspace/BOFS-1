@@ -17,6 +17,9 @@ def bofs1_test(*args):
     scf_config = copy.deepcopy(bofs1.pwx_scf_config)
     np = scf_config['command'][scf_config['command'].index('-np') + 1]
     nk = scf_config['command'][scf_config['command'].index('-nk') + 1]
+    # projwfc.x for SCDM projectability fitting
+    projwfcx_config = copy.deepcopy(bofs1.projwfcx_config)
+    bofs1.projwfcx(structure_path, projwfcx_config)
     # pw2wannier90 W2R
     pw2w90x_config = copy.deepcopy(bofs1.pw2w90x_config)
     pw2w90x_config['inputpp']['seedname'] = f'{name}_w2r'
@@ -63,6 +66,9 @@ def bofs1_full(*args):
     subprocess.run(f'mpirun --allow-run-as-root --use-hwthread-cpus -np {np} ./qe-7.5/bin/pw.x -nk {nk} -in {name}_nscf_w2r.in > {name}_nscf_w2r.out', shell=True, check=True)
     # Wannier90 preprocess W2R
     subprocess.run(f'wannier90.x -pp {name}_w2r', shell=True, check=True)
+    # projwfc.x for SCDM projectability fitting
+    projwfcx_config = copy.deepcopy(bofs1.projwfcx_config)
+    bofs1.projwfcx(structure_path, projwfcx_config)
     # pw2wannier90 W2R
     pw2w90x_config = copy.deepcopy(bofs1.pw2w90x_config)
     pw2w90x_config['inputpp']['seedname'] = f'{name}_w2r'

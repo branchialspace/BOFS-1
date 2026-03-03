@@ -4,6 +4,7 @@ import re
 import os
 import subprocess
 from subprocess import CalledProcessError
+from .scdm_fit import scdm_fit
 
 
 def pw2w90x(
@@ -21,11 +22,10 @@ def pw2w90x(
 
     def get_fermi_energy(pwo_path):
         """
-        Extract Fermi energy from the .pwo file for SCDM mu.
+        Extract Fermi energy from the .pwo file for SCDM mu fallback.
         """
         with open(pwo_path, 'r') as f:
-            lines = f.readlines()
-            content = "".join(lines)
+            content = f.read()
         fermi_match = re.search(r'the Fermi energy is\s+([-\d.]+)\s+ev', content, re.IGNORECASE)
         return float(fermi_match.group(1))
 
@@ -53,10 +53,20 @@ def pw2w90x(
     # Args
     structure_name = os.path.splitext(os.path.basename(structure_path))[0]
     pwo_path = config.get('nscf_output', f"{structure_name}_nscf.pwo")
-    e_fermi = get_fermi_energy(pwo_path)
-    print(f"Detected Fermi energy from {pwo_path}: {e_fermi} eV. Setting scdm_mu.")
     config['inputpp'].setdefault('seedname', structure_name)
-    config['inputpp']['scdm_mu'] = e_fermi
+
+    # Derive SCDM mu/sigma from projectability fitting (Vitale et al.)
+    atomic_proj_xml = f"{structure_name}/{structure_name}.save/atomic_proj.xml"
+    try:
+        scdm_params = scdm_fit(structure_name, atomic_proj_xml)
+        config['inputpp']['scdm_mu'] = scdm_params['scdm_mu']
+        config['inputpp']['scdm_sigma'] = scdm_params['scdm_sigma']
+        print(f"Using fitted SCDM parameters: mu={scdm_params['scdm_mu']:.4f}, sigma={scdm_params['scdm_sigma']:.4f}")
+    except Exception as e:
+        print(f"Projectability fitting unavailable ({e}), falling back to Fermi energy for scdm_mu.")
+        e_fermi = get_fermi_energy(pwo_path)
+        config['inputpp']['scdm_mu'] = e_fermi
+        print(f"Detected Fermi energy from {pwo_path}: {e_fermi} eV. Setting scdm_mu.")
     # Write input file
     write_pw2w90_input(config, f"{structure_name}.pw2win")
     # Subprocess run
