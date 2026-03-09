@@ -37,8 +37,7 @@ def projwfcx(
     
     # Args
     structure_name = os.path.splitext(os.path.basename(structure_path))[0]
-    calculation = "projwfc"
-    run_name = f"{structure_name}_{calculation}"
+    run_name = config.get('run_name', f"{structure_name}_projwfc")
     command = config['command']
     config['projwfc']['prefix'] = structure_name
     config['projwfc']['outdir'] = structure_name

@@ -67,7 +67,7 @@ def scdm_fit(
         popt, _ = curve_fit(
             erfc_model, eigenvalues, projectabilities,
             p0=[mu0, sigma0],
-            bounds=([eigenvalues.min(), 0.01], [eigenvalues.max(), eigenvalues.ptp()]),
+            bounds=([eigenvalues.min(), 0.01], [eigenvalues.max(), eigenvalues.max() - eigenvalues.min()]),
             maxfev=10000
         )
         mu_fit, sigma_fit = popt

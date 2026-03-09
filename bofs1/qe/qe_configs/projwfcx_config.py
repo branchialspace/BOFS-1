@@ -6,9 +6,10 @@ projwfcx_config = {
                 '-x', 'BLIS_NUM_THREADS=1',
                 '-x', 'FLAME_NUM_THREADS=1',
                 '-np', '32',
-                'projwfc.x'],
+                'projwfc.x',
+                '-nk', '32'],
     'projwfc': {
-        'ngauss': 0,
+        'ngauss': -99,
         'degauss': 0.01,
         'DeltaE': 0.05,
         'lsym': False,
