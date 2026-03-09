@@ -10,7 +10,7 @@ mlwf_config = {
     "translate_home_cell": "true",
     "iprint": 2,
     "bands_plot": "true",
-    "wannier_plot": "true",
+    "wannier_plot": "false",
     "wannier_plot_format": "xcrysden",
     "bands_plot_format": "gnuplot"
 }
