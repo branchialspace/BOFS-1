@@ -2,7 +2,8 @@ mlwf_config = {
     "spinors": "true",
     "auto_projections": "true",
     "dis_num_iter": 0,   # for SCDM
-    "num_iter": 0,       # Preserves symmetry for Yambo
+    "num_iter": 500,
+    "site_symmetry": "true", # Preserves symmetry for Yambo
     "guiding_centres": "false",
     "write_hr": "true",
     "write_xyz": "true",
