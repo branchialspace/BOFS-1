@@ -18,16 +18,16 @@ def bofs1_test(*args):
     np = scf_config['command'][scf_config['command'].index('-np') + 1]
     nk = scf_config['command'][scf_config['command'].index('-nk') + 1]
     # projwfc.x for SCDM projectability fitting W2R
-    projwfcx_config = copy.deepcopy(bofs1.projwfcx_config)
-    projwfcx_config['run_name'] = f'{name}_projwfc_w2r'
-    bofs1.projwfcx(structure_path, projwfcx_config)
+    # projwfcx_config = copy.deepcopy(bofs1.projwfcx_config)
+    # projwfcx_config['run_name'] = f'{name}_projwfc_w2r'
+    # bofs1.projwfcx(structure_path, projwfcx_config)
     # pw2wannier90 W2R
-    pw2w90x_config = copy.deepcopy(bofs1.pw2w90x_config)
-    pw2w90x_config['inputpp']['seedname'] = f'{name}_w2r'
-    pw2w90x_config['nscf_output'] = f'{name}_nscf_w2r.out'
-    bofs1.pw2w90x(structure_path, pw2w90x_config)
+    # pw2w90x_config = copy.deepcopy(bofs1.pw2w90x_config)
+    # pw2w90x_config['inputpp']['seedname'] = f'{name}_w2r'
+    # pw2w90x_config['nscf_output'] = f'{name}_nscf_w2r.out'
+    # bofs1.pw2w90x(structure_path, pw2w90x_config)
     # Wannier90 W2R
-    subprocess.run(f'bash ./bofs1/wannier90/w90_run.sh w90_run {name}_w2r {np}', shell=True, check=True)
+    subprocess.run(f'bash ./bofs1/wannier90/w90_run.sh w90_run {name}_w2r 1', shell=True, check=True)
     # wan2respack
     subprocess.run(f'bash ./bofs1/respack/respack_run.sh wan2respack_post ./wan2respack_work ./respack_calc', shell=True, check=True)
     # Respack
@@ -61,6 +61,7 @@ def bofs1_full(*args):
     pwo = f'{name}_nscf_ibz.pwo'
     pwi = f'{name}_nscf_ibz.pwi'
     w90_config = copy.deepcopy(bofs1.mlwf_config)
+    w90_config['num_iter'] = 200
     bofs1.w90_win(pwo, pwi, w90_config, nokpts=True) # No k-points in .win for w2r .win reference
     subprocess.run(f'bash ./bofs1/respack/respack_run.sh wan2respack_pre ./{name}/{name}.save {name} {pwi} {name}_nscf_ibz.win ./wan2respack_work', shell=True, check=True)
     # QE NSCF W2R
