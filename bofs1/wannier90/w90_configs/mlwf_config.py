@@ -3,6 +3,8 @@ mlwf_config = {
     "auto_projections": "true",
     "dis_num_iter": 0,   # for SCDM
     "num_iter": 0, # Set to 0 to preserve symmetry for Yambo, > 0 for W2R run
+    "conv_tol": 1.0E-8,
+    "conv_window": 5,
     "guiding_centres": "false",
     "write_hr": "true",
     "write_xyz": "true",
