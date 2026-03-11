@@ -95,6 +95,7 @@ echo "export PATH=$SCRIPT_DIR/wannier90/bin:\$PATH" >> "$CONDA_PREFIX/etc/conda/
 echo "export LD_LIBRARY_PATH=$SCRIPT_DIR/wannier90/lib:\$LD_LIBRARY_PATH" >> "$CONDA_PREFIX/etc/conda/activate.d/wannier90_path.sh"
 # RESPACK (python 2.7 venv)
 mamba create -y -p ./bofs1_env_py27 python=2.7
+mamba install -y -p ./bofs1_env_py27 -c conda-forge openmpi make
 wget -O RESPACK.tar.gz "https://www.mns.kyutech.ac.jp/~kazuma/downloads/RESPACK-20240804.tar.gz"
 tar -xvf RESPACK.tar.gz
 mv RESPACK-20240804-dist RESPACK
@@ -131,6 +132,11 @@ echo "export PATH=$SCRIPT_DIR/RESPACK/src/wannier:\$PATH" >> "$CONDA_PREFIX/etc/
 echo "export PATH=$SCRIPT_DIR/RESPACK/src/chiqw:\$PATH"   >> "$CONDA_PREFIX/etc/conda/activate.d/respack_path.sh"
 echo "export PATH=$SCRIPT_DIR/RESPACK/src/calc_int:\$PATH" >> "$CONDA_PREFIX/etc/conda/activate.d/respack_path.sh"
 echo "export PATH=$SCRIPT_DIR/RESPACK/src/transfer_analysis:\$PATH" >> "$CONDA_PREFIX/etc/conda/activate.d/respack_path.sh"
+mkdir -p ./bofs1_env_py27/etc/conda/activate.d
+echo "export PATH=$SCRIPT_DIR/RESPACK/src/wannier:\$PATH" >> ./bofs1_env_py27/etc/conda/activate.d/respack_path.sh
+echo "export PATH=$SCRIPT_DIR/RESPACK/src/chiqw:\$PATH"   >> ./bofs1_env_py27/etc/conda/activate.d/respack_path.sh
+echo "export PATH=$SCRIPT_DIR/RESPACK/src/calc_int:\$PATH" >> ./bofs1_env_py27/etc/conda/activate.d/respack_path.sh
+echo "export PATH=$SCRIPT_DIR/RESPACK/src/transfer_analysis:\$PATH" >> ./bofs1_env_py27/etc/conda/activate.d/respack_path.sh
 # wan2respack
 git clone https://github.com/respack-dev/wan2respack.git wan2respack_src
 mkdir -p wan2respack_src/build
