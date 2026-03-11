@@ -95,7 +95,7 @@ echo "export PATH=$SCRIPT_DIR/wannier90/bin:\$PATH" >> "$CONDA_PREFIX/etc/conda/
 echo "export LD_LIBRARY_PATH=$SCRIPT_DIR/wannier90/lib:\$LD_LIBRARY_PATH" >> "$CONDA_PREFIX/etc/conda/activate.d/wannier90_path.sh"
 # RESPACK (python 2.7 venv)
 mamba create -y -p ./bofs1_env_py27 python=2.7
-mamba install -y -p ./bofs1_env_py27 -c conda-forge openmpi make
+mamba install -y -p ./bofs1_env_py27 -c conda-forge openmpi make numpy
 wget -O RESPACK.tar.gz "https://www.mns.kyutech.ac.jp/~kazuma/downloads/RESPACK-20240804.tar.gz"
 tar -xvf RESPACK.tar.gz
 mv RESPACK-20240804-dist RESPACK

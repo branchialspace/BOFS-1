@@ -31,7 +31,7 @@ def bofs1_test(*args):
     # wan2respack
     subprocess.run(f'bash ./bofs1/respack/respack_run.sh wan2respack_post ./wan2respack_work ./respack_calc', shell=True, check=True)
     # Respack
-    subprocess.run(f'bash ./bofs1/respack/respack_run.sh respack_run ./respack_calc 1 1 {np}', shell=True, check=True)
+    subprocess.run(f'bash ./bofs1/respack/respack_run.sh respack_run ./respack_calc 1', shell=True, check=True)
 
 def bofs1_full(*args):
     """BOFS-1 workflow"""
@@ -82,7 +82,7 @@ def bofs1_full(*args):
     # wan2respack
     subprocess.run(f'bash ./bofs1/respack/respack_run.sh wan2respack_post ./wan2respack_work ./respack_calc', shell=True, check=True)
     # Respack
-    subprocess.run(f'bash ./bofs1/respack/respack_run.sh respack_run ./respack_calc 1 1 {np}', shell=True, check=True)
+    subprocess.run(f'bash ./bofs1/respack/respack_run.sh respack_run ./respack_calc 1', shell=True, check=True)
     # QE SCF+U
     scf_config = copy.deepcopy(bofs1.pwx_scf_config)
     bofs1.pwx(structure_path, scf_config)

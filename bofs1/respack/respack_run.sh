@@ -50,14 +50,13 @@ wan2respack_post () {
 # Run RESPACK
 respack_run () {
     local calc_dir="$(realpath -m "$1")"
-    local omp_stacksize="${2:-16}"
-    local omp_num_threads="${3:-16}"
-    local mpi_np="${4:-1}"
+    local mpi_np="${2:-1}"
     mkdir -p "$calc_dir"
     conda activate "$ROOT_DIR/bofs1_env_py27"
-    export OMP_STACKSIZE="$omp_stacksize"
-    export OMP_NUM_THREADS="$omp_num_threads"
     cd "$calc_dir" || return 1
+    # #region agent log
+    echo "{\"sessionId\":\"10f095\",\"hypothesisId\":\"H5,H6\",\"location\":\"respack_run.sh:respack_run\",\"message\":\"env state\",\"data\":{\"calc_dir\":\"$calc_dir\",\"cwd\":\"$(pwd)\",\"mpi_np\":\"$mpi_np\",\"which_calc_chiqw\":\"$(which calc_chiqw 2>&1)\",\"which_python\":\"$(which python 2>&1)\",\"python_version\":\"$(python --version 2>&1)\"},\"timestamp\":$(date +%s%3N)}" >> "$ROOT_DIR/.cursor/debug-10f095.log"
+    # #endregion
     cat > input.in <<EOF
 &param_chiqw
 flg_cRPA=1
@@ -72,14 +71,29 @@ flg_cRPA=1
 /
 EOF
     mpirun --allow-run-as-root --use-hwthread-cpus -np "$mpi_np" calc_chiqw < input.in > log.chiqw
+    # #region agent log
+    local chiqw_rc=$?
+    echo "{\"sessionId\":\"10f095\",\"hypothesisId\":\"H6\",\"location\":\"respack_run.sh:after_chiqw\",\"message\":\"calc_chiqw exit\",\"data\":{\"exit_code\":\"$chiqw_rc\",\"log_lines\":\"$(wc -l < log.chiqw)\"},\"timestamp\":$(date +%s%3N)}" >> "$ROOT_DIR/.cursor/debug-10f095.log"
+    # #endregion
     mpirun --allow-run-as-root --use-hwthread-cpus -np "$mpi_np" calc_w3d < input.in > log.calc_w3d
+    # #region agent log
+    local w3d_rc=$?
+    echo "{\"sessionId\":\"10f095\",\"hypothesisId\":\"H9\",\"location\":\"respack_run.sh:after_w3d\",\"message\":\"calc_w3d exit\",\"data\":{\"exit_code\":\"$w3d_rc\",\"log_lines\":\"$(wc -l < log.calc_w3d)\"},\"timestamp\":$(date +%s%3N)}" >> "$ROOT_DIR/.cursor/debug-10f095.log"
+    # #endregion
     mpirun --allow-run-as-root --use-hwthread-cpus -np "$mpi_np" calc_j3d < input.in > log.calc_j3d
+    # #region agent log
+    local j3d_rc=$?
+    echo "{\"sessionId\":\"10f095\",\"hypothesisId\":\"H9\",\"location\":\"respack_run.sh:after_j3d\",\"message\":\"calc_j3d exit\",\"data\":{\"exit_code\":\"$j3d_rc\",\"log_lines\":\"$(wc -l < log.calc_j3d)\"},\"timestamp\":$(date +%s%3N)}" >> "$ROOT_DIR/.cursor/debug-10f095.log"
+    # #endregion
     cp "$ROOT_DIR/RESPACK/util/transfer_analysis/tr.py" ./
     cd "$ROOT_DIR/RESPACK/src/transfer_analysis/" || return 1
     make
     cp calc_tr "$calc_dir/"
     cd "$calc_dir" || return 1
-    python ./tr.py
+    # #region agent log
+    echo "{\"sessionId\":\"10f095\",\"hypothesisId\":\"H7,H8\",\"location\":\"respack_run.sh:before_tr\",\"message\":\"tr.py state\",\"data\":{\"python_path\":\"$(which python 2>&1)\",\"numpy_check\":\"$(python -c 'import numpy; print(numpy.__version__)' 2>&1)\",\"tr_exists\":\"$(test -f ./tr.py && echo yes || echo no)\",\"calc_tr_exists\":\"$(test -f ./calc_tr && echo yes || echo no)\",\"calc_dir\":\"$calc_dir\"},\"timestamp\":$(date +%s%3N)}" >> "$ROOT_DIR/.cursor/debug-10f095.log"
+    # #endregion
+    python ./tr.py --dir "$calc_dir"
 }
 
 "$@"
