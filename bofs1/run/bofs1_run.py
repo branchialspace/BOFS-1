@@ -27,7 +27,7 @@ def bofs1_test(*args):
     # pw2w90x_config['nscf_output'] = f'{name}_nscf_w2r.out'
     # bofs1.pw2w90x(structure_path, pw2w90x_config)
     # Wannier90 W2R
-    subprocess.run(f'bash ./bofs1/wannier90/w90_run.sh w90_run {name}_w2r 1', shell=True, check=True)
+    # subprocess.run(f'bash ./bofs1/wannier90/w90_run.sh w90_run {name}_w2r 1', shell=True, check=True)
     # wan2respack
     subprocess.run(f'bash ./bofs1/respack/respack_run.sh wan2respack_post ./wan2respack_work ./respack_calc', shell=True, check=True)
     # Respack
