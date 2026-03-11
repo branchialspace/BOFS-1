@@ -43,15 +43,15 @@ wan2respack_post () {
     local calc_dir="$(realpath -m "$2")"
     conda activate "$ROOT_DIR/bofs1_env"
     cd "$work_dir" || return 1
-    python "$ROOT_DIR/wan2respack/bin/wan2respack.py" conf.toml
+    python "$ROOT_DIR/wan2respack/bin/wan2respack.py" conf.toml || return 1
     mkdir -p "$calc_dir"
-    cp -r dir-wfn dir-wan "$calc_dir/"
+    cp -r dir-wfn dir-wan "$calc_dir/" || return 1
     cd - > /dev/null
 }
 
 # Run RESPACK
 respack_run () {
-    local calc_dir="$1"
+    local calc_dir="$(realpath -m "$1")"
     local omp_stacksize="${2:-16}"
     local omp_num_threads="${3:-16}"
     local mpi_np="${4:-1}"
@@ -73,9 +73,9 @@ flg_cRPA=1
 &param_calc_int
 /
 EOF
-    mpirun -np "$mpi_np" calc_chiqw < input.in > log.chiqw
-    mpirun -np "$mpi_np" calc_w3d < input.in > log.calc_w3d
-    mpirun -np "$mpi_np" calc_j3d < input.in > log.calc_j3d
+    mpirun --allow-run-as-root --use-hwthread-cpus -np "$mpi_np" calc_chiqw < input.in > log.chiqw
+    mpirun --allow-run-as-root --use-hwthread-cpus -np "$mpi_np" calc_w3d < input.in > log.calc_w3d
+    mpirun --allow-run-as-root --use-hwthread-cpus -np "$mpi_np" calc_j3d < input.in > log.calc_j3d
     cp "$ROOT_DIR/RESPACK/util/transfer_analysis/tr.py" ./
     cd "$ROOT_DIR/RESPACK/src/transfer_analysis/" || return 1
     make
