@@ -16,7 +16,7 @@ wan2respack_pre () {
     cat > "$work_dir/conf.toml" <<EOF
 [base]
 QE_output_dir = "$(realpath "$qe_outdir")"
-seedname = "$seedname"
+seedname = "${seedname}_w2r"
 
 [pre.ref]
 nscf = "$nscf_ref"
@@ -42,11 +42,9 @@ wan2respack_post () {
     local work_dir="$1"
     local calc_dir="$(realpath -m "$2")"
     conda activate "$ROOT_DIR/bofs1_env"
-    cd "$work_dir" || return 1
-    python "$ROOT_DIR/wan2respack/bin/wan2respack.py" conf.toml || return 1
+    python "$ROOT_DIR/wan2respack/bin/wan2respack.py" "$work_dir/conf.toml" || return 1
     mkdir -p "$calc_dir"
     cp -r dir-wfn dir-wan "$calc_dir/" || return 1
-    cd - > /dev/null
 }
 
 # Run RESPACK
