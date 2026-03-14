@@ -1,5 +1,3 @@
-DFT environment for computing the electronic structure and optical response of MOFs
-
 ```bash
 # BOFS-1
 # Ubuntu 22.04 LTS x86 AMD
